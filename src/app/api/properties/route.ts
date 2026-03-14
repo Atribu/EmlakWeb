@@ -1,0 +1,123 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+import { getUserFromRequest } from "@/lib/auth";
+import { createProperty, listProperties } from "@/lib/data-store";
+import type { CreatePropertyInput, PropertyType } from "@/lib/types";
+
+const validTypes: PropertyType[] = ["Daire", "Villa", "Rezidans", "Arsa", "Ofis"];
+
+function parseNumber(value: unknown, fieldLabel: string): number {
+  const numeric = Number(value);
+
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    throw new Error(`${fieldLabel} geçerli bir sayı olmalıdır.`);
+  }
+
+  return numeric;
+}
+
+function parseString(value: unknown, fieldLabel: string): string {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`${fieldLabel} zorunludur.`);
+  }
+
+  return value.trim();
+}
+
+function parseList(value: unknown, fieldLabel: string): string[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error(`${fieldLabel} en az bir değer içermelidir.`);
+  }
+
+  const output = value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+
+  if (output.length === 0) {
+    throw new Error(`${fieldLabel} en az bir değer içermelidir.`);
+  }
+
+  return output;
+}
+
+function parseCreateInput(value: unknown): CreatePropertyInput {
+  if (!value || typeof value !== "object") {
+    throw new Error("Geçersiz istek gövdesi.");
+  }
+
+  const payload = value as Record<string, unknown>;
+  const type = parseString(payload.type, "Portföy tipi") as PropertyType;
+
+  if (!validTypes.includes(type)) {
+    throw new Error("Portföy tipi geçersiz.");
+  }
+
+  return {
+    title: parseString(payload.title, "Başlık"),
+    city: parseString(payload.city, "Şehir"),
+    district: parseString(payload.district, "İlçe"),
+    neighborhood: parseString(payload.neighborhood, "Mahalle"),
+    type,
+    price: parseNumber(payload.price, "Fiyat"),
+    rooms: parseString(payload.rooms, "Oda bilgisi"),
+    areaM2: parseNumber(payload.areaM2, "Metrekare"),
+    floor: parseString(payload.floor, "Kat bilgisi"),
+    heating: parseString(payload.heating, "Isıtma"),
+    description: parseString(payload.description, "Açıklama"),
+    advisorId: parseString(payload.advisorId, "Danışman"),
+    coverColor: parseString(payload.coverColor, "Kapak rengi"),
+    highlights: parseList(payload.highlights, "Öne çıkanlar"),
+    features: parseList(payload.features, "Özellikler"),
+    imageLabels: parseList(payload.imageLabels, "Görsel etiketleri"),
+  };
+}
+
+export async function GET(request: NextRequest) {
+  const url = request.nextUrl;
+  const query = url.searchParams.get("q") ?? undefined;
+  const city = url.searchParams.get("city") ?? undefined;
+  const type = url.searchParams.get("type") ?? undefined;
+  const rooms = url.searchParams.get("rooms") ?? undefined;
+
+  const minPriceRaw = url.searchParams.get("minPrice");
+  const maxPriceRaw = url.searchParams.get("maxPrice");
+
+  const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
+  const maxPrice = maxPriceRaw ? Number(maxPriceRaw) : undefined;
+
+  const properties = listProperties({
+    query,
+    city,
+    type,
+    rooms,
+    minPrice: Number.isFinite(minPrice) ? minPrice : undefined,
+    maxPrice: Number.isFinite(maxPrice) ? maxPrice : undefined,
+  });
+
+  return NextResponse.json({ properties });
+}
+
+export async function POST(request: NextRequest) {
+  const user = getUserFromRequest(request);
+
+  if (!user) {
+    return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
+  }
+
+  if (!user.role || !["admin", "advisor", "editor"].includes(user.role)) {
+    return NextResponse.json({ message: "Bu işlem için yetkiniz yok." }, { status: 403 });
+  }
+
+  try {
+    const payload = await request.json();
+    const input = parseCreateInput(payload);
+
+    const property = createProperty(input, user.id);
+
+    return NextResponse.json({ property }, { status: 201 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Portföy eklenemedi.";
+    return NextResponse.json({ message }, { status: 400 });
+  }
+}
