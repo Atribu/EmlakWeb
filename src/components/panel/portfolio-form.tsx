@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 
+import { SAMPLE_IMAGE_SETS } from "@/lib/sample-images";
 import type { Advisor } from "@/lib/types";
 
 type PortfolioFormProps = {
@@ -26,11 +27,19 @@ const coverOptions = [
 
 export function PortfolioForm({ advisors }: PortfolioFormProps) {
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
+  const [imageIndex, setImageIndex] = useState(0);
+
+  const selectedImageSet = useMemo(
+    () => SAMPLE_IMAGE_SETS[imageIndex] ?? SAMPLE_IMAGE_SETS[0],
+    [imageIndex],
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
+
+    const set = SAMPLE_IMAGE_SETS[Number(data.get("imageSetIndex"))] ?? SAMPLE_IMAGE_SETS[0];
 
     setStatus({ type: "loading" });
 
@@ -50,9 +59,13 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
         areaM2: Number(data.get("areaM2")),
         floor: data.get("floor"),
         heating: data.get("heating"),
+        latitude: data.get("latitude"),
+        longitude: data.get("longitude"),
         description: data.get("description"),
         advisorId: data.get("advisorId"),
         coverColor: data.get("coverColor"),
+        coverImage: set?.cover,
+        galleryImages: set?.gallery ?? [],
         highlights: String(data.get("highlights") ?? "")
           .split(",")
           .map((item) => item.trim())
@@ -85,13 +98,14 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
     });
 
     form.reset();
+    setImageIndex(0);
   }
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-xl font-semibold tracking-tight text-slate-900">Yeni Portföy Yükle</h2>
       <p className="mt-2 text-sm text-slate-600">
-        Her portföy için bir danışman seçmek zorunludur. Veriler demo bellekte saklanır.
+        Her portföy için bir danışman seçmek zorunludur. Bu sürümde veriler demo bellekte saklanır.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-5 grid gap-3 md:grid-cols-2">
@@ -113,6 +127,8 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
         <input required name="areaM2" type="number" min={20} placeholder="m²" className="input" />
         <input required name="floor" placeholder="Kat bilgisi" className="input" />
         <input required name="heating" placeholder="Isıtma" className="input" />
+        <input name="latitude" type="number" step="any" placeholder="Enlem (opsiyonel)" className="input" />
+        <input name="longitude" type="number" step="any" placeholder="Boylam (opsiyonel)" className="input" />
 
         <select required name="advisorId" className="input md:col-span-2">
           <option value="">Danışman seçin</option>
@@ -126,10 +142,29 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
         <select required name="coverColor" className="input md:col-span-2">
           {coverOptions.map((option) => (
             <option key={option.value} value={option.value}>
-              Kapak Rengi: {option.label}
+              Vurgu Rengi: {option.label}
             </option>
           ))}
         </select>
+
+        <select
+          required
+          name="imageSetIndex"
+          className="input md:col-span-2"
+          value={imageIndex}
+          onChange={(event) => setImageIndex(Number(event.target.value))}
+        >
+          {SAMPLE_IMAGE_SETS.map((set, index) => (
+            <option key={set.label} value={index}>
+              Görsel Seti: {set.label}
+            </option>
+          ))}
+        </select>
+
+        <div className="md:col-span-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+          <div className="h-44 bg-cover bg-center" style={{ backgroundImage: `url(${selectedImageSet?.cover})` }} />
+          <p className="px-3 py-2 text-xs text-slate-600">Seçili kapak: {selectedImageSet?.label}</p>
+        </div>
 
         <textarea required name="description" rows={4} placeholder="İlan açıklaması" className="input md:col-span-2" />
         <input

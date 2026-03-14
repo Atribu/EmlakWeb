@@ -1,4 +1,11 @@
+import { pickSampleImageSet } from "@/lib/sample-images";
 import type { Advisor, Property, User } from "@/lib/types";
+
+const imageSet0 = pickSampleImageSet(0);
+const imageSet1 = pickSampleImageSet(1);
+const imageSet2 = pickSampleImageSet(2);
+const imageSet3 = pickSampleImageSet(3);
+const imageSet4 = pickSampleImageSet(4);
 
 export const initialAdvisors: Advisor[] = [
   {
@@ -92,7 +99,11 @@ export const initialProperties: Property[] = [
       "7/24 güvenlik",
     ],
     advisorId: "adv-1",
+    latitude: 40.9886,
+    longitude: 29.029,
     coverColor: "linear-gradient(120deg, #0f766e, #2dd4bf)",
+    coverImage: imageSet0.cover,
+    galleryImages: imageSet0.gallery,
     imageLabels: ["Salon", "Mutfak", "Ebeveyn Odası"],
     publishedAt: "2026-03-12T10:30:00.000Z",
   },
@@ -125,7 +136,11 @@ export const initialProperties: Property[] = [
       "Toplantı odası",
     ],
     advisorId: "adv-2",
+    latitude: 41.0782,
+    longitude: 29.0113,
     coverColor: "linear-gradient(120deg, #1d4ed8, #60a5fa)",
+    coverImage: imageSet3.cover,
+    galleryImages: imageSet3.gallery,
     imageLabels: ["Cephe", "Çalışma Alanı", "Lobi"],
     publishedAt: "2026-03-11T08:00:00.000Z",
   },
@@ -159,7 +174,11 @@ export const initialProperties: Property[] = [
       "Fitness alanı",
     ],
     advisorId: "adv-3",
+    latitude: 41.2024,
+    longitude: 29.0306,
     coverColor: "linear-gradient(120deg, #7c2d12, #fb923c)",
+    coverImage: imageSet2.cover,
+    galleryImages: imageSet2.gallery,
     imageLabels: ["Bahçe", "Salon", "Havuz"],
     publishedAt: "2026-03-10T14:15:00.000Z",
   },
@@ -187,7 +206,11 @@ export const initialProperties: Property[] = [
       "Kuru temizleme hizmeti",
     ],
     advisorId: "adv-2",
+    latitude: 41.0486,
+    longitude: 28.9886,
     coverColor: "linear-gradient(120deg, #7e22ce, #c084fc)",
+    coverImage: imageSet1.cover,
+    galleryImages: imageSet1.gallery,
     imageLabels: ["Salon", "Mutfak", "Teras"],
     publishedAt: "2026-03-09T11:45:00.000Z",
   },
@@ -220,7 +243,11 @@ export const initialProperties: Property[] = [
       "Bölge gelişim planı",
     ],
     advisorId: "adv-1",
+    latitude: 38.3706,
+    longitude: 26.762,
     coverColor: "linear-gradient(120deg, #166534, #4ade80)",
+    coverImage: imageSet4.cover,
+    galleryImages: imageSet4.gallery,
     imageLabels: ["Arazi Görünümü", "Yol Cephesi", "Bölge Planı"],
     publishedAt: "2026-03-08T09:20:00.000Z",
   },

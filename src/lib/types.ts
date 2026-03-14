@@ -48,7 +48,11 @@ export type Property = {
   highlights: string[];
   features: string[];
   advisorId: string;
+  latitude: number;
+  longitude: number;
   coverColor: string;
+  coverImage: string;
+  galleryImages: string[];
   imageLabels: string[];
   publishedAt: string;
 };
@@ -78,7 +82,11 @@ export type CreatePropertyInput = {
   highlights: string[];
   features: string[];
   advisorId: string;
+  latitude?: number;
+  longitude?: number;
   coverColor: string;
+  coverImage: string;
+  galleryImages: string[];
   imageLabels: string[];
 };
 

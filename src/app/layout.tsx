@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope, Space_Grotesk } from "next/font/google";
+import { Cormorant_Garamond, Manrope } from "next/font/google";
 
 import "./globals.css";
 
@@ -8,9 +8,10 @@ const manrope = Manrope({
   subsets: ["latin"],
 });
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body className={`${manrope.variable} ${spaceGrotesk.variable} antialiased`}>{children}</body>
+      <body className={`${manrope.variable} ${cormorant.variable} antialiased`}>{children}</body>
     </html>
   );
 }

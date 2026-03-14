@@ -50,42 +50,21 @@ export function ContactForm({ propertySlug, propertyTitle }: ContactFormProps) {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold tracking-tight text-slate-900">Bu İlan İçin Bilgi Al</h2>
-      <p className="mt-2 text-sm text-slate-600">{propertyTitle} için formu doldurun, talebiniz e-posta ile iletilsin.</p>
+    <section className="rounded-2xl border border-[#ddcfbc] bg-[#fffdf9] p-6 shadow-sm">
+      <span className="section-kicker">Özel Talep</span>
+      <h2 className="mt-3 text-[1.9rem] font-semibold leading-none text-[#221b13]">Bu İlan İçin Bilgi Al</h2>
+      <p className="mt-2 text-sm text-[#665c4f]">{propertyTitle} için formu doldurun, talebiniz ekibe e-posta ile iletilsin.</p>
 
       <form onSubmit={onSubmit} className="mt-5 space-y-3">
-        <input
-          required
-          name="name"
-          placeholder="Ad Soyad"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-0 transition focus:border-slate-500"
-        />
-        <input
-          required
-          type="email"
-          name="email"
-          placeholder="E-posta"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-0 transition focus:border-slate-500"
-        />
-        <input
-          required
-          name="phone"
-          placeholder="Telefon"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-0 transition focus:border-slate-500"
-        />
-        <textarea
-          required
-          name="message"
-          placeholder="Talebinizi kısaca yazın"
-          rows={4}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-0 transition focus:border-slate-500"
-        />
+        <input required name="name" placeholder="Ad Soyad" className="input" />
+        <input required type="email" name="email" placeholder="E-posta" className="input" />
+        <input required name="phone" placeholder="Telefon" className="input" />
+        <textarea required name="message" placeholder="Talebinizi kısaca yazın" rows={4} className="input" />
 
         <button
           type="submit"
           disabled={status.type === "loading"}
-          className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-500"
+          className="cursor-pointer rounded-full bg-[#1f1a14] px-4 py-2 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-[#786b59]"
         >
           {status.type === "loading" ? "Gönderiliyor..." : "Talep Gönder"}
         </button>

@@ -1,4 +1,5 @@
 import { initialAdvisors, initialProperties, initialUsers } from "@/lib/mock-data";
+import { pickSampleImageSet } from "@/lib/sample-images";
 import type {
   Advisor,
   ContactLead,
@@ -23,6 +24,15 @@ const store = {
   properties: [...initialProperties],
   users: [...initialUsers],
   leads: [] as ContactLead[],
+};
+
+const cityCenterLookup: Record<string, [number, number]> = {
+  İstanbul: [41.0082, 28.9784],
+  Izmir: [38.4237, 27.1428],
+  İzmir: [38.4237, 27.1428],
+  Ankara: [39.9334, 32.8597],
+  Antalya: [36.8969, 30.7133],
+  Bursa: [40.1885, 29.061],
 };
 
 function toSafeUser(user: User): SafeUser {
@@ -70,6 +80,31 @@ function uniqueSlug(base: string): string {
   }
 
   return `${base}-${cursor}`;
+}
+
+function inferCoordinates(input: CreatePropertyInput): { latitude: number; longitude: number } {
+  if (
+    typeof input.latitude === "number" &&
+    Number.isFinite(input.latitude) &&
+    typeof input.longitude === "number" &&
+    Number.isFinite(input.longitude)
+  ) {
+    return { latitude: input.latitude, longitude: input.longitude };
+  }
+
+  const center =
+    cityCenterLookup[input.city] ??
+    cityCenterLookup[input.city.replace("İ", "I")] ??
+    cityCenterLookup.İstanbul;
+
+  const offsetIndex = store.properties.length % 7;
+  const latitudeOffset = (offsetIndex - 3) * 0.0052;
+  const longitudeOffset = (offsetIndex - 3) * 0.0041;
+
+  return {
+    latitude: Number((center[0] + latitudeOffset).toFixed(6)),
+    longitude: Number((center[1] + longitudeOffset).toFixed(6)),
+  };
 }
 
 export function listAdvisors(): Advisor[] {
@@ -138,9 +173,18 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
     throw new Error("Seçilen danışman bulunamadı.");
   }
 
+  const sampleSet = pickSampleImageSet(store.properties.length + 1);
   const baseSlug = createSlug(input.title);
+  const location = inferCoordinates(input);
   const property: Property = {
     ...input,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    coverImage: input.coverImage || sampleSet.cover,
+    galleryImages:
+      input.galleryImages && input.galleryImages.length > 0
+        ? input.galleryImages
+        : sampleSet.gallery,
     id: `prp-${crypto.randomUUID()}`,
     slug: uniqueSlug(baseSlug),
     listingRef: nextListingRef(),

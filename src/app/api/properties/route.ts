@@ -17,6 +17,15 @@ function parseNumber(value: unknown, fieldLabel: string): number {
   return numeric;
 }
 
+function parseOptionalNumber(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : undefined;
+}
+
 function parseString(value: unknown, fieldLabel: string): string {
   if (typeof value !== "string" || !value.trim()) {
     throw new Error(`${fieldLabel} zorunludur.`);
@@ -66,7 +75,11 @@ function parseCreateInput(value: unknown): CreatePropertyInput {
     heating: parseString(payload.heating, "Isıtma"),
     description: parseString(payload.description, "Açıklama"),
     advisorId: parseString(payload.advisorId, "Danışman"),
+    latitude: parseOptionalNumber(payload.latitude),
+    longitude: parseOptionalNumber(payload.longitude),
     coverColor: parseString(payload.coverColor, "Kapak rengi"),
+    coverImage: parseString(payload.coverImage, "Kapak görseli"),
+    galleryImages: parseList(payload.galleryImages, "Galeri görselleri"),
     highlights: parseList(payload.highlights, "Öne çıkanlar"),
     features: parseList(payload.features, "Özellikler"),
     imageLabels: parseList(payload.imageLabels, "Görsel etiketleri"),
