@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 
+import { baseMetadata } from "@/lib/seo";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -14,11 +15,7 @@ const cormorant = Cormorant_Garamond({
   weight: ["500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "PortföySatış | Demo Emlak Portalı",
-  description:
-    "Satış odaklı emlak portalı demo sürümü. Portföy listeleme, filtreleme, iletişim formu ve rol tabanlı admin paneli içerir.",
-};
+export const metadata: Metadata = baseMetadata();
 
 export default function RootLayout({
   children,

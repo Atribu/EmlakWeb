@@ -30,6 +30,15 @@ export type Advisor = {
   focusArea: string;
 };
 
+export type CreateAdvisorInput = {
+  name: string;
+  title: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  focusArea: string;
+};
+
 export type Property = {
   id: string;
   slug: string;
@@ -97,5 +106,63 @@ export type ContactLead = {
   email: string;
   phone: string;
   message: string;
+  stage: LeadStage;
+  source: LeadSource;
+  preferredDate?: string;
+  preferredTime?: string;
+  appointmentNote?: string;
+  assignedAdvisorId?: string;
+  pipelineNote?: string;
   createdAt: string;
+  updatedAt: string;
+};
+
+export type LeadStage =
+  | "new"
+  | "called"
+  | "appointment_scheduled"
+  | "offer_submitted"
+  | "won"
+  | "lost";
+
+export type LeadSource = "contact_form" | "appointment_form";
+
+export type CreateLeadInput = {
+  propertySlug: string;
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  source?: LeadSource;
+  preferredDate?: string;
+  preferredTime?: string;
+  appointmentNote?: string;
+  assignedAdvisorId?: string;
+  stage?: LeadStage;
+  pipelineNote?: string;
+};
+
+export type BlogPost = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage: string;
+  authorName: string;
+  tags: string[];
+  metaTitle: string;
+  metaDescription: string;
+  publishedAt: string;
+};
+
+export type CreateBlogPostInput = {
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage: string;
+  authorName: string;
+  tags: string[];
+  metaTitle: string;
+  metaDescription: string;
 };

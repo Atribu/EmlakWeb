@@ -1,11 +1,12 @@
 import { pickSampleImageSet } from "@/lib/sample-images";
-import type { Advisor, Property, User } from "@/lib/types";
+import type { Advisor, BlogPost, Property, User } from "@/lib/types";
 
 const imageSet0 = pickSampleImageSet(0);
 const imageSet1 = pickSampleImageSet(1);
 const imageSet2 = pickSampleImageSet(2);
 const imageSet3 = pickSampleImageSet(3);
 const imageSet4 = pickSampleImageSet(4);
+const imageSet5 = pickSampleImageSet(5);
 
 export const initialAdvisors: Advisor[] = [
   {
@@ -250,5 +251,83 @@ export const initialProperties: Property[] = [
     galleryImages: imageSet4.gallery,
     imageLabels: ["Arazi Görünümü", "Yol Cephesi", "Bölge Planı"],
     publishedAt: "2026-03-08T09:20:00.000Z",
+  },
+];
+
+export const initialBlogPosts: BlogPost[] = [
+  {
+    id: "blog-seo-showcase-2026",
+    slug: "premium-emlak-ilaninda-seo-ve-satis-stratejisi-rehberi",
+    title: "Premium Emlak Ilaninda SEO ve Satis Stratejisi Rehberi",
+    excerpt:
+      "Premium segmentte hizli ve kaliteli teklif toplamak icin sadece gorsel yeterli degil. Dogru SEO kurgusu, icerik akisi ve CTA yerlesimi ile ilan performansini olculebilir sekilde artirabilirsiniz.",
+    content: `H2|accent: Premium Emlak Ilaninda SEO Neden Satis Hizini Artirir
+
+P: Premium segmentte alici davranisi, ilk aramada guven veren ve net bilgi sunan ilanlara yonelir. Bu nedenle SEO kurgusu sadece trafik degil, dogrudan teklif kalitesi icin de kritik bir etkendir.
+
+H3|soft: Ilk 7 gunde gorunurluk icin temel sinyaller
+
+UL|soft: H1 baslikta lokasyon ve portfoy tipini birlikte kullanin | Meta description icinde net deger onermesi yazin | Etiketlerde semt, yatirim ve satilik niyetini birlestirin | Ilk paragrafta fiyat bandi ve hedef alici profilini belirtin
+
+H4|accent: Icerik akisinin donusume etkisi
+
+OL: Arama niyetini cevaplayan guclu bir giris yazin | Lokasyon avantajlarini veri ve sosyal imkanlarla siralayin | Fiyat/deger karsilastirmasini benzer ilan mantigiyla sunun | Uzman yorumu ve guven sinyalleriyle karar surecini hizlandirin
+
+QUOTE|accent: Premium ilanda sadece guzel gorsel degil, dogru kurgulanmis metin de teklif kalitesini belirler.
+
+IMG|soft: https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1600&q=80 | Bogaz manzarali premium rezidans salonu gorunumu | Alt metin ve aciklayici baslik, gorsel aramalarindan gelen trafikte kaliteyi artirir.
+
+H5: Icerikte ic baglanti ve harita stratejisi
+
+P|soft: Blog iceriginden ilgili portfoy sayfalarina, bolgesel kategoriye ve harita uzerindeki ilanlara ic baglanti vermek; kullanicinin sitede gecirdigi sureyi artirir ve donusum hunisini guclendirir.
+
+IMG: https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=80 | Istanbul sahil hattinda luks daire dis cephe gorunumu | Bolgesel anahtar kelimeyle yazilmis alt metin, sayfanin konu alakasini pekistirir.
+
+CTA|accent: Danismanla Premium Portfoy Stratejisi Planla | /iletisim`,
+    coverImage: imageSet1.cover,
+    authorName: "PortfoySatis Icerik Ekibi",
+    tags: ["Premium Emlak", "SEO", "Satis Stratejisi", "Icerik Pazarlamasi", "Istanbul"],
+    metaTitle: "Premium Emlak Ilaninda SEO ve Satis Stratejisi Rehberi",
+    metaDescription:
+      "Premium emlak ilanlarinda SEO, icerik akisi, gorsel alt metni, ic link ve CTA kullanimiyla daha hizli ve kaliteli teklif almanizi saglayan uygulanabilir rehber.",
+    publishedAt: "2026-03-16T15:30:00.000Z",
+  },
+  {
+    id: "blog-1",
+    slug: "istanbulda-luks-konut-yatiriminda-2026-trendleri",
+    title: "İstanbul'da Lüks Konut Yatırımında 2026 Trendleri",
+    excerpt:
+      "Lokasyon, teslim tarihi ve kira çarpanı üzerinden 2026 premium konut yatırım fırsatlarını değerlendiriyoruz.",
+    content: `İstanbul premium konut pazarında 2026 yılında en belirgin fark, alıcıların sadece metrekare değil yaşam altyapısı odaklı karar vermesi oldu.
+
+Levent, Nişantaşı ve sahil hattında yeni portföylerde concierge, güvenlik ve sosyal alan kalitesi fiyat kadar belirleyici hale geliyor.
+
+Yatırımcı tarafında ise kısa vadeli al-sat yaklaşımı yerine, kira getirisi ve çıkış likiditesi birlikte analiz ediliyor. Bu nedenle ilan incelerken teslim tarihi, proje ölçeği ve çevre gelişim planı mutlaka birlikte okunmalı.`,
+    coverImage: imageSet1.cover,
+    authorName: "PortföySatış Araştırma Ekibi",
+    tags: ["İstanbul", "Lüks Konut", "Yatırım", "2026"],
+    metaTitle: "İstanbul Lüks Konut Yatırımı 2026 Trendleri | PortföySatış Blog",
+    metaDescription:
+      "İstanbul'da lüks konut yatırımı yaparken 2026 trendlerini, kira getirisi ve lokasyon analiziyle birlikte inceleyin.",
+    publishedAt: "2026-03-12T09:10:00.000Z",
+  },
+  {
+    id: "blog-2",
+    slug: "portfoy-satista-dogru-fiyatlandirma-stratejisi",
+    title: "Portföy Satışta Doğru Fiyatlandırma Stratejisi",
+    excerpt:
+      "Doğru fiyatlandırma, satış süresini ve teklif kalitesini doğrudan etkiler. Uygulamada kullanılan net yaklaşım adımları.",
+    content: `Emlakta satış sürecinin en kritik adımı doğru başlangıç fiyatıdır. Piyasa üstü fiyatlar ilan görünürlüğünü düşürürken, piyasa altı fiyatlar da mülk sahibinin değer kaybına yol açabilir.
+
+Doğru fiyatlandırma için benzer portföy karşılaştırması, bölge arz-talep dengesi ve ilan performans metrikleri birlikte değerlendirilmelidir.
+
+PortföySatış modelinde danışmanlar, fiyat aralığını tek bir rakamdan çok stratejik bant olarak belirler. Bu yöntem, hem daha hızlı teklif almayı hem de müzakere alanını korumayı sağlar.`,
+    coverImage: imageSet5.cover,
+    authorName: "Selin Yıldız",
+    tags: ["Satış", "Fiyatlandırma", "Portföy Yönetimi"],
+    metaTitle: "Emlakta Doğru Fiyatlandırma Stratejisi | PortföySatış Blog",
+    metaDescription:
+      "Emlak portföylerinde doğru fiyatlandırma nasıl yapılır? Satış süresini kısaltan temel stratejileri öğrenin.",
+    publishedAt: "2026-03-10T11:40:00.000Z",
   },
 ];

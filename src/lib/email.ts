@@ -30,10 +30,18 @@ export async function sendLeadNotification({
 
   const text = [
     `Yeni ilan talebi geldi: ${property.title} (${property.listingRef})`,
+    `Kaynak: ${lead.source === "appointment_form" ? "Randevu Formu" : "İletişim Formu"}`,
+    `Aşama: ${lead.stage}`,
     `Ad Soyad: ${lead.name}`,
     `E-posta: ${lead.email}`,
     `Telefon: ${lead.phone}`,
     `Mesaj: ${lead.message}`,
+    `Randevu: ${
+      lead.preferredDate && lead.preferredTime
+        ? `${lead.preferredDate} ${lead.preferredTime}`
+        : "Belirtilmedi"
+    }`,
+    `Ziyaret Tipi: ${lead.appointmentNote ?? "Belirtilmedi"}`,
     `Danışman: ${advisor ? `${advisor.name} (${advisor.phone})` : "Atanmadı"}`,
     `Tarih: ${new Date(lead.createdAt).toLocaleString("tr-TR")}`,
   ].join("\n");

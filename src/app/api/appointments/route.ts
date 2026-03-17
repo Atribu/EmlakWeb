@@ -11,8 +11,21 @@ function requireString(value: unknown, label: string): string {
   return value.trim();
 }
 
-function sanitizeMessage(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
+function validateDate(value: string): string {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error("Randevu tarihi geçersiz.");
+  }
+
+  return value;
+}
+
+function validateTime(value: string): string {
+  if (!/^\d{2}:\d{2}$/.test(value)) {
+    throw new Error("Randevu saati geçersiz.");
+  }
+
+  return value;
 }
 
 export async function POST(request: Request) {
@@ -26,14 +39,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "İlan bulunamadı." }, { status: 404 });
     }
 
+    const preferredDate = validateDate(requireString(payload.preferredDate, "Randevu tarihi"));
+    const preferredTime = validateTime(requireString(payload.preferredTime, "Randevu saati"));
+
     const lead = createLead({
       propertySlug,
       name: requireString(payload.name, "Ad Soyad"),
       email: requireString(payload.email, "E-posta"),
       phone: requireString(payload.phone, "Telefon"),
-      message: sanitizeMessage(requireString(payload.message, "Mesaj")),
-      source: "contact_form",
+      message: requireString(payload.message, "Mesaj"),
+      source: "appointment_form",
       assignedAdvisorId: property.advisorId,
+      preferredDate,
+      preferredTime,
+      appointmentNote: requireString(payload.visitType, "Ziyaret tipi"),
     });
 
     const advisor = getAdvisorById(property.advisorId);
@@ -42,14 +61,16 @@ export async function POST(request: Request) {
     if (!emailResult.delivered) {
       return NextResponse.json({
         message:
-          "Talebiniz alındı. Demo modunda mail ayarı olmadığı için kayıt panelde tutuldu.",
+          "Randevu talebiniz alındı. Demo modunda mail ayarı olmadığı için kayıt panelde tutuldu.",
         mode: "demo",
       });
     }
 
-    return NextResponse.json({ message: "Talebiniz başarıyla iletildi. Ekibimiz sizi arayacak." });
+    return NextResponse.json({
+      message: "Randevu talebiniz alındı. Ekibimiz uygunluk için size dönüş yapacak.",
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Talep gönderilemedi.";
+    const message = error instanceof Error ? error.message : "Randevu gönderilemedi.";
     return NextResponse.json({ message }, { status: 400 });
   }
 }

@@ -152,7 +152,7 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
             onClick={() => setMapStyle(style.key as MapStyleKey)}
             className={`cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${
               mapStyle === style.key
-                ? "bg-[#1f1a14] text-white"
+                ? "bg-[#17140f] text-white"
                 : "border border-[#d2c4af] bg-white text-[#6f5a3c] hover:bg-[#f1e6d5]"
             }`}
           >
@@ -193,7 +193,7 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
             <button
               type="button"
               onClick={handleLocationSearch}
-              className="cursor-pointer rounded-full bg-[#1f1a14] px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-black"
+              className="cursor-pointer rounded-full bg-[#17140f] px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-black"
             >
               Konum Ara
             </button>

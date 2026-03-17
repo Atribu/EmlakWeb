@@ -1,16 +1,30 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AppointmentForm } from "@/components/appointment-form";
 import { ContactForm } from "@/components/contact-form";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentUser } from "@/lib/auth";
 import { getAdvisorById, getPropertyBySlug } from "@/lib/data-store";
 import { formatPhoneForHref, formatPrice } from "@/lib/format";
 import { getProjectMeta } from "@/lib/project-meta";
+import { listingMetadata, propertySchema } from "@/lib/seo";
 
 type PropertyDetailProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: PropertyDetailProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  const property = getPropertyBySlug(resolvedParams.slug);
+
+  if (!property) {
+    return { title: "İlan Bulunamadı | PortföySatış" };
+  }
+
+  return listingMetadata(property);
+}
 
 export default async function PropertyDetailPage({ params }: PropertyDetailProps) {
   const [resolvedParams, currentUser] = await Promise.all([params, getCurrentUser()]);
@@ -23,6 +37,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
 
   const advisor = getAdvisorById(property.advisorId);
   const projectMeta = getProjectMeta(property);
+  const listingSchema = propertySchema(property);
 
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : null;
   const whatsappHref = advisor
@@ -121,10 +136,15 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
                 </aside>
               ) : null}
 
+              <AppointmentForm propertySlug={property.slug} propertyTitle={property.title} />
               <ContactForm propertySlug={property.slug} propertyTitle={property.title} />
             </div>
           </div>
         </section>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(listingSchema) }}
+        />
       </main>
     </div>
   );

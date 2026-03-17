@@ -18,3 +18,19 @@ export function roleLabel(role: string): string {
   if (role === "editor") return "İçerik Yükleyici";
   return role;
 }
+
+export function leadStageLabel(stage: string): string {
+  if (stage === "new") return "Yeni";
+  if (stage === "called") return "Arandı";
+  if (stage === "appointment_scheduled") return "Randevu";
+  if (stage === "offer_submitted") return "Teklif";
+  if (stage === "won") return "Kazanıldı";
+  if (stage === "lost") return "Kaybedildi";
+  return stage;
+}
+
+export function leadSourceLabel(source: string): string {
+  if (source === "contact_form") return "İletişim Formu";
+  if (source === "appointment_form") return "Randevu Formu";
+  return source;
+}
