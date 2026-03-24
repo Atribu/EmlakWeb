@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { getUserFromRequest } from "@/lib/auth";
-import { getPropertyBySlug, updatePropertyBySlug } from "@/lib/data-store";
+import { deletePropertyBySlug, getPropertyBySlug, updatePropertyBySlug } from "@/lib/data-store";
 import {
   buildRoomImageFileName,
   deleteManagedPropertyImages,
@@ -252,6 +252,45 @@ export async function PATCH(
     return NextResponse.json({ property });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Portföy güncellenemedi.";
+    return NextResponse.json({ message }, { status: 400 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  const user = getUserFromRequest(request);
+
+  if (!user) {
+    return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
+  }
+
+  if (!user.role || !["admin", "advisor", "editor"].includes(user.role)) {
+    return NextResponse.json({ message: "Bu işlem için yetkiniz yok." }, { status: 403 });
+  }
+
+  const { slug } = await params;
+  const existing = getPropertyBySlug(slug);
+
+  if (!existing) {
+    return NextResponse.json({ message: "Portföy bulunamadı." }, { status: 404 });
+  }
+
+  try {
+    const removed = deletePropertyBySlug(slug);
+    await deleteManagedPropertyImages([removed.coverImage, ...removed.galleryImages]);
+
+    return NextResponse.json({
+      property: {
+        id: removed.id,
+        slug: removed.slug,
+        listingRef: removed.listingRef,
+        title: removed.title,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Portföy silinemedi.";
     return NextResponse.json({ message }, { status: 400 });
   }
 }

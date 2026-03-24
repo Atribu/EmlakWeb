@@ -6,6 +6,7 @@ import { AdvisorManagement } from "@/components/panel/advisor-management";
 import { BlogEditor } from "@/components/panel/blog-editor";
 import { BlogForm } from "@/components/panel/blog-form";
 import { LeadPipelineBoard } from "@/components/panel/lead-pipeline-board";
+import { PortfolioDelete } from "@/components/panel/portfolio-delete";
 import { PortfolioEditor } from "@/components/panel/portfolio-editor";
 import { PortfolioForm } from "@/components/panel/portfolio-form";
 import { SiteHeader } from "@/components/site-header";
@@ -26,6 +27,7 @@ type PanelTab =
   | "overview"
   | "portfolio-create"
   | "portfolio-edit"
+  | "portfolio-delete"
   | "blog-create"
   | "blog-edit"
   | "advisor-manage"
@@ -40,6 +42,7 @@ const panelTabs: Array<{ id: PanelTab; label: string; hint: string }> = [
   { id: "overview", label: "Genel Bakış", hint: "Özet ve hızlı tablolar" },
   { id: "portfolio-create", label: "Portföy Yükle", hint: "Yeni ilan oluştur" },
   { id: "portfolio-edit", label: "Portföy Düzenle", hint: "Mevcut ilanı güncelle" },
+  { id: "portfolio-delete", label: "Portföy Sil", hint: "Yayındaki ilanı kaldır" },
   { id: "blog-create", label: "Blog Ekle", hint: "SEO içerik yayınla" },
   { id: "blog-edit", label: "Blog Düzenle", hint: "Yayınlanan yazıyı güncelle" },
   { id: "advisor-manage", label: "Danışman Ekle/Sil", hint: "Kayıt yönetimi" },
@@ -134,6 +137,13 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
 
             {activeTab === "portfolio-create" ? <PortfolioForm advisors={advisors} /> : null}
             {activeTab === "portfolio-edit" ? <PortfolioEditor initialProperties={properties} advisors={advisors} /> : null}
+            {activeTab === "portfolio-delete" ? (
+              <PortfolioDelete
+                initialProperties={properties}
+                advisors={advisors}
+                canManage={["admin", "advisor", "editor"].includes(currentUser.role)}
+              />
+            ) : null}
             {activeTab === "blog-create" ? <BlogForm defaultAuthorName={currentUser.name} /> : null}
             {activeTab === "blog-edit" ? <BlogEditor initialPosts={blogPosts} /> : null}
             {activeTab === "advisor-manage" ? (

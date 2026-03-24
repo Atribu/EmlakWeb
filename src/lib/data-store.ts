@@ -470,6 +470,20 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
   return property;
 }
 
+export function deletePropertyBySlug(slug: string): Property {
+  syncPropertiesFromDisk();
+  const propertyIndex = store.properties.findIndex((property) => property.slug === slug);
+
+  if (propertyIndex === -1) {
+    throw new Error("Portföy bulunamadı.");
+  }
+
+  const [removed] = store.properties.splice(propertyIndex, 1);
+  writePropertiesToDisk(store.properties);
+
+  return removed;
+}
+
 export function listCities(): string[] {
   syncPropertiesFromDisk();
   return Array.from(new Set(store.properties.map((property) => property.city))).sort((a, b) =>
