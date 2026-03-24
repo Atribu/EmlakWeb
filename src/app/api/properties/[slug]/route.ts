@@ -4,12 +4,17 @@ import type { NextRequest } from "next/server";
 import { getUserFromRequest } from "@/lib/auth";
 import { getPropertyBySlug, updatePropertyBySlug } from "@/lib/data-store";
 import {
+  buildRoomImageFileName,
+  deleteManagedPropertyImages,
+  resolvePropertyStorageKey,
+  savePropertyImageFile,
+} from "@/lib/property-image-storage";
+import {
   getFilesFromFormData,
   isLabelForRoom,
   MAX_IMAGES_PER_ROOM,
   PORTFOLIO_ROOM_FIELDS,
   makeRoomImageLabel,
-  readWebpAsDataUrl,
 } from "@/lib/portfolio-images";
 import type { CreatePropertyInput, Property, PropertyType } from "@/lib/types";
 
@@ -125,15 +130,26 @@ function galleryEntriesFromProperty(property: Property): GalleryEntry[] {
 
 async function parseFormDataInput(formData: FormData, existing: Property): Promise<CreatePropertyInput> {
   const type = parseString(formData.get("type"), "Portföy tipi") as PropertyType;
+  const title = parseString(formData.get("title"), "Başlık");
 
   if (!validTypes.includes(type)) {
     throw new Error("Portföy tipi geçersiz.");
   }
 
+  let storageKey: string | null = null;
+  const getStorageKey = () => {
+    storageKey ??= resolvePropertyStorageKey([existing.coverImage, ...existing.galleryImages], title);
+    return storageKey;
+  };
+
   const coverFile = formData.get("coverImageFile");
   const coverImage =
     coverFile instanceof File && coverFile.size > 0
-      ? await readWebpAsDataUrl(coverFile, "Kapak görseli")
+      ? await savePropertyImageFile(coverFile, {
+          storageKey: getStorageKey(),
+          fileName: "cover",
+          fieldLabel: "Kapak görseli",
+        })
       : existing.coverImage;
 
   let galleryEntries = galleryEntriesFromProperty(existing);
@@ -149,17 +165,29 @@ async function parseFormDataInput(formData: FormData, existing: Property): Promi
       throw new Error(`${field.label} için en fazla ${MAX_IMAGES_PER_ROOM} görsel yükleyebilirsiniz.`);
     }
 
+    const replacedEntries = galleryEntries.filter((entry) => isLabelForRoom(entry.label, field.label));
     const nextEntries = galleryEntries.filter((entry) => !isLabelForRoom(entry.label, field.label));
+    const nextRoomEntries: GalleryEntry[] = [];
 
     for (const [index, file] of files.entries()) {
       const label = makeRoomImageLabel(field, index, files.length);
-      nextEntries.push({
+      nextRoomEntries.push({
         label,
-        image: await readWebpAsDataUrl(file, `${label} görseli`),
+        image: await savePropertyImageFile(file, {
+          storageKey: getStorageKey(),
+          fileName: buildRoomImageFileName(field.label, index, files.length),
+          fieldLabel: `${label} görseli`,
+        }),
       });
     }
 
-    galleryEntries = nextEntries;
+    const staleImages = replacedEntries
+      .map((entry) => entry.image)
+      .filter((image) => !nextRoomEntries.some((entry) => entry.image === image));
+
+    await deleteManagedPropertyImages(staleImages);
+
+    galleryEntries = [...nextEntries, ...nextRoomEntries];
   }
 
   const galleryImages = galleryEntries.map((entry) => entry.image);
@@ -170,7 +198,7 @@ async function parseFormDataInput(formData: FormData, existing: Property): Promi
   }
 
   return {
-    title: parseString(formData.get("title"), "Başlık"),
+    title,
     city: parseString(formData.get("city"), "Şehir"),
     district: parseString(formData.get("district"), "İlçe"),
     neighborhood: parseString(formData.get("neighborhood"), "Mahalle"),

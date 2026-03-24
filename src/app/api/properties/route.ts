@@ -4,11 +4,15 @@ import type { NextRequest } from "next/server";
 import { getUserFromRequest } from "@/lib/auth";
 import { createProperty, listProperties } from "@/lib/data-store";
 import {
+  buildRoomImageFileName,
+  createPropertyImageStorageKey,
+  savePropertyImageFile,
+} from "@/lib/property-image-storage";
+import {
   getFilesFromFormData,
   MAX_IMAGES_PER_ROOM,
   PORTFOLIO_ROOM_FIELDS,
   makeRoomImageLabel,
-  readWebpAsDataUrl,
 } from "@/lib/portfolio-images";
 import type { CreatePropertyInput, PropertyType } from "@/lib/types";
 
@@ -112,6 +116,7 @@ function parseCreateInput(value: unknown): CreatePropertyInput {
 
 async function parseCreateFormData(formData: FormData): Promise<CreatePropertyInput> {
   const type = parseString(formData.get("type"), "Portföy tipi") as PropertyType;
+  const title = parseString(formData.get("title"), "Başlık");
 
   if (!validTypes.includes(type)) {
     throw new Error("Portföy tipi geçersiz.");
@@ -122,7 +127,12 @@ async function parseCreateFormData(formData: FormData): Promise<CreatePropertyIn
     throw new Error("Kapak görseli zorunludur.");
   }
 
-  const coverImage = await readWebpAsDataUrl(coverFile, "Kapak görseli");
+  const storageKey = createPropertyImageStorageKey(title);
+  const coverImage = await savePropertyImageFile(coverFile, {
+    storageKey,
+    fileName: "cover",
+    fieldLabel: "Kapak görseli",
+  });
   const galleryImages: string[] = [];
   const imageLabels: string[] = [];
 
@@ -142,7 +152,13 @@ async function parseCreateFormData(formData: FormData): Promise<CreatePropertyIn
 
     for (const [index, file] of files.entries()) {
       const label = makeRoomImageLabel(field, index, files.length);
-      galleryImages.push(await readWebpAsDataUrl(file, `${label} görseli`));
+      galleryImages.push(
+        await savePropertyImageFile(file, {
+          storageKey,
+          fileName: buildRoomImageFileName(field.label, index, files.length),
+          fieldLabel: `${label} görseli`,
+        }),
+      );
       imageLabels.push(label);
     }
   }
@@ -152,7 +168,7 @@ async function parseCreateFormData(formData: FormData): Promise<CreatePropertyIn
   }
 
   return {
-    title: parseString(formData.get("title"), "Başlık"),
+    title,
     city: parseString(formData.get("city"), "Şehir"),
     district: parseString(formData.get("district"), "İlçe"),
     neighborhood: parseString(formData.get("neighborhood"), "Mahalle"),

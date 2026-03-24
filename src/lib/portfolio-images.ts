@@ -34,41 +34,6 @@ export function validateWebpFile(file: File, fieldLabel: string) {
   }
 }
 
-function fileToDataUrlInBrowser(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const value = reader.result;
-      if (typeof value !== "string") {
-        reject(new Error("Görsel okunamadı."));
-        return;
-      }
-
-      resolve(value);
-    };
-
-    reader.onerror = () => reject(new Error("Görsel okunamadı."));
-    reader.readAsDataURL(file);
-  });
-}
-
-async function fileToDataUrlOnServer(file: File): Promise<string> {
-  const contentType = file.type || "image/webp";
-  const arrayBuffer = await file.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString("base64");
-  return `data:${contentType};base64,${base64}`;
-}
-
-export async function readWebpAsDataUrl(file: File, fieldLabel: string): Promise<string> {
-  validateWebpFile(file, fieldLabel);
-  if (typeof window === "undefined") {
-    return fileToDataUrlOnServer(file);
-  }
-
-  return fileToDataUrlInBrowser(file);
-}
-
 export function getFilesFromFormData(formData: FormData, fieldName: string): File[] {
   return formData
     .getAll(fieldName)
