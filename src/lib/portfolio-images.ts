@@ -1,6 +1,6 @@
 export const MAX_WEBP_UPLOAD_MB = 8;
 export const MAX_IMAGES_PER_ROOM = 8;
-export const MAX_PORTFOLIO_REQUEST_MB = 4;
+export const MAX_PORTFOLIO_REQUEST_MB = 60;
 
 const maxUploadBytes = MAX_WEBP_UPLOAD_MB * 1024 * 1024;
 const maxPortfolioRequestBytes = MAX_PORTFOLIO_REQUEST_MB * 1024 * 1024;
