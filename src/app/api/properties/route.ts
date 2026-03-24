@@ -3,6 +3,13 @@ import type { NextRequest } from "next/server";
 
 import { getUserFromRequest } from "@/lib/auth";
 import { createProperty, listProperties } from "@/lib/data-store";
+import {
+  getFilesFromFormData,
+  MAX_IMAGES_PER_ROOM,
+  PORTFOLIO_ROOM_FIELDS,
+  makeRoomImageLabel,
+  readWebpAsDataUrl,
+} from "@/lib/portfolio-images";
 import type { CreatePropertyInput, PropertyType } from "@/lib/types";
 
 const validTypes: PropertyType[] = ["Daire", "Villa", "Rezidans", "Arsa", "Ofis"];
@@ -50,6 +57,23 @@ function parseList(value: unknown, fieldLabel: string): string[] {
   return output;
 }
 
+function parseCommaSeparatedList(value: unknown, fieldLabel: string): string[] {
+  if (typeof value !== "string") {
+    throw new Error(`${fieldLabel} en az bir değer içermelidir.`);
+  }
+
+  const output = value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (output.length === 0) {
+    throw new Error(`${fieldLabel} en az bir değer içermelidir.`);
+  }
+
+  return output;
+}
+
 function parseCreateInput(value: unknown): CreatePropertyInput {
   if (!value || typeof value !== "object") {
     throw new Error("Geçersiz istek gövdesi.");
@@ -83,6 +107,71 @@ function parseCreateInput(value: unknown): CreatePropertyInput {
     highlights: parseList(payload.highlights, "Öne çıkanlar"),
     features: parseList(payload.features, "Özellikler"),
     imageLabels: parseList(payload.imageLabels, "Görsel etiketleri"),
+  };
+}
+
+async function parseCreateFormData(formData: FormData): Promise<CreatePropertyInput> {
+  const type = parseString(formData.get("type"), "Portföy tipi") as PropertyType;
+
+  if (!validTypes.includes(type)) {
+    throw new Error("Portföy tipi geçersiz.");
+  }
+
+  const coverFile = formData.get("coverImageFile");
+  if (!(coverFile instanceof File) || coverFile.size === 0) {
+    throw new Error("Kapak görseli zorunludur.");
+  }
+
+  const coverImage = await readWebpAsDataUrl(coverFile, "Kapak görseli");
+  const galleryImages: string[] = [];
+  const imageLabels: string[] = [];
+
+  for (const field of PORTFOLIO_ROOM_FIELDS) {
+    const files = getFilesFromFormData(formData, field.name);
+
+    if (files.length === 0) {
+      if (field.requiredOnCreate) {
+        throw new Error(`${field.label} görseli zorunludur.`);
+      }
+      continue;
+    }
+
+    if (files.length > MAX_IMAGES_PER_ROOM) {
+      throw new Error(`${field.label} için en fazla ${MAX_IMAGES_PER_ROOM} görsel yükleyebilirsiniz.`);
+    }
+
+    for (const [index, file] of files.entries()) {
+      const label = makeRoomImageLabel(field, index, files.length);
+      galleryImages.push(await readWebpAsDataUrl(file, `${label} görseli`));
+      imageLabels.push(label);
+    }
+  }
+
+  if (galleryImages.length === 0) {
+    throw new Error("En az bir oda görseli yükleyin.");
+  }
+
+  return {
+    title: parseString(formData.get("title"), "Başlık"),
+    city: parseString(formData.get("city"), "Şehir"),
+    district: parseString(formData.get("district"), "İlçe"),
+    neighborhood: parseString(formData.get("neighborhood"), "Mahalle"),
+    type,
+    price: parseNumber(formData.get("price"), "Fiyat"),
+    rooms: parseString(formData.get("rooms"), "Oda bilgisi"),
+    areaM2: parseNumber(formData.get("areaM2"), "Metrekare"),
+    floor: parseString(formData.get("floor"), "Kat bilgisi"),
+    heating: parseString(formData.get("heating"), "Isıtma"),
+    description: parseString(formData.get("description"), "Açıklama"),
+    advisorId: parseString(formData.get("advisorId"), "Danışman"),
+    latitude: parseOptionalNumber(formData.get("latitude")),
+    longitude: parseOptionalNumber(formData.get("longitude")),
+    coverColor: parseString(formData.get("coverColor"), "Kapak rengi"),
+    coverImage,
+    galleryImages,
+    highlights: parseCommaSeparatedList(formData.get("highlights"), "Öne çıkanlar"),
+    features: parseCommaSeparatedList(formData.get("features"), "Özellikler"),
+    imageLabels,
   };
 }
 
@@ -123,8 +212,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const payload = await request.json();
-    const input = parseCreateInput(payload);
+    const contentType = request.headers.get("content-type") ?? "";
+    const input = contentType.includes("multipart/form-data")
+      ? await parseCreateFormData(await request.formData())
+      : parseCreateInput(await request.json());
 
     const property = createProperty(input, user.id);
 

@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 
 import {
   MAX_IMAGES_PER_ROOM,
+  MAX_PORTFOLIO_REQUEST_MB,
   MAX_WEBP_UPLOAD_MB,
   PORTFOLIO_ROOM_FIELDS,
   getFilesFromFormData,
-  isLabelForRoom,
-  makeRoomImageLabel,
-  readWebpAsDataUrl,
+  validateTotalUploadSize,
+  validateWebpFile,
 } from "@/lib/portfolio-images";
 import { formatPrice } from "@/lib/format";
 import type { Advisor, Property } from "@/lib/types";
@@ -35,18 +35,6 @@ const coverOptions = [
   { label: "Mor", value: "linear-gradient(120deg, #7e22ce, #c084fc)" },
   { label: "Yeşil", value: "linear-gradient(120deg, #166534, #4ade80)" },
 ];
-
-type GalleryEntry = {
-  label: string;
-  image: string;
-};
-
-function galleryEntriesFromProperty(property: Property): GalleryEntry[] {
-  return property.galleryImages.map((image, index) => ({
-    label: property.imageLabels[index] ?? `Görsel ${index + 1}`,
-    image,
-  }));
-}
 
 export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditorProps) {
   const router = useRouter();
@@ -86,14 +74,13 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
     setStatus({ type: "loading" });
 
     try {
-      let coverImage = selectedProperty.coverImage;
+      const uploadFiles: File[] = [];
       const coverFile = data.get("coverImageFile");
 
       if (coverFile instanceof File && coverFile.size > 0) {
-        coverImage = await readWebpAsDataUrl(coverFile, "Kapak görseli");
+        validateWebpFile(coverFile, "Kapak görseli");
+        uploadFiles.push(coverFile);
       }
-
-      let galleryEntries = galleryEntriesFromProperty(selectedProperty);
 
       for (const field of PORTFOLIO_ROOM_FIELDS) {
         const files = getFilesFromFormData(data, field.name);
@@ -105,60 +92,30 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
           throw new Error(`${field.label} için en fazla ${MAX_IMAGES_PER_ROOM} görsel yükleyebilirsiniz.`);
         }
 
-        const nextEntries = galleryEntries.filter((entry) => !isLabelForRoom(entry.label, field.label));
-
         for (const [index, file] of files.entries()) {
-          const label = makeRoomImageLabel(field, index, files.length);
-          const image = await readWebpAsDataUrl(file, `${label} görseli`);
-          nextEntries.push({ label, image });
+          validateWebpFile(file, `${field.label} ${index + 1} görseli`);
+          uploadFiles.push(file);
         }
-
-        galleryEntries = nextEntries;
       }
 
-      const imageLabels = galleryEntries.map((entry) => entry.label);
-      const galleryImages = galleryEntries.map((entry) => entry.image);
-
-      if (galleryImages.length === 0) {
-        throw new Error("En az bir oda görseli bulunmalıdır.");
+      if (uploadFiles.length > 0) {
+        validateTotalUploadSize(uploadFiles);
       }
 
       const response = await fetch(`/api/properties/${selectedProperty.slug}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: data.get("title"),
-          city: data.get("city"),
-          district: data.get("district"),
-          neighborhood: data.get("neighborhood"),
-          type: data.get("type"),
-          price: Number(data.get("price")),
-          rooms: data.get("rooms"),
-          areaM2: Number(data.get("areaM2")),
-          floor: data.get("floor"),
-          heating: data.get("heating"),
-          latitude: data.get("latitude"),
-          longitude: data.get("longitude"),
-          description: data.get("description"),
-          advisorId: data.get("advisorId"),
-          coverColor: data.get("coverColor"),
-          coverImage,
-          galleryImages,
-          imageLabels,
-          highlights: String(data.get("highlights") ?? "")
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean),
-          features: String(data.get("features") ?? "")
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean),
-        }),
+        body: data,
       });
 
       if (!response.ok) {
+        if (response.status === 413) {
+          setStatus({
+            type: "error",
+            message: `Hatalı işlem yaptınız. Yüklenen görseller sunucu limiti için çok büyük. Toplam yüklemeyi ${MAX_PORTFOLIO_REQUEST_MB} MB altına düşürün.`,
+          });
+          return;
+        }
+
         const payload = (await response.json().catch(() => null)) as { message?: string } | null;
         const detail = payload?.message ?? "Portföy güncellenemedi.";
         setStatus({
@@ -328,7 +285,7 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
 
         <p className="md:col-span-2 text-xs text-slate-500">
           Dosya kuralı: yalnızca `.webp`, dosya başına en fazla {MAX_WEBP_UPLOAD_MB} MB, oda başına en fazla{" "}
-          {MAX_IMAGES_PER_ROOM} görsel.
+          {MAX_IMAGES_PER_ROOM} görsel, toplam yükleme en fazla {MAX_PORTFOLIO_REQUEST_MB} MB.
         </p>
 
         <div className="md:col-span-2 grid gap-3 sm:grid-cols-3">

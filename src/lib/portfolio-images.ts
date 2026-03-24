@@ -1,7 +1,9 @@
 export const MAX_WEBP_UPLOAD_MB = 8;
 export const MAX_IMAGES_PER_ROOM = 8;
+export const MAX_PORTFOLIO_REQUEST_MB = 4;
 
 const maxUploadBytes = MAX_WEBP_UPLOAD_MB * 1024 * 1024;
+const maxPortfolioRequestBytes = MAX_PORTFOLIO_REQUEST_MB * 1024 * 1024;
 
 export const PORTFOLIO_ROOM_FIELDS = [
   { name: "livingRoomImage", label: "Salon", requiredOnCreate: true },
@@ -32,7 +34,7 @@ export function validateWebpFile(file: File, fieldLabel: string) {
   }
 }
 
-function fileToDataUrl(file: File): Promise<string> {
+function fileToDataUrlInBrowser(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -51,15 +53,36 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+async function fileToDataUrlOnServer(file: File): Promise<string> {
+  const contentType = file.type || "image/webp";
+  const arrayBuffer = await file.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString("base64");
+  return `data:${contentType};base64,${base64}`;
+}
+
 export async function readWebpAsDataUrl(file: File, fieldLabel: string): Promise<string> {
   validateWebpFile(file, fieldLabel);
-  return fileToDataUrl(file);
+  if (typeof window === "undefined") {
+    return fileToDataUrlOnServer(file);
+  }
+
+  return fileToDataUrlInBrowser(file);
 }
 
 export function getFilesFromFormData(formData: FormData, fieldName: string): File[] {
   return formData
     .getAll(fieldName)
     .filter((value): value is File => value instanceof File && value.size > 0);
+}
+
+export function validateTotalUploadSize(files: File[]) {
+  const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+
+  if (totalBytes > maxPortfolioRequestBytes) {
+    throw new Error(
+      `Toplam görsel yükleme boyutu en fazla ${MAX_PORTFOLIO_REQUEST_MB} MB olabilir. Daha küçük .webp dosyaları deneyin.`,
+    );
+  }
 }
 
 export function makeRoomImageLabel(field: RoomField, index: number, total: number): string {

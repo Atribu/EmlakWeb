@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 
 import {
   MAX_IMAGES_PER_ROOM,
+  MAX_PORTFOLIO_REQUEST_MB,
   MAX_WEBP_UPLOAD_MB,
   PORTFOLIO_ROOM_FIELDS,
   getFilesFromFormData,
-  makeRoomImageLabel,
-  readWebpAsDataUrl,
+  validateTotalUploadSize,
+  validateWebpFile,
 } from "@/lib/portfolio-images";
 import type { Advisor } from "@/lib/types";
 
@@ -50,9 +51,9 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
         throw new Error("Kapak görseli yüklemek zorunludur.");
       }
 
-      const coverImage = await readWebpAsDataUrl(coverFile, "Kapak görseli");
-
-      const roomUploads: Array<{ label: string; image: string }> = [];
+      validateWebpFile(coverFile, "Kapak görseli");
+      const uploadFiles: File[] = [coverFile];
+      let roomFileCount = 0;
 
       for (const field of PORTFOLIO_ROOM_FIELDS) {
         const files = getFilesFromFormData(data, field.name);
@@ -68,53 +69,34 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
           throw new Error(`${field.label} için en fazla ${MAX_IMAGES_PER_ROOM} görsel yükleyebilirsiniz.`);
         }
 
+        roomFileCount += files.length;
+
         for (const [index, file] of files.entries()) {
-          const label = makeRoomImageLabel(field, index, files.length);
-          const image = await readWebpAsDataUrl(file, `${label} görseli`);
-          roomUploads.push({ label, image });
+          validateWebpFile(file, `${field.label} ${index + 1} görseli`);
+          uploadFiles.push(file);
         }
       }
 
-      if (roomUploads.length === 0) {
+      if (roomFileCount === 0) {
         throw new Error("En az bir oda görseli yükleyin.");
       }
 
+      validateTotalUploadSize(uploadFiles);
+
       const response = await fetch("/api/properties", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: data.get("title"),
-          city: data.get("city"),
-          district: data.get("district"),
-          neighborhood: data.get("neighborhood"),
-          type: data.get("type"),
-          price: Number(data.get("price")),
-          rooms: data.get("rooms"),
-          areaM2: Number(data.get("areaM2")),
-          floor: data.get("floor"),
-          heating: data.get("heating"),
-          latitude: data.get("latitude"),
-          longitude: data.get("longitude"),
-          description: data.get("description"),
-          advisorId: data.get("advisorId"),
-          coverColor: data.get("coverColor"),
-          coverImage,
-          galleryImages: roomUploads.map((item) => item.image),
-          imageLabels: roomUploads.map((item) => item.label),
-          highlights: String(data.get("highlights") ?? "")
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean),
-          features: String(data.get("features") ?? "")
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean),
-        }),
+        body: data,
       });
 
       if (!response.ok) {
+        if (response.status === 413) {
+          setStatus({
+            type: "error",
+            message: `Hatalı işlem yaptınız. Yüklenen görseller sunucu limiti için çok büyük. Toplam yüklemeyi ${MAX_PORTFOLIO_REQUEST_MB} MB altına düşürün.`,
+          });
+          return;
+        }
+
         const payload = (await response.json().catch(() => null)) as { message?: string } | null;
         const detail = payload?.message ?? "Portföy kaydedilemedi.";
         setStatus({
@@ -215,7 +197,7 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
 
         <p className="md:col-span-2 text-xs text-slate-500">
           Dosya kuralı: yalnızca `.webp`, dosya başına en fazla {MAX_WEBP_UPLOAD_MB} MB, oda başına en fazla{" "}
-          {MAX_IMAGES_PER_ROOM} görsel.
+          {MAX_IMAGES_PER_ROOM} görsel, toplam yükleme en fazla {MAX_PORTFOLIO_REQUEST_MB} MB.
         </p>
 
         <textarea required name="description" rows={4} placeholder="İlan açıklaması" className="input md:col-span-2" />
