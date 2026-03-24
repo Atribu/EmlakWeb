@@ -95,7 +95,10 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 {property.galleryImages.map((image, index) => (
-                  <article key={image} className="overflow-hidden rounded-xl border border-[#ddd0bd] bg-[#fbf8f3]">
+                  <article
+                    key={`${property.slug}-${property.imageLabels[index] ?? "gorsel"}-${index}`}
+                    className="overflow-hidden rounded-xl border border-[#ddd0bd] bg-[#fbf8f3]"
+                  >
                     <div className="h-32 bg-cover bg-center" style={{ backgroundImage: `url(${image})` }} />
                     <p className="px-3 py-2 text-xs font-medium text-[#6b6051]">
                       {property.imageLabels[index] ?? `Görsel ${index + 1}`}

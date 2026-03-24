@@ -36,6 +36,7 @@ const store = {
 };
 
 const demoDataDir = path.join(process.cwd(), ".demo-data");
+const propertyStorePath = path.join(demoDataDir, "properties.json");
 const blogStorePath = path.join(demoDataDir, "blog-posts.json");
 
 function ensureDemoDataDir() {
@@ -50,6 +51,49 @@ function writeBlogPostsToDisk(posts: BlogPost[]) {
     fs.writeFileSync(blogStorePath, JSON.stringify(posts, null, 2), "utf-8");
   } catch (error) {
     console.error("[demo-blog-store-write-error]", error);
+  }
+}
+
+function writePropertiesToDisk(properties: Property[]) {
+  try {
+    ensureDemoDataDir();
+    fs.writeFileSync(propertyStorePath, JSON.stringify(properties, null, 2), "utf-8");
+  } catch (error) {
+    console.error("[demo-property-store-write-error]", error);
+  }
+}
+
+function readPropertiesFromDisk(): Property[] | null {
+  try {
+    if (!fs.existsSync(propertyStorePath)) {
+      return null;
+    }
+
+    const raw = fs.readFileSync(propertyStorePath, "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    const valid = parsed.filter((item) => item && typeof item === "object") as Property[];
+    return valid;
+  } catch (error) {
+    console.error("[demo-property-store-read-error]", error);
+    return null;
+  }
+}
+
+function syncPropertiesFromDisk() {
+  const diskProperties = readPropertiesFromDisk();
+
+  if (diskProperties && diskProperties.length > 0) {
+    store.properties = diskProperties;
+    return;
+  }
+
+  if (!fs.existsSync(propertyStorePath)) {
+    writePropertiesToDisk(store.properties);
   }
 }
 
@@ -296,6 +340,7 @@ export function deleteAdvisor(advisorId: string): Advisor {
 }
 
 export function listProperties(filter: PropertyFilter = {}): Property[] {
+  syncPropertiesFromDisk();
   const query = filter.query ? normalizeText(filter.query) : "";
 
   return store.properties
@@ -344,10 +389,12 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
 }
 
 export function getPropertyBySlug(slug: string): Property | undefined {
+  syncPropertiesFromDisk();
   return store.properties.find((property) => property.slug === slug);
 }
 
 export function createProperty(input: CreatePropertyInput, actorId: string): Property {
+  syncPropertiesFromDisk();
   const advisor = getAdvisorById(input.advisorId);
   if (!advisor) {
     throw new Error("Seçilen danışman bulunamadı.");
@@ -372,6 +419,7 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
   };
 
   store.properties.unshift(property);
+  writePropertiesToDisk(store.properties);
 
   // Demo store keeps local state only while server process is alive.
   void actorId;
@@ -380,6 +428,7 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
 }
 
 export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): Property {
+  syncPropertiesFromDisk();
   const property = getPropertyBySlug(slug);
   if (!property) {
     throw new Error("Portföy bulunamadı.");
@@ -416,23 +465,27 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
   property.coverImage = input.coverImage || property.coverImage;
   property.galleryImages = input.galleryImages.length > 0 ? input.galleryImages : property.galleryImages;
   property.imageLabels = input.imageLabels.length > 0 ? input.imageLabels : property.imageLabels;
+  writePropertiesToDisk(store.properties);
 
   return property;
 }
 
 export function listCities(): string[] {
+  syncPropertiesFromDisk();
   return Array.from(new Set(store.properties.map((property) => property.city))).sort((a, b) =>
     a.localeCompare(b, "tr"),
   );
 }
 
 export function listTypes(): string[] {
+  syncPropertiesFromDisk();
   return Array.from(new Set(store.properties.map((property) => property.type))).sort((a, b) =>
     a.localeCompare(b, "tr"),
   );
 }
 
 export function listRoomOptions(): string[] {
+  syncPropertiesFromDisk();
   return Array.from(new Set(store.properties.map((property) => property.rooms))).sort((a, b) =>
     a.localeCompare(b, "tr"),
   );

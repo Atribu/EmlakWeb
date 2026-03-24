@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   MAX_IMAGES_PER_ROOM,
@@ -33,6 +34,7 @@ const coverOptions = [
 ];
 
 export function PortfolioForm({ advisors }: PortfolioFormProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -133,6 +135,7 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
       });
 
       form.reset();
+      router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Görseller işlenemedi.";
       setStatus({ type: "error", message: `Hatalı işlem yaptınız. ${message}` });
