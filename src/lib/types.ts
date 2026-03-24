@@ -28,6 +28,7 @@ export type Advisor = {
   whatsapp: string;
   email: string;
   focusArea: string;
+  image: string;
 };
 
 export type CreateAdvisorInput = {
@@ -37,6 +38,7 @@ export type CreateAdvisorInput = {
   whatsapp: string;
   email: string;
   focusArea: string;
+  image: string;
 };
 
 export type Property = {

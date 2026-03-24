@@ -93,9 +93,17 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
         </div>
 
         {advisor ? (
-          <p className="text-xs text-[#7f7364]">
-            Danışman: <span className="font-semibold text-[#40362b]">{advisor.name}</span>
-          </p>
+          <div className="flex items-center gap-2 rounded-xl border border-[#e4d8c6] bg-[#fbf7f0] px-3 py-2">
+            <div
+              className="h-10 w-10 shrink-0 rounded-full border border-[#deceb7] bg-cover bg-center"
+              style={{ backgroundImage: `url(${advisor.image})` }}
+              aria-hidden
+            />
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[#9a8a73]">Danışman</p>
+              <p className="truncate text-sm font-semibold text-[#40362b]">{advisor.name}</p>
+            </div>
+          </div>
         ) : null}
       </div>
     </article>

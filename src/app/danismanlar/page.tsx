@@ -37,7 +37,10 @@ export default async function DanismanlarPage() {
             const whatsappHref = `https://wa.me/${formatPhoneForHref(advisor.whatsapp)}`;
 
             return (
-              <article key={advisor.id} className="luxury-card p-5">
+              <article key={advisor.id} className="luxury-card overflow-hidden p-5">
+                <div className="mb-5 overflow-hidden rounded-[1.35rem] border border-[#deceb7] bg-[#f9f2e7]">
+                  <div className="h-72 bg-cover bg-center" style={{ backgroundImage: `url(${advisor.image})` }} />
+                </div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8d7348]">Portföy Danışmanı</p>
                 <h2 className="mt-2 text-[2rem] leading-none font-semibold text-[#1f1a14]">{advisor.name}</h2>
                 <p className="mt-1 text-sm text-[#5f5548]">{advisor.title}</p>

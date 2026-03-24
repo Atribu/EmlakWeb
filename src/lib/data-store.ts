@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { initialAdvisors, initialBlogPosts, initialProperties, initialUsers } from "@/lib/mock-data";
+import { pickSampleAdvisorImageForSeed } from "@/lib/sample-advisor-images";
 import { pickSampleImageSet } from "@/lib/sample-images";
 import type {
   Advisor,
@@ -36,6 +37,7 @@ const store = {
 };
 
 const demoDataDir = path.join(process.cwd(), ".demo-data");
+const advisorStorePath = path.join(demoDataDir, "advisors.json");
 const propertyStorePath = path.join(demoDataDir, "properties.json");
 const blogStorePath = path.join(demoDataDir, "blog-posts.json");
 
@@ -51,6 +53,15 @@ function writeBlogPostsToDisk(posts: BlogPost[]) {
     fs.writeFileSync(blogStorePath, JSON.stringify(posts, null, 2), "utf-8");
   } catch (error) {
     console.error("[demo-blog-store-write-error]", error);
+  }
+}
+
+function writeAdvisorsToDisk(advisors: Advisor[]) {
+  try {
+    ensureDemoDataDir();
+    fs.writeFileSync(advisorStorePath, JSON.stringify(advisors, null, 2), "utf-8");
+  } catch (error) {
+    console.error("[demo-advisor-store-write-error]", error);
   }
 }
 
@@ -84,10 +95,55 @@ function readPropertiesFromDisk(): Property[] | null {
   }
 }
 
+function readAdvisorsFromDisk(): Advisor[] | null {
+  try {
+    if (!fs.existsSync(advisorStorePath)) {
+      return null;
+    }
+
+    const raw = fs.readFileSync(advisorStorePath, "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    const valid = parsed
+      .filter((item) => item && typeof item === "object")
+      .map((item, index) => {
+        const advisor = item as Advisor & { image?: string };
+        return {
+          ...advisor,
+          image:
+            typeof advisor.image === "string" && advisor.image.trim()
+              ? advisor.image.trim()
+              : pickSampleAdvisorImageForSeed(`${advisor.id ?? advisor.email ?? index}`),
+        } satisfies Advisor;
+      });
+    return valid;
+  } catch (error) {
+    console.error("[demo-advisor-store-read-error]", error);
+    return null;
+  }
+}
+
+function syncAdvisorsFromDisk() {
+  const diskAdvisors = readAdvisorsFromDisk();
+
+  if (diskAdvisors) {
+    store.advisors = diskAdvisors;
+    return;
+  }
+
+  if (!fs.existsSync(advisorStorePath)) {
+    writeAdvisorsToDisk(store.advisors);
+  }
+}
+
 function syncPropertiesFromDisk() {
   const diskProperties = readPropertiesFromDisk();
 
-  if (diskProperties && diskProperties.length > 0) {
+  if (diskProperties) {
     store.properties = diskProperties;
     return;
   }
@@ -121,7 +177,7 @@ function readBlogPostsFromDisk(): BlogPost[] | null {
 function syncBlogPostsFromDisk() {
   const diskPosts = readBlogPostsFromDisk();
 
-  if (diskPosts && diskPosts.length > 0) {
+  if (diskPosts) {
     store.blogPosts = diskPosts;
     return;
   }
@@ -235,10 +291,12 @@ function inferCoordinates(input: CreatePropertyInput): { latitude: number; longi
 }
 
 export function listAdvisors(): Advisor[] {
+  syncAdvisorsFromDisk();
   return [...store.advisors];
 }
 
 export function getAdvisorById(advisorId: string): Advisor | undefined {
+  syncAdvisorsFromDisk();
   return store.advisors.find((advisor) => advisor.id === advisorId);
 }
 
@@ -250,6 +308,7 @@ function advisorUsage(advisorId: string): { propertyCount: number; linkedUserCou
 }
 
 export function createAdvisor(input: CreateAdvisorInput): Advisor {
+  syncAdvisorsFromDisk();
   const name = input.name.trim();
   const title = input.title.trim();
   const phone = input.phone.trim();
@@ -276,13 +335,16 @@ export function createAdvisor(input: CreateAdvisorInput): Advisor {
     whatsapp,
     email,
     focusArea,
+    image: input.image || pickSampleAdvisorImageForSeed(email),
   };
 
   store.advisors.unshift(advisor);
+  writeAdvisorsToDisk(store.advisors);
   return advisor;
 }
 
 export function updateAdvisorById(advisorId: string, input: CreateAdvisorInput): Advisor {
+  syncAdvisorsFromDisk();
   const advisor = getAdvisorById(advisorId);
   if (!advisor) {
     throw new Error("Danışman bulunamadı.");
@@ -312,11 +374,14 @@ export function updateAdvisorById(advisorId: string, input: CreateAdvisorInput):
   advisor.whatsapp = whatsapp;
   advisor.email = email;
   advisor.focusArea = focusArea;
+  advisor.image = input.image || advisor.image;
+  writeAdvisorsToDisk(store.advisors);
 
   return advisor;
 }
 
 export function deleteAdvisor(advisorId: string): Advisor {
+  syncAdvisorsFromDisk();
   const advisorIndex = store.advisors.findIndex((advisor) => advisor.id === advisorId);
   if (advisorIndex === -1) {
     throw new Error("Danışman bulunamadı.");
@@ -336,6 +401,7 @@ export function deleteAdvisor(advisorId: string): Advisor {
   }
 
   const [removed] = store.advisors.splice(advisorIndex, 1);
+  writeAdvisorsToDisk(store.advisors);
   return removed;
 }
 
@@ -678,6 +744,9 @@ export function leadStageSummary() {
 }
 
 export function dashboardSummary() {
+  syncAdvisorsFromDisk();
+  syncPropertiesFromDisk();
+  syncBlogPostsFromDisk();
   return {
     propertyCount: store.properties.length,
     blogCount: store.blogPosts.length,

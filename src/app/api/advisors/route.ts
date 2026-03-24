@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { createAdvisorImageStorageKey, saveAdvisorImageFile } from "@/lib/advisor-image-storage";
 import { getUserFromRequest } from "@/lib/auth";
 import { createAdvisor, listAdvisors } from "@/lib/data-store";
 import type { CreateAdvisorInput } from "@/lib/types";
@@ -27,6 +28,31 @@ function parseCreateInput(payload: unknown): CreateAdvisorInput {
     whatsapp: parseString(body.whatsapp, "WhatsApp"),
     email: parseString(body.email, "E-posta"),
     focusArea: parseString(body.focusArea, "Uzmanlık alanı"),
+    image: typeof body.image === "string" ? body.image.trim() : "",
+  };
+}
+
+async function parseCreateFormData(formData: FormData): Promise<CreateAdvisorInput> {
+  const name = parseString(formData.get("name"), "Ad Soyad");
+  const imageFile = formData.get("imageFile");
+
+  if (!(imageFile instanceof File) || imageFile.size === 0) {
+    throw new Error("Danışman görseli zorunludur.");
+  }
+
+  const image = await saveAdvisorImageFile(imageFile, {
+    storageKey: createAdvisorImageStorageKey(name),
+    fieldLabel: "Danışman görseli",
+  });
+
+  return {
+    name,
+    title: parseString(formData.get("title"), "Unvan"),
+    phone: parseString(formData.get("phone"), "Telefon"),
+    whatsapp: parseString(formData.get("whatsapp"), "WhatsApp"),
+    email: parseString(formData.get("email"), "E-posta"),
+    focusArea: parseString(formData.get("focusArea"), "Uzmanlık alanı"),
+    image,
   };
 }
 
@@ -46,8 +72,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const payload = await request.json();
-    const input = parseCreateInput(payload);
+    const contentType = request.headers.get("content-type") ?? "";
+    const input = contentType.includes("multipart/form-data")
+      ? await parseCreateFormData(await request.formData())
+      : parseCreateInput(await request.json());
     const advisor = createAdvisor(input);
 
     return NextResponse.json({ advisor }, { status: 201 });

@@ -1,4 +1,5 @@
 import { pickSampleImageSet } from "@/lib/sample-images";
+import { pickSampleAdvisorImage } from "@/lib/sample-advisor-images";
 import type { Advisor, BlogPost, Property, User } from "@/lib/types";
 
 const imageSet0 = pickSampleImageSet(0);
@@ -17,6 +18,7 @@ export const initialAdvisors: Advisor[] = [
     whatsapp: "+905321112233",
     email: "ayse.demir@demolanding.com",
     focusArea: "Kadıköy / Moda",
+    image: pickSampleAdvisorImage(0),
   },
   {
     id: "adv-2",
@@ -26,6 +28,7 @@ export const initialAdvisors: Advisor[] = [
     whatsapp: "+905334445566",
     email: "mehmet.kaya@demolanding.com",
     focusArea: "Beşiktaş / Levent",
+    image: pickSampleAdvisorImage(1),
   },
   {
     id: "adv-3",
@@ -35,6 +38,7 @@ export const initialAdvisors: Advisor[] = [
     whatsapp: "+905347778899",
     email: "selin.yildiz@demolanding.com",
     focusArea: "Sarıyer / Zekeriyaköy",
+    image: pickSampleAdvisorImage(2),
   },
 ];
 
