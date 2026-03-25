@@ -44,8 +44,17 @@ export const initialAdvisors: Advisor[] = [
 
 export const initialUsers: User[] = [
   {
+    id: "usr-portal-1",
+    name: "Oguz Kilinc",
+    role: "portal_admin",
+    email: "oguzkilinc.ant@gmail.com",
+    phone: "+90 555 000 00 00",
+    username: "oguzkilinc.ant@gmail.com",
+    password: "qweasd11.",
+  },
+  {
     id: "usr-1",
-    name: "Portal Admin",
+    name: "Operasyon Admin",
     role: "admin",
     email: "admin@demolanding.com",
     phone: "+90 212 900 00 01",
@@ -55,7 +64,7 @@ export const initialUsers: User[] = [
   {
     id: "usr-2",
     name: "Ayşe Demir",
-    role: "advisor",
+    role: "portfolio_manager",
     email: "ayse.demir@demolanding.com",
     phone: "+90 532 111 22 33",
     username: "ayse",

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { canCreateOrEditPortfolios } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
 import { createProperty, listProperties } from "@/lib/data-store";
 import {
@@ -223,7 +224,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
   }
 
-  if (!user.role || !["admin", "advisor", "editor"].includes(user.role)) {
+  if (!user.role || !canCreateOrEditPortfolios(user.role)) {
     return NextResponse.json({ message: "Bu işlem için yetkiniz yok." }, { status: 403 });
   }
 

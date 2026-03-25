@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { canManageAdvisors } from "@/lib/access-control";
 import {
   deleteManagedAdvisorImage,
   resolveAdvisorStorageKey,
@@ -75,8 +76,11 @@ export async function PATCH(
     return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
   }
 
-  if (user.role !== "admin") {
-    return NextResponse.json({ message: "Danışman düzenleme işlemi sadece admin yetkisindedir." }, { status: 403 });
+  if (!canManageAdvisors(user.role)) {
+    return NextResponse.json(
+      { message: "Danışman düzenleme işlemi sadece portal admin ve admin yetkisindedir." },
+      { status: 403 },
+    );
   }
 
   const { advisorId } = await params;
@@ -109,8 +113,11 @@ export async function DELETE(
     return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
   }
 
-  if (user.role !== "admin") {
-    return NextResponse.json({ message: "Danışman silme işlemi sadece admin yetkisindedir." }, { status: 403 });
+  if (!canManageAdvisors(user.role)) {
+    return NextResponse.json(
+      { message: "Danışman silme işlemi sadece portal admin ve admin yetkisindedir." },
+      { status: 403 },
+    );
   }
 
   const { advisorId } = await params;

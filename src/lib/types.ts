@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "advisor" | "editor";
+export type UserRole = "portal_admin" | "admin" | "portfolio_manager" | "advisor" | "editor";
 
 export type PropertyType =
   | "Daire"
@@ -19,6 +19,15 @@ export type User = {
 };
 
 export type SafeUser = Omit<User, "password">;
+
+export type CreateUserInput = {
+  name: string;
+  role: UserRole;
+  email: string;
+  phone: string;
+  password: string;
+  advisorId?: string;
+};
 
 export type Advisor = {
   id: string;

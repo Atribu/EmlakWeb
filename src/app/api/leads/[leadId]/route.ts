@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { canManageLeads } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
 import { getLeadById, updateLeadStage } from "@/lib/data-store";
 import type { LeadStage } from "@/lib/types";
@@ -36,7 +37,7 @@ export async function PATCH(
     return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
   }
 
-  if (!user.role || !["admin", "advisor"].includes(user.role)) {
+  if (!user.role || !canManageLeads(user.role)) {
     return NextResponse.json({ message: "Bu işlem için yetkiniz yok." }, { status: 403 });
   }
 

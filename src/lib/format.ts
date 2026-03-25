@@ -13,7 +13,9 @@ export function formatPhoneForHref(value: string): string {
 }
 
 export function roleLabel(role: string): string {
+  if (role === "portal_admin") return "Portal Admin";
   if (role === "admin") return "Admin";
+  if (role === "portfolio_manager") return "Portföy Yetkilisi";
   if (role === "advisor") return "Danışman";
   if (role === "editor") return "İçerik Yükleyici";
   return role;

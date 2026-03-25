@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { canManageBlogs } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
-import { getBlogPostBySlug, updateBlogPostBySlug } from "@/lib/data-store";
+import { deleteBlogPostBySlug, getBlogPostBySlug, updateBlogPostBySlug } from "@/lib/data-store";
 import type { CreateBlogPostInput } from "@/lib/types";
 
 function parseString(value: unknown, label: string): string {
@@ -58,7 +59,7 @@ export async function PATCH(
     return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
   }
 
-  if (!["admin", "advisor", "editor"].includes(user.role)) {
+  if (!canManageBlogs(user.role)) {
     return NextResponse.json({ message: "Bu işlem için yetkiniz yok." }, { status: 403 });
   }
 
@@ -77,6 +78,42 @@ export async function PATCH(
     return NextResponse.json({ post });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Blog yazısı güncellenemedi.";
+    return NextResponse.json({ message }, { status: 400 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  const user = getUserFromRequest(request);
+
+  if (!user) {
+    return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
+  }
+
+  if (!canManageBlogs(user.role)) {
+    return NextResponse.json({ message: "Bu işlem için yetkiniz yok." }, { status: 403 });
+  }
+
+  const { slug } = await params;
+  const existing = getBlogPostBySlug(slug);
+
+  if (!existing) {
+    return NextResponse.json({ message: "Blog yazısı bulunamadı." }, { status: 404 });
+  }
+
+  try {
+    const post = deleteBlogPostBySlug(slug);
+    return NextResponse.json({
+      post: {
+        id: post.id,
+        slug: post.slug,
+        title: post.title,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Blog yazısı silinemedi.";
     return NextResponse.json({ message }, { status: 400 });
   }
 }

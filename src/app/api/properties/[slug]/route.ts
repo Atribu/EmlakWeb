@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { canCreateOrEditPortfolios, canDeletePortfolios } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
 import { deletePropertyBySlug, getPropertyBySlug, updatePropertyBySlug } from "@/lib/data-store";
 import {
@@ -231,7 +232,7 @@ export async function PATCH(
     return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
   }
 
-  if (!user.role || !["admin", "advisor", "editor"].includes(user.role)) {
+  if (!user.role || !canCreateOrEditPortfolios(user.role)) {
     return NextResponse.json({ message: "Bu işlem için yetkiniz yok." }, { status: 403 });
   }
 
@@ -266,7 +267,7 @@ export async function DELETE(
     return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
   }
 
-  if (!user.role || !["admin", "advisor", "editor"].includes(user.role)) {
+  if (!user.role || !canDeletePortfolios(user.role)) {
     return NextResponse.json({ message: "Bu işlem için yetkiniz yok." }, { status: 403 });
   }
 

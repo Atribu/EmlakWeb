@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { canManageAdvisors } from "@/lib/access-control";
 import { createAdvisorImageStorageKey, saveAdvisorImageFile } from "@/lib/advisor-image-storage";
 import { getUserFromRequest } from "@/lib/auth";
 import { createAdvisor, listAdvisors } from "@/lib/data-store";
@@ -67,8 +68,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
   }
 
-  if (user.role !== "admin") {
-    return NextResponse.json({ message: "Danışman yönetimi sadece admin yetkisindedir." }, { status: 403 });
+  if (!canManageAdvisors(user.role)) {
+    return NextResponse.json(
+      { message: "Danışman yönetimi sadece portal admin ve admin yetkisindedir." },
+      { status: 403 },
+    );
   }
 
   try {

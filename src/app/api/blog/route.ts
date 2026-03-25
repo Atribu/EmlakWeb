@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { canManageBlogs } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
 import { createBlogPost, listBlogPosts } from "@/lib/data-store";
 import type { CreateBlogPostInput } from "@/lib/types";
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Bu işlem için giriş yapmalısınız." }, { status: 401 });
   }
 
-  if (!["admin", "advisor", "editor"].includes(user.role)) {
+  if (!canManageBlogs(user.role)) {
     return NextResponse.json({ message: "Bu işlem için yetkiniz yok." }, { status: 403 });
   }
 

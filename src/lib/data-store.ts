@@ -12,11 +12,13 @@ import type {
   CreateBlogPostInput,
   CreateLeadInput,
   CreatePropertyInput,
+  CreateUserInput,
   LeadStage,
   Property,
   PropertyFilter,
   SafeUser,
   User,
+  UserRole,
 } from "@/lib/types";
 
 const cityNormalizer: Record<string, string> = {
@@ -40,6 +42,7 @@ const demoDataDir = path.join(process.cwd(), ".demo-data");
 const advisorStorePath = path.join(demoDataDir, "advisors.json");
 const propertyStorePath = path.join(demoDataDir, "properties.json");
 const blogStorePath = path.join(demoDataDir, "blog-posts.json");
+const userStorePath = path.join(demoDataDir, "users.json");
 
 function ensureDemoDataDir() {
   if (!fs.existsSync(demoDataDir)) {
@@ -71,6 +74,15 @@ function writePropertiesToDisk(properties: Property[]) {
     fs.writeFileSync(propertyStorePath, JSON.stringify(properties, null, 2), "utf-8");
   } catch (error) {
     console.error("[demo-property-store-write-error]", error);
+  }
+}
+
+function writeUsersToDisk(users: User[]) {
+  try {
+    ensureDemoDataDir();
+    fs.writeFileSync(userStorePath, JSON.stringify(users, null, 2), "utf-8");
+  } catch (error) {
+    console.error("[demo-user-store-write-error]", error);
   }
 }
 
@@ -127,6 +139,63 @@ function readAdvisorsFromDisk(): Advisor[] | null {
   }
 }
 
+function normalizeStoredUserRole(role: unknown): UserRole {
+  if (role === "portal_admin" || role === "admin" || role === "portfolio_manager" || role === "editor") {
+    return role;
+  }
+
+  if (role === "advisor") {
+    return "portfolio_manager";
+  }
+
+  return "editor";
+}
+
+function readUsersFromDisk(): User[] | null {
+  try {
+    if (!fs.existsSync(userStorePath)) {
+      return null;
+    }
+
+    const raw = fs.readFileSync(userStorePath, "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    return parsed
+      .filter((item) => item && typeof item === "object")
+      .map((item, index) => {
+        const user = item as Partial<User> & { role?: unknown };
+        const email =
+          typeof user.email === "string" && user.email.trim()
+            ? user.email.trim().toLocaleLowerCase("tr")
+            : `kullanici-${index + 1}@ornek.com`;
+
+        return {
+          id: typeof user.id === "string" && user.id.trim() ? user.id.trim() : `usr-${crypto.randomUUID()}`,
+          name: typeof user.name === "string" && user.name.trim() ? user.name.trim() : `Kullanıcı ${index + 1}`,
+          role: normalizeStoredUserRole(user.role),
+          email,
+          phone: typeof user.phone === "string" ? user.phone.trim() : "",
+          username:
+            typeof user.username === "string" && user.username.trim()
+              ? user.username.trim()
+              : email,
+          password: typeof user.password === "string" ? user.password : "",
+          advisorId:
+            typeof user.advisorId === "string" && user.advisorId.trim()
+              ? user.advisorId.trim()
+              : undefined,
+        } satisfies User;
+      });
+  } catch (error) {
+    console.error("[demo-user-store-read-error]", error);
+    return null;
+  }
+}
+
 function syncAdvisorsFromDisk() {
   const diskAdvisors = readAdvisorsFromDisk();
 
@@ -137,6 +206,19 @@ function syncAdvisorsFromDisk() {
 
   if (!fs.existsSync(advisorStorePath)) {
     writeAdvisorsToDisk(store.advisors);
+  }
+}
+
+function syncUsersFromDisk() {
+  const diskUsers = readUsersFromDisk();
+
+  if (diskUsers) {
+    store.users = diskUsers;
+    return;
+  }
+
+  if (!fs.existsSync(userStorePath)) {
+    writeUsersToDisk(store.users);
   }
 }
 
@@ -301,6 +383,7 @@ export function getAdvisorById(advisorId: string): Advisor | undefined {
 }
 
 function advisorUsage(advisorId: string): { propertyCount: number; linkedUserCount: number } {
+  syncUsersFromDisk();
   return {
     propertyCount: store.properties.filter((property) => property.advisorId === advisorId).length,
     linkedUserCount: store.users.filter((user) => user.advisorId === advisorId).length,
@@ -571,10 +654,13 @@ export function listRoomOptions(): string[] {
   );
 }
 
-export function authenticateUser(username: string, password: string): SafeUser | null {
+export function authenticateUser(identifier: string, password: string): SafeUser | null {
+  syncUsersFromDisk();
+  const normalizedIdentifier = identifier.toLocaleLowerCase("tr");
   const user = store.users.find(
     (candidate) =>
-      candidate.username.toLocaleLowerCase("tr") === username.toLocaleLowerCase("tr") &&
+      (candidate.username.toLocaleLowerCase("tr") === normalizedIdentifier ||
+        candidate.email.toLocaleLowerCase("tr") === normalizedIdentifier) &&
       candidate.password === password,
   );
 
@@ -582,12 +668,96 @@ export function authenticateUser(username: string, password: string): SafeUser |
 }
 
 export function getUserById(userId: string): SafeUser | null {
+  syncUsersFromDisk();
   const user = store.users.find((candidate) => candidate.id === userId);
   return user ? toSafeUser(user) : null;
 }
 
 export function listUsers(): SafeUser[] {
-  return store.users.map(toSafeUser);
+  syncUsersFromDisk();
+  const roleOrder: Record<string, number> = {
+    portal_admin: 0,
+    admin: 1,
+    portfolio_manager: 2,
+    advisor: 2,
+    editor: 3,
+  };
+
+  return [...store.users]
+    .sort((left, right) => {
+      const roleDiff = (roleOrder[left.role] ?? 99) - (roleOrder[right.role] ?? 99);
+      if (roleDiff !== 0) {
+        return roleDiff;
+      }
+
+      return left.name.localeCompare(right.name, "tr");
+    })
+    .map(toSafeUser);
+}
+
+export function createUser(input: CreateUserInput): SafeUser {
+  syncUsersFromDisk();
+  const name = input.name.trim();
+  const email = input.email.trim().toLocaleLowerCase("tr");
+  const phone = input.phone.trim();
+  const password = input.password.trim();
+  const role = input.role;
+
+  if (!name || !email || !phone || !password || !role) {
+    throw new Error("Kullanıcı alanları eksik.");
+  }
+
+  if (!["portal_admin", "admin", "portfolio_manager", "editor"].includes(role)) {
+    throw new Error("Geçersiz kullanıcı rolü.");
+  }
+
+  if (password.length < 6) {
+    throw new Error("Şifre en az 6 karakter olmalıdır.");
+  }
+
+  const duplicateEmail = store.users.some(
+    (user) =>
+      user.email.toLocaleLowerCase("tr") === email ||
+      user.username.toLocaleLowerCase("tr") === email,
+  );
+
+  if (duplicateEmail) {
+    throw new Error("Bu e-posta ile kayıtlı bir kullanıcı zaten var.");
+  }
+
+  const user: User = {
+    id: `usr-${crypto.randomUUID()}`,
+    name,
+    role,
+    email,
+    phone,
+    username: email,
+    password,
+    advisorId: input.advisorId?.trim() || undefined,
+  };
+
+  store.users.unshift(user);
+  writeUsersToDisk(store.users);
+  return toSafeUser(user);
+}
+
+export function deleteUserById(userId: string): SafeUser {
+  syncUsersFromDisk();
+  const userIndex = store.users.findIndex((candidate) => candidate.id === userId);
+
+  if (userIndex === -1) {
+    throw new Error("Kullanıcı bulunamadı.");
+  }
+
+  const [removed] = store.users.splice(userIndex, 1);
+
+  if (removed.role === "portal_admin" && !store.users.some((user) => user.role === "portal_admin")) {
+    store.users.splice(userIndex, 0, removed);
+    throw new Error("Sistemde en az bir portal admin hesabı kalmalıdır.");
+  }
+
+  writeUsersToDisk(store.users);
+  return toSafeUser(removed);
 }
 
 export function createLead(input: CreateLeadInput): ContactLead {
@@ -693,6 +863,20 @@ export function updateBlogPostBySlug(slug: string, input: CreateBlogPostInput): 
   writeBlogPostsToDisk(store.blogPosts);
 
   return post;
+}
+
+export function deleteBlogPostBySlug(slug: string): BlogPost {
+  syncBlogPostsFromDisk();
+  const postIndex = store.blogPosts.findIndex((post) => post.slug === slug);
+
+  if (postIndex === -1) {
+    throw new Error("Blog yazısı bulunamadı.");
+  }
+
+  const [removed] = store.blogPosts.splice(postIndex, 1);
+  writeBlogPostsToDisk(store.blogPosts);
+
+  return removed;
 }
 
 export function listLeads(): ContactLead[] {
