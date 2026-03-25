@@ -21,6 +21,7 @@ import {
   canManageBlogs,
   canManageLeads,
   canManageUsers,
+  filterLeadsForActor,
   filterUsersForActor,
 } from "@/lib/access-control";
 import { getCurrentUser } from "@/lib/auth";
@@ -33,7 +34,7 @@ import {
   listProperties,
   listUsers,
 } from "@/lib/data-store";
-import { roleLabel } from "@/lib/format";
+import { formatDateTR, roleLabel } from "@/lib/format";
 import type { LeadStage } from "@/lib/types";
 
 type PanelTab =
@@ -132,9 +133,10 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
   const users = filterUsersForActor(currentUser, allUsers);
   const summary = dashboardSummary();
   const blogPosts = listBlogPosts();
-  const leads = listLeads();
+  const allLeads = listLeads();
+  const leads = filterLeadsForActor(currentUser, allLeads);
   const stageSummary = leadStageSummary();
-  const appointmentLeadCount = leads.filter((lead) => lead.source === "appointment_form").length;
+  const appointmentLeadCount = allLeads.filter((lead) => lead.source === "appointment_form").length;
   const advisorStats = advisors.map((advisor) => ({
     ...advisor,
     propertyCount: properties.filter((property) => property.advisorId === advisor.id).length,
@@ -144,7 +146,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader initialUser={currentUser} />
 
       <main className="mx-auto w-full max-w-[1320px] px-4 pb-12 pt-6 sm:px-6">
         <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -219,10 +221,10 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
             ) : null}
             {activeTab === "leads" ? (
               canManageLeads(currentUser.role) ? (
-                <LeadPipelineBoard initialLeads={leads} properties={properties} />
+                <LeadPipelineBoard initialLeads={leads} properties={properties} currentUser={currentUser} advisors={advisors} />
               ) : (
                 <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-                  CRM Pipeline sadece portal admin ve admin rolünde kullanılabilir.
+                  CRM Pipeline sadece portal admin, admin ve danışman rolünde kullanılabilir.
                 </section>
               )
             ) : null}
@@ -231,6 +233,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                 currentUser={currentUser}
                 initialUsers={users}
                 assignableRoles={assignableUserRoles(currentUser.role)}
+                advisors={advisors}
               />
             ) : null}
           </section>
@@ -289,7 +292,7 @@ function OverviewSection({
       <section className="grid gap-6 xl:grid-cols-2">
         <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="text-xl font-semibold tracking-tight text-slate-900">Kullanıcı Rolleri</h3>
-          <p className="mt-2 text-sm text-slate-600">Portal admin, admin, portföy ve içerik hesapları.</p>
+          <p className="mt-2 text-sm text-slate-600">Portal admin, admin, danışman, portföy ve içerik hesapları.</p>
 
           <ul className="mt-4 space-y-3">
             {users.map((user) => (
@@ -366,7 +369,7 @@ function OverviewSection({
                     </Link>
                   </td>
                   <td className="py-2 pr-3">{post.authorName}</td>
-                  <td className="py-2 pr-3">{new Date(post.publishedAt).toLocaleDateString("tr-TR")}</td>
+                  <td className="py-2 pr-3">{formatDateTR(post.publishedAt)}</td>
                   <td className="py-2 pr-3 text-emerald-700">Meta Hazır</td>
                 </tr>
               ))}

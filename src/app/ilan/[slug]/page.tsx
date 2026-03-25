@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { AppointmentForm } from "@/components/appointment-form";
 import { ContactForm } from "@/components/contact-form";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser } from "@/lib/auth";
 import { getAdvisorById, getPropertyBySlug } from "@/lib/data-store";
 import { formatPhoneForHref, formatPrice } from "@/lib/format";
 import { getProjectMeta } from "@/lib/project-meta";
@@ -27,7 +26,7 @@ export async function generateMetadata({ params }: PropertyDetailProps): Promise
 }
 
 export default async function PropertyDetailPage({ params }: PropertyDetailProps) {
-  const [resolvedParams, currentUser] = await Promise.all([params, getCurrentUser()]);
+  const resolvedParams = await params;
 
   const property = getPropertyBySlug(resolvedParams.slug);
 
@@ -48,7 +47,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader />
 
       <main className="mx-auto w-full max-w-6xl px-4 pb-12 pt-6 sm:px-6">
         <Link href="/" className="text-sm font-semibold text-[#6f6558] transition hover:text-[#2a241c]">

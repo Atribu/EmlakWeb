@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser } from "@/lib/auth";
 import { parseBlogContent } from "@/lib/blog-content";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/data-store";
+import { formatDateTR } from "@/lib/format";
 import { blogMetadata, blogPostSchema } from "@/lib/seo";
 
 type BlogDetailPageProps = {
@@ -84,7 +84,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
 }
 
 export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
-  const [resolvedParams, currentUser] = await Promise.all([params, getCurrentUser()]);
+  const resolvedParams = await params;
   const post = getBlogPostBySlug(resolvedParams.slug);
 
   if (!post) {
@@ -112,7 +112,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader />
 
       <main className="w-full pb-24">
         <section className="frame-wide relative overflow-hidden rounded-[1.4rem] border border-[#3f3022] bg-[#0f1621] shadow-[0_48px_88px_-64px_rgba(0,0,0,0.95)]">
@@ -125,7 +125,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 ← Blog listesine dön
               </Link>
               <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">
-                {new Date(post.publishedAt).toLocaleDateString("tr-TR")} • {post.authorName}
+                {formatDateTR(post.publishedAt)} • {post.authorName}
               </p>
               <h1 className="mt-2 max-w-4xl text-[2.2rem] leading-[1.02] font-semibold sm:text-[3.4rem]">{post.title}</h1>
             </div>

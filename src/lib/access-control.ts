@@ -1,20 +1,22 @@
-import type { SafeUser, UserRole } from "@/lib/types";
+import type { ContactLead, SafeUser, UserRole } from "@/lib/types";
 
 const portalAdminAssignableRoles: UserRole[] = [
   "portal_admin",
   "admin",
   "portfolio_manager",
+  "advisor",
   "editor",
 ];
 
 const adminAssignableRoles: UserRole[] = [
   "admin",
   "portfolio_manager",
+  "advisor",
   "editor",
 ];
 
 export function isPortfolioRole(role: string): boolean {
-  return role === "portfolio_manager" || role === "advisor";
+  return role === "portfolio_manager";
 }
 
 export function canAccessOverview(role: string): boolean {
@@ -42,7 +44,7 @@ export function canDeletePortfolios(role: string): boolean {
 }
 
 export function canManageLeads(role: string): boolean {
-  return role === "portal_admin" || role === "admin";
+  return role === "portal_admin" || role === "admin" || role === "advisor";
 }
 
 export function assignableUserRoles(actorRole: string): UserRole[] {
@@ -97,4 +99,26 @@ export function canDeleteManagedUser(
 
 export function filterUsersForActor(actor: Pick<SafeUser, "id" | "role">, users: SafeUser[]): SafeUser[] {
   return users.filter((user) => canViewManagedUser(actor, user));
+}
+
+export function canViewLead(
+  actor: Pick<SafeUser, "role" | "advisorId">,
+  lead: Pick<ContactLead, "assignedAdvisorId">,
+): boolean {
+  if (actor.role === "portal_admin" || actor.role === "admin") {
+    return true;
+  }
+
+  if (actor.role === "advisor") {
+    return Boolean(actor.advisorId) && actor.advisorId === lead.assignedAdvisorId;
+  }
+
+  return false;
+}
+
+export function filterLeadsForActor(
+  actor: Pick<SafeUser, "role" | "advisorId">,
+  leads: ContactLead[],
+): ContactLead[] {
+  return leads.filter((lead) => canViewLead(actor, lead));
 }

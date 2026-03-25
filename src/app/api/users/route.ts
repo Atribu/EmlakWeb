@@ -24,7 +24,7 @@ function parseRole(value: unknown): UserRole {
     throw new Error("Kullanıcı rolü zorunludur.");
   }
 
-  if (!["portal_admin", "admin", "portfolio_manager", "editor"].includes(value)) {
+  if (!["portal_admin", "admin", "portfolio_manager", "advisor", "editor"].includes(value)) {
     throw new Error("Geçersiz kullanıcı rolü.");
   }
 
@@ -44,6 +44,7 @@ function parseInput(payload: unknown): CreateUserInput {
     phone: parseString(body.phone, "Telefon"),
     password: parseString(body.password, "Şifre"),
     role: parseRole(body.role),
+    advisorId: typeof body.advisorId === "string" ? body.advisorId.trim() || undefined : undefined,
   };
 }
 

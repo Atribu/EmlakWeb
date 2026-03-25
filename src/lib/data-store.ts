@@ -43,6 +43,7 @@ const advisorStorePath = path.join(demoDataDir, "advisors.json");
 const propertyStorePath = path.join(demoDataDir, "properties.json");
 const blogStorePath = path.join(demoDataDir, "blog-posts.json");
 const userStorePath = path.join(demoDataDir, "users.json");
+const leadStorePath = path.join(demoDataDir, "leads.json");
 
 function ensureDemoDataDir() {
   if (!fs.existsSync(demoDataDir)) {
@@ -83,6 +84,15 @@ function writeUsersToDisk(users: User[]) {
     fs.writeFileSync(userStorePath, JSON.stringify(users, null, 2), "utf-8");
   } catch (error) {
     console.error("[demo-user-store-write-error]", error);
+  }
+}
+
+function writeLeadsToDisk(leads: ContactLead[]) {
+  try {
+    ensureDemoDataDir();
+    fs.writeFileSync(leadStorePath, JSON.stringify(leads, null, 2), "utf-8");
+  } catch (error) {
+    console.error("[demo-lead-store-write-error]", error);
   }
 }
 
@@ -140,12 +150,14 @@ function readAdvisorsFromDisk(): Advisor[] | null {
 }
 
 function normalizeStoredUserRole(role: unknown): UserRole {
-  if (role === "portal_admin" || role === "admin" || role === "portfolio_manager" || role === "editor") {
+  if (
+    role === "portal_admin" ||
+    role === "admin" ||
+    role === "portfolio_manager" ||
+    role === "advisor" ||
+    role === "editor"
+  ) {
     return role;
-  }
-
-  if (role === "advisor") {
-    return "portfolio_manager";
   }
 
   return "editor";
@@ -219,6 +231,39 @@ function syncUsersFromDisk() {
 
   if (!fs.existsSync(userStorePath)) {
     writeUsersToDisk(store.users);
+  }
+}
+
+function readLeadsFromDisk(): ContactLead[] | null {
+  try {
+    if (!fs.existsSync(leadStorePath)) {
+      return null;
+    }
+
+    const raw = fs.readFileSync(leadStorePath, "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    return parsed.filter((item) => item && typeof item === "object") as ContactLead[];
+  } catch (error) {
+    console.error("[demo-lead-store-read-error]", error);
+    return null;
+  }
+}
+
+function syncLeadsFromDisk() {
+  const diskLeads = readLeadsFromDisk();
+
+  if (diskLeads) {
+    store.leads = diskLeads;
+    return;
+  }
+
+  if (!fs.existsSync(leadStorePath)) {
+    writeLeadsToDisk(store.leads);
   }
 }
 
@@ -697,17 +742,19 @@ export function listUsers(): SafeUser[] {
 
 export function createUser(input: CreateUserInput): SafeUser {
   syncUsersFromDisk();
+  syncAdvisorsFromDisk();
   const name = input.name.trim();
   const email = input.email.trim().toLocaleLowerCase("tr");
   const phone = input.phone.trim();
   const password = input.password.trim();
   const role = input.role;
+  const advisorId = input.advisorId?.trim() || undefined;
 
   if (!name || !email || !phone || !password || !role) {
     throw new Error("Kullanıcı alanları eksik.");
   }
 
-  if (!["portal_admin", "admin", "portfolio_manager", "editor"].includes(role)) {
+  if (!["portal_admin", "admin", "portfolio_manager", "advisor", "editor"].includes(role)) {
     throw new Error("Geçersiz kullanıcı rolü.");
   }
 
@@ -725,6 +772,28 @@ export function createUser(input: CreateUserInput): SafeUser {
     throw new Error("Bu e-posta ile kayıtlı bir kullanıcı zaten var.");
   }
 
+  if (advisorId) {
+    const advisor = getAdvisorById(advisorId);
+
+    if (!advisor) {
+      throw new Error("Seçilen danışman bulunamadı.");
+    }
+  }
+
+  if (role === "advisor") {
+    if (!advisorId) {
+      throw new Error("Danışman hesabı için bağlı danışman seçmelisiniz.");
+    }
+
+    const linkedAdvisorExists = store.users.some(
+      (user) => user.role === "advisor" && user.advisorId === advisorId,
+    );
+
+    if (linkedAdvisorExists) {
+      throw new Error("Bu danışman için zaten bir panel hesabı bulunuyor.");
+    }
+  }
+
   const user: User = {
     id: `usr-${crypto.randomUUID()}`,
     name,
@@ -733,7 +802,7 @@ export function createUser(input: CreateUserInput): SafeUser {
     phone,
     username: email,
     password,
-    advisorId: input.advisorId?.trim() || undefined,
+    advisorId,
   };
 
   store.users.unshift(user);
@@ -761,6 +830,7 @@ export function deleteUserById(userId: string): SafeUser {
 }
 
 export function createLead(input: CreateLeadInput): ContactLead {
+  syncLeadsFromDisk();
   const stage = input.stage ?? "new";
   if (!validLeadStages.includes(stage)) {
     throw new Error("Geçersiz lead aşaması.");
@@ -777,6 +847,7 @@ export function createLead(input: CreateLeadInput): ContactLead {
   };
 
   store.leads.unshift(lead);
+  writeLeadsToDisk(store.leads);
   return lead;
 }
 
@@ -880,10 +951,12 @@ export function deleteBlogPostBySlug(slug: string): BlogPost {
 }
 
 export function listLeads(): ContactLead[] {
+  syncLeadsFromDisk();
   return [...store.leads].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 }
 
 export function getLeadById(leadId: string): ContactLead | undefined {
+  syncLeadsFromDisk();
   return store.leads.find((lead) => lead.id === leadId);
 }
 
@@ -892,6 +965,7 @@ export function updateLeadStage(input: {
   stage: LeadStage;
   pipelineNote?: string;
 }): ContactLead {
+  syncLeadsFromDisk();
   if (!validLeadStages.includes(input.stage)) {
     throw new Error("Geçersiz lead aşaması.");
   }
@@ -906,11 +980,13 @@ export function updateLeadStage(input: {
     lead.pipelineNote = input.pipelineNote.trim() || undefined;
   }
   lead.updatedAt = new Date().toISOString();
+  writeLeadsToDisk(store.leads);
 
   return lead;
 }
 
 export function leadStageSummary() {
+  syncLeadsFromDisk();
   const summary: Record<LeadStage, number> = {
     new: 0,
     called: 0,
@@ -931,6 +1007,7 @@ export function dashboardSummary() {
   syncAdvisorsFromDisk();
   syncPropertiesFromDisk();
   syncBlogPostsFromDisk();
+  syncLeadsFromDisk();
   return {
     propertyCount: store.properties.length,
     blogCount: store.blogPosts.length,

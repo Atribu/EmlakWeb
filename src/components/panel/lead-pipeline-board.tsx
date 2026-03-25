@@ -3,11 +3,13 @@
 import { useMemo, useState } from "react";
 
 import { leadSourceLabel, leadStageLabel } from "@/lib/format";
-import type { ContactLead, LeadStage, Property } from "@/lib/types";
+import type { Advisor, ContactLead, LeadStage, Property, SafeUser } from "@/lib/types";
 
 type LeadPipelineBoardProps = {
   initialLeads: ContactLead[];
   properties: Property[];
+  currentUser: SafeUser;
+  advisors: Advisor[];
 };
 
 const stageOptions: LeadStage[] = [
@@ -19,7 +21,7 @@ const stageOptions: LeadStage[] = [
   "lost",
 ];
 
-export function LeadPipelineBoard({ initialLeads, properties }: LeadPipelineBoardProps) {
+export function LeadPipelineBoard({ initialLeads, properties, currentUser, advisors }: LeadPipelineBoardProps) {
   const [leads, setLeads] = useState<ContactLead[]>(initialLeads);
   const [filterStage, setFilterStage] = useState<LeadStage | "all">("all");
   const [savingLeadId, setSavingLeadId] = useState<string | null>(null);
@@ -27,6 +29,10 @@ export function LeadPipelineBoard({ initialLeads, properties }: LeadPipelineBoar
   const propertyBySlug = useMemo(
     () => new Map(properties.map((property) => [property.slug, property])),
     [properties],
+  );
+  const advisorById = useMemo(
+    () => new Map(advisors.map((advisor) => [advisor.id, advisor])),
+    [advisors],
   );
 
   const filteredLeads = useMemo(() => {
@@ -85,7 +91,9 @@ export function LeadPipelineBoard({ initialLeads, properties }: LeadPipelineBoar
         <div>
           <h2 className="text-[1.9rem] font-semibold leading-none text-[#231d15]">CRM Lead Pipeline</h2>
           <p className="mt-2 text-sm text-[#665c4f]">
-            Lead aşamalarını güncelleyin, randevu ve teklif sürecini tek ekrandan takip edin.
+            {currentUser.role === "advisor"
+              ? "Size atanmış bilgi ve randevu taleplerini tek ekrandan takip edin."
+              : "Lead aşamalarını güncelleyin, randevu ve teklif sürecini tek ekrandan takip edin."}
           </p>
         </div>
 
@@ -134,6 +142,14 @@ export function LeadPipelineBoard({ initialLeads, properties }: LeadPipelineBoar
                     {property ? (
                       <p className="mt-1 text-sm text-[#5c5347]">
                         Portföy: <span className="font-semibold">{property.title}</span>
+                      </p>
+                    ) : null}
+                    {lead.assignedAdvisorId ? (
+                      <p className="mt-1 text-sm text-[#5c5347]">
+                        Danışman:{" "}
+                        <span className="font-semibold">
+                          {advisorById.get(lead.assignedAdvisorId)?.name ?? "Atanmamış"}
+                        </span>
                       </p>
                     ) : null}
                     {lead.preferredDate && lead.preferredTime ? (

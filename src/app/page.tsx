@@ -4,7 +4,6 @@ import Link from "next/link";
 import { PropertyCard } from "@/components/property-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser } from "@/lib/auth";
 import { listAdvisors, listProperties } from "@/lib/data-store";
 import { formatPrice } from "@/lib/format";
 import { homeListingSchema } from "@/lib/seo";
@@ -16,8 +15,6 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [currentUser] = await Promise.all([getCurrentUser()]);
-
   const properties = listProperties();
   const advisors = listAdvisors();
   const advisorMap = new Map(advisors.map((advisor) => [advisor.id, advisor]));
@@ -28,7 +25,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader />
 
       <main className="w-full pb-24">
         <section className="frame-wide fade-up relative min-h-[88vh] overflow-hidden rounded-[1.6rem] border border-[#3f3022] bg-[#0d151f] shadow-[0_58px_102px_-68px_rgba(0,0,0,0.95)]">
@@ -156,7 +153,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-5 xl:grid-cols-2">
             {featured.map((property) => (
               <PropertyCard key={property.id} property={property} advisor={advisorMap.get(property.advisorId)} />
             ))}

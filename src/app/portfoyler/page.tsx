@@ -4,7 +4,6 @@ import Link from "next/link";
 import { PropertyCard } from "@/components/property-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser } from "@/lib/auth";
 import { listAdvisors, listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
 
 export const metadata: Metadata = {
@@ -36,7 +35,7 @@ function toNumber(value: string): number | undefined {
 }
 
 export default async function PortfoylerPage({ searchParams }: PortfoylerPageProps) {
-  const [params, currentUser] = await Promise.all([searchParams, getCurrentUser()]);
+  const params = await searchParams;
 
   const query = readString(params.q).trim();
   const city = readString(params.city).trim();
@@ -63,7 +62,7 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader />
 
       <main className="w-full pb-24">
         <section className="frame-wide fade-up relative overflow-hidden rounded-[1.4rem] border border-[#3f3022] bg-[#0f1621] p-7 text-[#f4ead8] shadow-[0_48px_88px_-64px_rgba(0,0,0,0.95)] sm:p-10">
@@ -146,7 +145,7 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
               Filtreye uygun ilan bulunamadı. Arama kriterlerini genişletip tekrar deneyin.
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid gap-5">
               {properties.map((property) => (
                 <PropertyCard key={property.id} property={property} advisor={advisorMap.get(property.advisorId)} />
               ))}

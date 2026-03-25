@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 
 import { canDeleteManagedUser } from "@/lib/access-control";
 import { roleLabel } from "@/lib/format";
-import type { SafeUser, UserRole } from "@/lib/types";
+import type { Advisor, SafeUser, UserRole } from "@/lib/types";
 
 type UserManagementProps = {
   currentUser: SafeUser;
   initialUsers: SafeUser[];
   assignableRoles: UserRole[];
+  advisors: Advisor[];
 };
 
 type SubmitState =
@@ -23,12 +24,21 @@ export function UserManagement({
   currentUser,
   initialUsers,
   assignableRoles,
+  advisors,
 }: UserManagementProps) {
   const router = useRouter();
   const [users, setUsers] = useState<SafeUser[]>(initialUsers);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole>(assignableRoles[0] ?? "editor");
+
+  const advisorMap = useMemo(
+    () => new Map(advisors.map((advisor) => [advisor.id, advisor])),
+    [advisors],
+  );
+
+  const requiresAdvisorSelection = selectedRole === "advisor";
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("tr");
@@ -61,6 +71,7 @@ export function UserManagement({
         phone: data.get("phone"),
         password: data.get("password"),
         role: data.get("role"),
+        advisorId: requiresAdvisorSelection ? data.get("advisorId") : undefined,
       }),
     });
 
@@ -74,6 +85,7 @@ export function UserManagement({
     setUsers((previous) => [payload.user, ...previous]);
     setStatus({ type: "success", message: `${payload.user.name} oluşturuldu.` });
     form.reset();
+    setSelectedRole(assignableRoles[0] ?? "editor");
     router.refresh();
   }
 
@@ -112,8 +124,8 @@ export function UserManagement({
 
         <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
           {currentUser.role === "portal_admin"
-            ? "Portal admin tüm rolleri atayabilir."
-            : "Admin yeni admin, portföy yetkilisi ve içerik yükleyici hesapları oluşturabilir. Portal admin hesaplarını göremez."}
+            ? "Portal admin tüm rolleri, danışman hesapları dahil atayabilir."
+            : "Admin yeni admin, portföy yetkilisi, danışman ve içerik yükleyici hesapları oluşturabilir. Portal admin hesaplarını göremez."}
         </div>
 
         <form onSubmit={handleCreate} className="mt-5 grid gap-3 md:grid-cols-2">
@@ -125,7 +137,13 @@ export function UserManagement({
             <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
               Rol
             </span>
-            <select required name="role" defaultValue={assignableRoles[0] ?? ""} className="input">
+            <select
+              required
+              name="role"
+              value={selectedRole}
+              onChange={(event) => setSelectedRole(event.target.value as UserRole)}
+              className="input"
+            >
               {assignableRoles.map((role) => (
                 <option key={role} value={role}>
                   {roleLabel(role)}
@@ -134,9 +152,36 @@ export function UserManagement({
             </select>
           </label>
 
+          {requiresAdvisorSelection ? (
+            <label className="md:col-span-2">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                Bağlı Danışman
+              </span>
+              <select required name="advisorId" defaultValue="" className="input">
+                <option value="" disabled>
+                  Danışman seçin
+                </option>
+                {advisors.map((advisor) => (
+                  <option key={advisor.id} value={advisor.id}>
+                    {advisor.name} • {advisor.focusArea}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-slate-500">
+                Danışman hesabı sadece seçilen danışmanın kendi taleplerini görür.
+              </p>
+            </label>
+          ) : null}
+
+          {requiresAdvisorSelection && advisors.length === 0 ? (
+            <p className="md:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Önce danışman kaydı oluşturulmalı. Danışman hesabı seçili danışmana bağlanır.
+            </p>
+          ) : null}
+
           <button
             type="submit"
-            disabled={status.type === "loading"}
+            disabled={status.type === "loading" || (requiresAdvisorSelection && advisors.length === 0)}
             className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-500 md:col-span-2"
           >
             {status.type === "loading" ? "Kullanıcı Oluşturuluyor..." : "Kullanıcı Oluştur"}
@@ -195,6 +240,11 @@ export function UserManagement({
                       <p className="mt-2 text-lg font-semibold text-slate-900">{user.name}</p>
                       <p className="text-sm text-slate-600">{user.email}</p>
                       <p className="text-sm text-slate-500">{user.phone || "Telefon bilgisi yok"}</p>
+                      {user.advisorId ? (
+                        <p className="mt-1 text-sm text-slate-500">
+                          Bağlı danışman: {advisorMap.get(user.advisorId)?.name ?? "Kayıt bulunamadı"}
+                        </p>
+                      ) : null}
                     </div>
 
                     <button

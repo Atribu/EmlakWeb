@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { canManageLeads } from "@/lib/access-control";
+import { canManageLeads, filterLeadsForActor } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
 import { listLeads } from "@/lib/data-store";
 
@@ -16,5 +16,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: "Bu işlem için yetkiniz yok." }, { status: 403 });
   }
 
-  return NextResponse.json({ leads: listLeads() });
+  return NextResponse.json({ leads: filterLeadsForActor(user, listLeads()) });
 }
