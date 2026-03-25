@@ -138,8 +138,8 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
 
   return (
     <article className="overflow-hidden rounded-[1.35rem] border border-[#dbcfbf] bg-[linear-gradient(180deg,#fffdfa_0%,#fbf7f0_100%)] shadow-[0_26px_52px_-36px_rgba(33,27,19,0.32)]">
-      <div className="grid min-w-0 lg:grid-cols-[420px_minmax(0,1fr)]">
-        <div className="relative min-h-[280px] overflow-hidden bg-[#d8cab5] lg:min-h-full">
+      <div className="grid min-w-0 lg:grid-cols-[500px_minmax(0,1fr)] xl:grid-cols-[560px_minmax(0,1fr)]">
+        <div className="relative min-h-[320px] overflow-hidden bg-[#d8cab5] sm:min-h-[360px] lg:min-h-full">
           <div
             className="absolute inset-0 bg-cover bg-center transition duration-500"
             style={{ backgroundImage: `url(${activeImage})` }}
