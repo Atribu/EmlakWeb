@@ -170,7 +170,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
 
   return (
     <article className="overflow-hidden rounded-[1.35rem] border border-[#dbcfbf] bg-[linear-gradient(180deg,#fffdfa_0%,#fbf7f0_100%)] shadow-[0_26px_52px_-36px_rgba(33,27,19,0.32)]">
-      <div className="grid min-w-0 lg:grid-cols-[500px_minmax(0,1fr)] xl:grid-cols-[560px_minmax(0,1fr)]">
+      <div className="grid min-w-0 lg:grid-cols-[minmax(320px,44%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(380px,48%)_minmax(0,1fr)]">
         <div className="relative min-h-[320px] overflow-hidden bg-[#d8cab5] sm:min-h-[360px] lg:min-h-full">
           <Image
             src={activeImage}
@@ -178,7 +178,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             fetchPriority="low"
             unoptimized={isUnoptimizedImageSrc(activeImage)}
             fill
-            sizes="(max-width: 1280px) 100vw, 560px"
+            sizes="(max-width: 1024px) 100vw, (max-width: 1536px) 44vw, 48vw"
             className="absolute inset-0 object-cover transition duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#10161d]/18 via-transparent to-[#10161d]/12" />
@@ -259,7 +259,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             <p className="text-[15px] leading-7 text-[#5f5548]">{truncateText(property.description, 185)}</p>
           </div>
 
-          <div className="grid gap-4 border-b border-dashed border-[#d7cebf] py-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+          <div className="grid gap-4 border-b border-dashed border-[#d7cebf] py-4 xl:grid-cols-[minmax(0,1fr)_minmax(180px,auto)] xl:items-end">
             <div className="flex flex-wrap items-center gap-3">
               {advisor ? (
                 <div className="flex items-center gap-3 rounded-full border border-[#eadfce] bg-white px-3 py-2 shadow-[0_16px_28px_-24px_rgba(38,28,18,0.45)]">
@@ -286,9 +286,9 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
               </div>
             </div>
 
-            <div className="xl:text-right">
+            <div className="min-w-0 xl:text-right">
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7f6d5d]">Başlangıç Fiyatı</p>
-              <p className="mt-1 text-[2rem] leading-none font-semibold text-[#d2232d] sm:text-[2.35rem]">
+              <p className="mt-1 break-words text-[clamp(1.55rem,4vw,2.35rem)] leading-[0.96] font-semibold text-[#d2232d]">
                 {formatPrice(property.price)}
               </p>
             </div>
