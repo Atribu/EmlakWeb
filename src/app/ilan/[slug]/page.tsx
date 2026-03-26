@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -7,6 +8,7 @@ import { ContactForm } from "@/components/contact-form";
 import { SiteHeader } from "@/components/site-header";
 import { getAdvisorById, getPropertyBySlug } from "@/lib/data-store";
 import { formatPhoneForHref, formatPrice } from "@/lib/format";
+import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { getProjectMeta } from "@/lib/project-meta";
 import { listingMetadata, propertySchema } from "@/lib/seo";
 
@@ -56,7 +58,15 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
 
         <section className="luxury-card mt-4 overflow-hidden">
           <div className="relative h-[320px] sm:h-[430px]">
-            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${property.coverImage})` }} />
+            <Image
+              src={property.coverImage}
+              alt={property.title}
+              fetchPriority="high"
+              unoptimized={isUnoptimizedImageSrc(property.coverImage)}
+              fill
+              sizes="(max-width: 1024px) 100vw, 1152px"
+              className="absolute inset-0 object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-[#18120c]/85 via-[#18120c]/25 to-[#18120c]/18" />
 
             <div className="absolute bottom-0 left-0 right-0 p-5 text-white sm:p-8">
@@ -98,7 +108,16 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
                     key={`${property.slug}-${property.imageLabels[index] ?? "gorsel"}-${index}`}
                     className="overflow-hidden rounded-xl border border-[#ddd0bd] bg-[#fbf8f3]"
                   >
-                    <div className="h-32 bg-cover bg-center" style={{ backgroundImage: `url(${image})` }} />
+                    <Image
+                      src={image}
+                      alt={property.imageLabels[index] ?? `${property.title} görsel ${index + 1}`}
+                      fetchPriority="low"
+                      unoptimized={isUnoptimizedImageSrc(image)}
+                      width={480}
+                      height={240}
+                      sizes="(max-width: 640px) 100vw, 33vw"
+                      className="h-32 w-full object-cover"
+                    />
                     <p className="px-3 py-2 text-xs font-medium text-[#6b6051]">
                       {property.imageLabels[index] ?? `Görsel ${index + 1}`}
                     </p>
@@ -113,9 +132,15 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
                   <div className="flex flex-col gap-4 sm:flex-row-reverse sm:items-center sm:justify-between">
                     <div className="flex justify-center sm:justify-end">
                       <div className="rounded-[2rem] border border-[#dbcbb3] bg-[#f7f0e3] p-3">
-                        <div
-                          className="h-32 w-32 rounded-full border border-white/70 bg-cover bg-center shadow-[0_18px_32px_-24px_rgba(0,0,0,0.55)]"
-                          style={{ backgroundImage: `url(${advisor.image})` }}
+                        <Image
+                          src={advisor.image}
+                          alt={advisor.name}
+                          fetchPriority="low"
+                          unoptimized={isUnoptimizedImageSrc(advisor.image)}
+                          width={128}
+                          height={128}
+                          sizes="128px"
+                          className="h-32 w-32 rounded-full border border-white/70 object-cover shadow-[0_18px_32px_-24px_rgba(0,0,0,0.55)]"
                         />
                       </div>
                     </div>

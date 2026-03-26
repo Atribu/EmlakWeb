@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -7,6 +8,7 @@ import { SiteHeader } from "@/components/site-header";
 import { parseBlogContent } from "@/lib/blog-content";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/data-store";
 import { formatDateTR } from "@/lib/format";
+import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { blogMetadata, blogPostSchema } from "@/lib/seo";
 
 type BlogDetailPageProps = {
@@ -117,7 +119,15 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
       <main className="w-full pb-24">
         <section className="frame-wide relative overflow-hidden rounded-[1.4rem] border border-[#3f3022] bg-[#0f1621] shadow-[0_48px_88px_-64px_rgba(0,0,0,0.95)]">
           <div className="relative h-[280px] sm:h-[380px]">
-            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${post.coverImage})` }} />
+            <Image
+              src={post.coverImage}
+              alt={post.title}
+              fetchPriority="high"
+              unoptimized={isUnoptimizedImageSrc(post.coverImage)}
+              fill
+              sizes="(max-width: 1024px) 100vw, 1400px"
+              className="absolute inset-0 object-cover"
+            />
             <div className="hero-overlay absolute inset-0" />
 
             <div className="absolute bottom-0 left-0 right-0 p-6 text-[#f4ead8] sm:p-9">

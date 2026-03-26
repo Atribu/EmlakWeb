@@ -1,9 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 import { formatPhoneForHref, formatPrice } from "@/lib/format";
+import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import type { Advisor, Property } from "@/lib/types";
 
 type PropertyCardProps = {
@@ -12,7 +16,7 @@ type PropertyCardProps = {
 };
 
 type MetricProps = {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
 };
@@ -100,6 +104,7 @@ function CameraIcon() {
 }
 
 export function PropertyCard({ property, advisor }: PropertyCardProps) {
+  const router = useRouter();
   const gallery = useMemo(() => {
     const images = [property.coverImage, ...property.galleryImages].filter((image) => Boolean(image?.trim()));
     return Array.from(new Set(images));
@@ -136,14 +141,45 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
     });
   }
 
+  function navigateToDetail() {
+    router.push(`/ilan/${property.slug}`);
+  }
+
+  function shouldIgnoreCardNavigation(target: EventTarget | null) {
+    return target instanceof HTMLElement && Boolean(target.closest("a, button, input, select, textarea, summary"));
+  }
+
+  function handleCardClick(event: MouseEvent<HTMLElement>) {
+    if (shouldIgnoreCardNavigation(event.target)) {
+      return;
+    }
+
+    navigateToDetail();
+  }
+
+  function handleCardKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (shouldIgnoreCardNavigation(event.target)) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      navigateToDetail();
+    }
+  }
+
   return (
     <article className="overflow-hidden rounded-[1.35rem] border border-[#dbcfbf] bg-[linear-gradient(180deg,#fffdfa_0%,#fbf7f0_100%)] shadow-[0_26px_52px_-36px_rgba(33,27,19,0.32)]">
       <div className="grid min-w-0 lg:grid-cols-[500px_minmax(0,1fr)] xl:grid-cols-[560px_minmax(0,1fr)]">
         <div className="relative min-h-[320px] overflow-hidden bg-[#d8cab5] sm:min-h-[360px] lg:min-h-full">
-          <div
-            className="absolute inset-0 bg-cover bg-center transition duration-500"
-            style={{ backgroundImage: `url(${activeImage})` }}
-            aria-hidden
+          <Image
+            src={activeImage}
+            alt={property.title}
+            fetchPriority="low"
+            unoptimized={isUnoptimizedImageSrc(activeImage)}
+            fill
+            sizes="(max-width: 1280px) 100vw, 560px"
+            className="absolute inset-0 object-cover transition duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#10161d]/18 via-transparent to-[#10161d]/12" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#11161d]/38 to-transparent" />
@@ -188,7 +224,14 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-col p-5 sm:p-6">
+        <div
+          tabIndex={0}
+          role="link"
+          aria-label={`${property.title} detay sayfasını aç`}
+          onClick={handleCardClick}
+          onKeyDown={handleCardKeyDown}
+          className="flex min-w-0 cursor-pointer flex-col p-5 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d2232d]/45 focus-visible:ring-inset sm:p-6"
+        >
           <div className="flex flex-col gap-4 border-b border-dashed border-[#d7cebf] pb-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
@@ -220,10 +263,15 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             <div className="flex flex-wrap items-center gap-3">
               {advisor ? (
                 <div className="flex items-center gap-3 rounded-full border border-[#eadfce] bg-white px-3 py-2 shadow-[0_16px_28px_-24px_rgba(38,28,18,0.45)]">
-                  <div
-                    className="h-11 w-11 rounded-full border border-[#ddceb8] bg-cover bg-center"
-                    style={{ backgroundImage: `url(${advisor.image})` }}
-                    aria-hidden
+                  <Image
+                    src={advisor.image}
+                    alt={advisor.name}
+                    fetchPriority="low"
+                    unoptimized={isUnoptimizedImageSrc(advisor.image)}
+                    width={44}
+                    height={44}
+                    sizes="44px"
+                    className="h-11 w-11 rounded-full border border-[#ddceb8] object-cover"
                   />
                   <div className="min-w-0">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#90816e]">Danışman</p>

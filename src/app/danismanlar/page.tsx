@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listAdvisors, listProperties } from "@/lib/data-store";
 import { formatPhoneForHref } from "@/lib/format";
+import { isUnoptimizedImageSrc } from "@/lib/image-src";
 
 export const metadata: Metadata = {
   title: "Danışmanlar | PortföySatış",
@@ -36,7 +38,16 @@ export default async function DanismanlarPage() {
             return (
               <article key={advisor.id} className="luxury-card overflow-hidden p-5">
                 <div className="mb-5 overflow-hidden rounded-[1.35rem] border border-[#deceb7] bg-[#f9f2e7]">
-                  <div className="h-72 bg-cover bg-center" style={{ backgroundImage: `url(${advisor.image})` }} />
+                  <Image
+                    src={advisor.image}
+                    alt={advisor.name}
+                    fetchPriority="low"
+                    unoptimized={isUnoptimizedImageSrc(advisor.image)}
+                    width={900}
+                    height={720}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    className="h-72 w-full object-cover"
+                  />
                 </div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8d7348]">Portföy Danışmanı</p>
                 <h2 className="mt-2 text-[2rem] leading-none font-semibold text-[#1f1a14]">{advisor.name}</h2>

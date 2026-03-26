@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listBlogPosts } from "@/lib/data-store";
 import { formatDateTR } from "@/lib/format";
+import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { blogListSchema } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -35,7 +37,16 @@ export default async function BlogPage() {
         <section className="frame mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {posts.map((post) => (
             <article key={post.id} className="luxury-card overflow-hidden">
-              <div className="h-52 bg-cover bg-center" style={{ backgroundImage: `url(${post.coverImage})` }} />
+              <Image
+                src={post.coverImage}
+                alt={post.title}
+                fetchPriority="low"
+                unoptimized={isUnoptimizedImageSrc(post.coverImage)}
+                width={960}
+                height={420}
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                className="h-52 w-full object-cover"
+              />
               <div className="p-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8d7348]">
                   {formatDateTR(post.publishedAt)} • {post.authorName}

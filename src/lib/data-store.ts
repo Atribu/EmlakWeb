@@ -45,6 +45,38 @@ const blogStorePath = path.join(demoDataDir, "blog-posts.json");
 const userStorePath = path.join(demoDataDir, "users.json");
 const leadStorePath = path.join(demoDataDir, "leads.json");
 
+type DiskCacheKey = "advisors" | "properties" | "blogPosts" | "users" | "leads";
+
+const diskCacheState: Record<DiskCacheKey, { initialized: boolean; mtimeMs: number | null }> = {
+  advisors: { initialized: false, mtimeMs: null },
+  properties: { initialized: false, mtimeMs: null },
+  blogPosts: { initialized: false, mtimeMs: null },
+  users: { initialized: false, mtimeMs: null },
+  leads: { initialized: false, mtimeMs: null },
+};
+
+function fileMtimeMs(filePath: string): number | null {
+  try {
+    return fs.statSync(filePath).mtimeMs;
+  } catch {
+    return null;
+  }
+}
+
+function hasDiskResourceChanged(key: DiskCacheKey, filePath: string): boolean {
+  const nextMtimeMs = fileMtimeMs(filePath);
+  const cache = diskCacheState[key];
+  const changed = !cache.initialized || cache.mtimeMs !== nextMtimeMs;
+  cache.initialized = true;
+  cache.mtimeMs = nextMtimeMs;
+  return changed;
+}
+
+function rememberDiskResourceState(key: DiskCacheKey, filePath: string) {
+  diskCacheState[key].initialized = true;
+  diskCacheState[key].mtimeMs = fileMtimeMs(filePath);
+}
+
 function ensureDemoDataDir() {
   if (!fs.existsSync(demoDataDir)) {
     fs.mkdirSync(demoDataDir, { recursive: true });
@@ -55,6 +87,7 @@ function writeBlogPostsToDisk(posts: BlogPost[]) {
   try {
     ensureDemoDataDir();
     fs.writeFileSync(blogStorePath, JSON.stringify(posts, null, 2), "utf-8");
+    rememberDiskResourceState("blogPosts", blogStorePath);
   } catch (error) {
     console.error("[demo-blog-store-write-error]", error);
   }
@@ -64,6 +97,7 @@ function writeAdvisorsToDisk(advisors: Advisor[]) {
   try {
     ensureDemoDataDir();
     fs.writeFileSync(advisorStorePath, JSON.stringify(advisors, null, 2), "utf-8");
+    rememberDiskResourceState("advisors", advisorStorePath);
   } catch (error) {
     console.error("[demo-advisor-store-write-error]", error);
   }
@@ -73,6 +107,7 @@ function writePropertiesToDisk(properties: Property[]) {
   try {
     ensureDemoDataDir();
     fs.writeFileSync(propertyStorePath, JSON.stringify(properties, null, 2), "utf-8");
+    rememberDiskResourceState("properties", propertyStorePath);
   } catch (error) {
     console.error("[demo-property-store-write-error]", error);
   }
@@ -82,6 +117,7 @@ function writeUsersToDisk(users: User[]) {
   try {
     ensureDemoDataDir();
     fs.writeFileSync(userStorePath, JSON.stringify(users, null, 2), "utf-8");
+    rememberDiskResourceState("users", userStorePath);
   } catch (error) {
     console.error("[demo-user-store-write-error]", error);
   }
@@ -91,6 +127,7 @@ function writeLeadsToDisk(leads: ContactLead[]) {
   try {
     ensureDemoDataDir();
     fs.writeFileSync(leadStorePath, JSON.stringify(leads, null, 2), "utf-8");
+    rememberDiskResourceState("leads", leadStorePath);
   } catch (error) {
     console.error("[demo-lead-store-write-error]", error);
   }
@@ -209,6 +246,10 @@ function readUsersFromDisk(): User[] | null {
 }
 
 function syncAdvisorsFromDisk() {
+  if (!hasDiskResourceChanged("advisors", advisorStorePath)) {
+    return;
+  }
+
   const diskAdvisors = readAdvisorsFromDisk();
 
   if (diskAdvisors) {
@@ -222,6 +263,10 @@ function syncAdvisorsFromDisk() {
 }
 
 function syncUsersFromDisk() {
+  if (!hasDiskResourceChanged("users", userStorePath)) {
+    return;
+  }
+
   const diskUsers = readUsersFromDisk();
 
   if (diskUsers) {
@@ -255,6 +300,10 @@ function readLeadsFromDisk(): ContactLead[] | null {
 }
 
 function syncLeadsFromDisk() {
+  if (!hasDiskResourceChanged("leads", leadStorePath)) {
+    return;
+  }
+
   const diskLeads = readLeadsFromDisk();
 
   if (diskLeads) {
@@ -268,6 +317,10 @@ function syncLeadsFromDisk() {
 }
 
 function syncPropertiesFromDisk() {
+  if (!hasDiskResourceChanged("properties", propertyStorePath)) {
+    return;
+  }
+
   const diskProperties = readPropertiesFromDisk();
 
   if (diskProperties) {
@@ -302,6 +355,10 @@ function readBlogPostsFromDisk(): BlogPost[] | null {
 }
 
 function syncBlogPostsFromDisk() {
+  if (!hasDiskResourceChanged("blogPosts", blogStorePath)) {
+    return;
+  }
+
   const diskPosts = readBlogPostsFromDisk();
 
   if (diskPosts) {
