@@ -2,14 +2,29 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 
 import { AppointmentForm } from "@/components/appointment-form";
 import { ContactForm } from "@/components/contact-form";
+import { PriceText } from "@/components/price-text";
+import { PropertyDetailGallery } from "@/components/property-detail-gallery";
 import { SiteHeader } from "@/components/site-header";
 import { getAdvisorById, getPropertyBySlug } from "@/lib/data-store";
-import { formatPhoneForHref, formatPrice } from "@/lib/format";
+import { formatPhoneForHref } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { getProjectMeta } from "@/lib/project-meta";
+import {
+  propertyDetailPageCopy,
+  propertyDetailWhatsAppInquiry,
+  translateDeliveryDate,
+  translateFloorLabel,
+  translateHeatingLabel,
+  translatePaymentPlan,
+  translateProjectLaunchType,
+  translatePropertyType,
+  translateRoomLabel,
+} from "@/lib/site-copy";
+import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 import { listingMetadata, propertySchema } from "@/lib/seo";
 
 type PropertyDetailProps = {
@@ -28,6 +43,8 @@ export async function generateMetadata({ params }: PropertyDetailProps): Promise
 }
 
 export default async function PropertyDetailPage({ params }: PropertyDetailProps) {
+  const language = await getServerSiteLanguage();
+  const copy = propertyDetailPageCopy(language);
   const resolvedParams = await params;
 
   const property = getPropertyBySlug(resolvedParams.slug);
@@ -43,7 +60,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : null;
   const whatsappHref = advisor
     ? `https://wa.me/${formatPhoneForHref(advisor.whatsapp)}?text=${encodeURIComponent(
-        `${property.title} (${property.listingRef}) için bilgi almak istiyorum.`,
+        propertyDetailWhatsAppInquiry(language, property.title, property.listingRef),
       )}`
     : null;
 
@@ -53,76 +70,41 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
 
       <main className="mx-auto w-full max-w-6xl px-4 pb-12 pt-6 sm:px-6">
         <Link href="/" className="text-sm font-semibold text-[#6f6558] transition hover:text-[#2a241c]">
-          ← İlan listesine dön
+          {copy.back}
         </Link>
 
         <section className="luxury-card mt-4 overflow-hidden">
-          <div className="relative h-[320px] sm:h-[430px]">
-            <Image
-              src={property.coverImage}
-              alt={property.title}
-              fetchPriority="high"
-              unoptimized={isUnoptimizedImageSrc(property.coverImage)}
-              fill
-              sizes="(max-width: 1024px) 100vw, 1152px"
-              className="absolute inset-0 object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#18120c]/85 via-[#18120c]/25 to-[#18120c]/18" />
-
-            <div className="absolute bottom-0 left-0 right-0 p-5 text-white sm:p-8">
-              <span className="section-kicker border-white/35 bg-white/15 text-[#ecd8b6]">{property.listingRef}</span>
-              <h1 className="mt-3 max-w-3xl text-[2.4rem] leading-[1.02] font-semibold sm:text-[3.2rem]">{property.title}</h1>
-              <p className="mt-2 text-sm text-[#e7dcc9]">
-                {property.city} / {property.district} / {property.neighborhood}
-              </p>
-            </div>
-          </div>
+          <PropertyDetailGallery
+            title={property.title}
+            listingRef={property.listingRef}
+            locationLabel={`${property.city} / ${property.district} / ${property.neighborhood}`}
+            coverImage={property.coverImage}
+            galleryImages={property.galleryImages}
+            imageLabels={property.imageLabels}
+          />
 
           <div className="grid gap-6 p-6 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <DetailItem label="Fiyat" value={formatPrice(property.price)} highlight />
-                <DetailItem label="Tip" value={property.type} />
-                <DetailItem label="Oda" value={property.rooms} />
-                <DetailItem label="Brüt m²" value={String(property.areaM2)} />
-                <DetailItem label="Kat" value={property.floor} />
-                <DetailItem label="Isıtma" value={property.heating} />
+                <DetailItem label={copy.labels.price} value={<PriceText amount={property.price} />} highlight />
+                <DetailItem label={copy.labels.type} value={translatePropertyType(property.type, language)} />
+                <DetailItem label={copy.labels.rooms} value={translateRoomLabel(property.rooms, language)} />
+                <DetailItem label={copy.labels.area} value={String(property.areaM2)} />
+                <DetailItem label={copy.labels.floor} value={translateFloorLabel(property.floor, language)} />
+                <DetailItem label={copy.labels.heating} value={translateHeatingLabel(property.heating, language)} />
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <DetailItem label="Lansman" value={projectMeta.launchType} compact />
-                <DetailItem label="Ödeme Planı" value={projectMeta.paymentPlan} compact />
-                <DetailItem label="Teslim" value={projectMeta.deliveryDate} compact />
+                <DetailItem label={copy.labels.launch} value={translateProjectLaunchType(projectMeta.launchType, language)} compact />
+                <DetailItem label={copy.labels.paymentPlan} value={translatePaymentPlan(projectMeta.paymentPlan, language)} compact />
+                <DetailItem label={copy.labels.delivery} value={translateDeliveryDate(projectMeta.deliveryDate, language)} compact />
               </div>
 
               <p className="mt-6 text-sm leading-7 text-[#5f5649]">{property.description}</p>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <InfoList title="Öne Çıkanlar" items={property.highlights} />
-                <InfoList title="Özellikler" items={property.features} />
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                {property.galleryImages.map((image, index) => (
-                  <article
-                    key={`${property.slug}-${property.imageLabels[index] ?? "gorsel"}-${index}`}
-                    className="overflow-hidden rounded-xl border border-[#ddd0bd] bg-[#fbf8f3]"
-                  >
-                    <Image
-                      src={image}
-                      alt={property.imageLabels[index] ?? `${property.title} görsel ${index + 1}`}
-                      fetchPriority="low"
-                      unoptimized={isUnoptimizedImageSrc(image)}
-                      width={480}
-                      height={240}
-                      sizes="(max-width: 640px) 100vw, 33vw"
-                      className="h-32 w-full object-cover"
-                    />
-                    <p className="px-3 py-2 text-xs font-medium text-[#6b6051]">
-                      {property.imageLabels[index] ?? `Görsel ${index + 1}`}
-                    </p>
-                  </article>
-                ))}
+                <InfoList title={copy.highlights} items={property.highlights} />
+                <InfoList title={copy.features} items={property.features} />
               </div>
             </div>
 
@@ -146,10 +128,10 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
                     </div>
 
                     <div className="text-left">
-                      <h2 className="text-[1.8rem] font-semibold leading-none text-[#251e16]">Portföy Danışmanı</h2>
+                      <h2 className="text-[1.8rem] font-semibold leading-none text-[#251e16]">{copy.advisorTitle}</h2>
                       <p className="mt-2 text-sm font-semibold text-[#3a3228]">{advisor.name}</p>
                       <p className="text-sm text-[#655b4e]">{advisor.title}</p>
-                      <p className="mt-2 text-sm text-[#726758]">Uzmanlık: {advisor.focusArea}</p>
+                      <p className="mt-2 text-sm text-[#726758]">{copy.specialty}: {advisor.focusArea}</p>
 
                       <div className="mt-4 flex flex-wrap gap-2 text-sm">
                         {phoneHref ? (
@@ -157,7 +139,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
                             href={phoneHref}
                             className="rounded-full border border-[#d0c2ad] bg-white px-4 py-2 font-semibold text-[#4d4336] transition hover:bg-[#f5ebdc]"
                           >
-                            Ara
+                            {copy.call}
                           </a>
                         ) : null}
                         {whatsappHref ? (
@@ -192,7 +174,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
 
 type DetailItemProps = {
   label: string;
-  value: string;
+  value: ReactNode;
   highlight?: boolean;
   compact?: boolean;
 };

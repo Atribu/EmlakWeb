@@ -12,11 +12,13 @@ import type {
   CreateBlogPostInput,
   CreateLeadInput,
   CreatePropertyInput,
+  CreateSellerLeadInput,
   CreateUserInput,
   LeadStage,
   Property,
   PropertyFilter,
   SafeUser,
+  SellerLead,
   User,
   UserRole,
 } from "@/lib/types";
@@ -36,6 +38,7 @@ const store = {
   blogPosts: [...initialBlogPosts],
   users: [...initialUsers],
   leads: [] as ContactLead[],
+  sellerLeads: [] as SellerLead[],
 };
 
 const demoDataDir = path.join(process.cwd(), ".demo-data");
@@ -44,8 +47,9 @@ const propertyStorePath = path.join(demoDataDir, "properties.json");
 const blogStorePath = path.join(demoDataDir, "blog-posts.json");
 const userStorePath = path.join(demoDataDir, "users.json");
 const leadStorePath = path.join(demoDataDir, "leads.json");
+const sellerLeadStorePath = path.join(demoDataDir, "seller-leads.json");
 
-type DiskCacheKey = "advisors" | "properties" | "blogPosts" | "users" | "leads";
+type DiskCacheKey = "advisors" | "properties" | "blogPosts" | "users" | "leads" | "sellerLeads";
 
 const diskCacheState: Record<DiskCacheKey, { initialized: boolean; mtimeMs: number | null }> = {
   advisors: { initialized: false, mtimeMs: null },
@@ -53,6 +57,7 @@ const diskCacheState: Record<DiskCacheKey, { initialized: boolean; mtimeMs: numb
   blogPosts: { initialized: false, mtimeMs: null },
   users: { initialized: false, mtimeMs: null },
   leads: { initialized: false, mtimeMs: null },
+  sellerLeads: { initialized: false, mtimeMs: null },
 };
 
 function fileMtimeMs(filePath: string): number | null {
@@ -130,6 +135,16 @@ function writeLeadsToDisk(leads: ContactLead[]) {
     rememberDiskResourceState("leads", leadStorePath);
   } catch (error) {
     console.error("[demo-lead-store-write-error]", error);
+  }
+}
+
+function writeSellerLeadsToDisk(sellerLeads: SellerLead[]) {
+  try {
+    ensureDemoDataDir();
+    fs.writeFileSync(sellerLeadStorePath, JSON.stringify(sellerLeads, null, 2), "utf-8");
+    rememberDiskResourceState("sellerLeads", sellerLeadStorePath);
+  } catch (error) {
+    console.error("[demo-seller-lead-store-write-error]", error);
   }
 }
 
@@ -299,6 +314,26 @@ function readLeadsFromDisk(): ContactLead[] | null {
   }
 }
 
+function readSellerLeadsFromDisk(): SellerLead[] | null {
+  try {
+    if (!fs.existsSync(sellerLeadStorePath)) {
+      return null;
+    }
+
+    const raw = fs.readFileSync(sellerLeadStorePath, "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    return parsed.filter((item) => item && typeof item === "object") as SellerLead[];
+  } catch (error) {
+    console.error("[demo-seller-lead-store-read-error]", error);
+    return null;
+  }
+}
+
 function syncLeadsFromDisk() {
   if (!hasDiskResourceChanged("leads", leadStorePath)) {
     return;
@@ -313,6 +348,23 @@ function syncLeadsFromDisk() {
 
   if (!fs.existsSync(leadStorePath)) {
     writeLeadsToDisk(store.leads);
+  }
+}
+
+function syncSellerLeadsFromDisk() {
+  if (!hasDiskResourceChanged("sellerLeads", sellerLeadStorePath)) {
+    return;
+  }
+
+  const diskSellerLeads = readSellerLeadsFromDisk();
+
+  if (diskSellerLeads) {
+    store.sellerLeads = diskSellerLeads;
+    return;
+  }
+
+  if (!fs.existsSync(sellerLeadStorePath)) {
+    writeSellerLeadsToDisk(store.sellerLeads);
   }
 }
 
@@ -908,6 +960,28 @@ export function createLead(input: CreateLeadInput): ContactLead {
   return lead;
 }
 
+export function createSellerLead(input: CreateSellerLeadInput): SellerLead {
+  syncSellerLeadsFromDisk();
+  const now = new Date().toISOString();
+
+  const sellerLead: SellerLead = {
+    ...input,
+    neighborhood: input.neighborhood?.trim() || undefined,
+    subType: input.subType?.trim() || undefined,
+    rooms: input.rooms?.trim() || undefined,
+    buildingAge: input.buildingAge?.trim() || undefined,
+    floor: input.floor?.trim() || undefined,
+    inCompound: input.inCompound?.trim() || undefined,
+    preferredDateTime: input.preferredDateTime?.trim() || undefined,
+    id: `seller-lead-${crypto.randomUUID()}`,
+    createdAt: now,
+  };
+
+  store.sellerLeads.unshift(sellerLead);
+  writeSellerLeadsToDisk(store.sellerLeads);
+  return sellerLead;
+}
+
 export function listBlogPosts(): BlogPost[] {
   syncBlogPostsFromDisk();
   return [...store.blogPosts].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
@@ -1010,6 +1084,11 @@ export function deleteBlogPostBySlug(slug: string): BlogPost {
 export function listLeads(): ContactLead[] {
   syncLeadsFromDisk();
   return [...store.leads].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+}
+
+export function listSellerLeads(): SellerLead[] {
+  syncSellerLeadsFromDisk();
+  return [...store.sellerLeads].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
 export function getLeadById(leadId: string): ContactLead | undefined {

@@ -153,6 +153,44 @@ export type CreateLeadInput = {
   pipelineNote?: string;
 };
 
+export type SellerLead = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  district: string;
+  neighborhood?: string;
+  propertyType: string;
+  subType?: string;
+  areaM2?: number;
+  rooms?: string;
+  buildingAge?: string;
+  floor?: string;
+  inCompound?: string;
+  preferredDateTime?: string;
+  message: string;
+  createdAt: string;
+};
+
+export type CreateSellerLeadInput = {
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  district: string;
+  neighborhood?: string;
+  propertyType: string;
+  subType?: string;
+  areaM2?: number;
+  rooms?: string;
+  buildingAge?: string;
+  floor?: string;
+  inCompound?: string;
+  preferredDateTime?: string;
+  message: string;
+};
+
 export type BlogPost = {
   id: string;
   slug: string;

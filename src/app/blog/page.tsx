@@ -5,8 +5,10 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listBlogPosts } from "@/lib/data-store";
-import { formatDateTR } from "@/lib/format";
+import { blogListPageCopy } from "@/lib/site-copy";
+import { formatDate } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
+import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 import { blogListSchema } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -18,6 +20,8 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
+  const language = await getServerSiteLanguage();
+  const copy = blogListPageCopy(language);
   const posts = listBlogPosts();
   const schema = blogListSchema(posts);
 
@@ -27,10 +31,10 @@ export default async function BlogPage() {
 
       <main className="w-full pb-24">
         <section className="frame-wide fade-up relative overflow-hidden rounded-[1.4rem] border border-[#3f3022] bg-[#0f1621] p-7 text-[#f4ead8] shadow-[0_48px_88px_-64px_rgba(0,0,0,0.95)] sm:p-10">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">Insights & SEO Content</p>
-          <h1 className="mt-3 text-[2.4rem] leading-[0.95] font-semibold sm:text-[3.8rem]">PortföySatış Blog</h1>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">{copy.heroKicker}</p>
+          <h1 className="mt-3 text-[2.4rem] leading-[0.95] font-semibold sm:text-[3.8rem]">{copy.heroTitle}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[#d7c8ad] sm:text-base">
-            Emlak satış operasyonu, yatırım kararları ve lokasyon trendleri üzerine yayınlanan uzman içerikler.
+            {copy.heroBody}
           </p>
         </section>
 
@@ -49,7 +53,7 @@ export default async function BlogPage() {
               />
               <div className="p-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8d7348]">
-                  {formatDateTR(post.publishedAt)} • {post.authorName}
+                  {formatDate(post.publishedAt, language)} • {post.authorName}
                 </p>
                 <h2 className="mt-2 text-[1.75rem] leading-[1.05] font-semibold text-[#1f1a14]">{post.title}</h2>
                 <p className="mt-2 text-sm leading-7 text-[#635a4e]">{post.excerpt}</p>
@@ -64,7 +68,7 @@ export default async function BlogPage() {
                   ))}
                 </div>
                 <Link href={`/blog/${post.slug}`} className="mt-3 inline-block text-sm font-semibold text-[#6b5028] underline">
-                  Yazıyı Oku
+                  {copy.read}
                 </Link>
               </div>
             </article>

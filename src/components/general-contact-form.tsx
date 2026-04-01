@@ -2,6 +2,9 @@
 
 import { FormEvent, useState } from "react";
 
+import { useSitePreferences } from "@/components/use-site-preferences";
+import { generalContactFormCopy } from "@/lib/site-copy";
+
 type PropertyOption = {
   slug: string;
   title: string;
@@ -18,6 +21,8 @@ type SubmitState =
   | { type: "error"; message: string };
 
 export function GeneralContactForm({ properties }: GeneralContactFormProps) {
+  const { language } = useSitePreferences();
+  const copy = generalContactFormCopy(language);
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -43,7 +48,7 @@ export function GeneralContactForm({ properties }: GeneralContactFormProps) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
       setStatus({
         type: "error",
-        message: payload?.message ?? "Form gönderilemedi. Lütfen tekrar deneyin.",
+        message: payload?.message ?? copy.fallbackError,
       });
       return;
     }
@@ -55,12 +60,12 @@ export function GeneralContactForm({ properties }: GeneralContactFormProps) {
 
   return (
     <section className="luxury-card p-6 sm:p-7">
-      <span className="section-kicker">İletişim</span>
+      <span className="section-kicker">{copy.kicker}</span>
       <h2 className="mt-3 text-[2rem] leading-none font-semibold text-[#1f1a14]">
-        Size Uygun Portföyü Birlikte Bulalım
+        {copy.title}
       </h2>
       <p className="mt-2 text-sm text-[#655b4f]">
-        Talebinizi bırakın, danışman ekibimiz kısa sürede sizinle iletişime geçsin.
+        {copy.body}
       </p>
 
       <form onSubmit={onSubmit} className="mt-5 grid gap-3">
@@ -71,17 +76,17 @@ export function GeneralContactForm({ properties }: GeneralContactFormProps) {
             </option>
           ))}
         </select>
-        <input required name="name" placeholder="Ad Soyad" className="input" />
-        <input required type="email" name="email" placeholder="E-posta" className="input" />
-        <input required name="phone" placeholder="Telefon" className="input" />
-        <textarea required name="message" placeholder="Talebinizi kısaca yazın" rows={4} className="input" />
+        <input required name="name" placeholder={copy.name} className="input" />
+        <input required type="email" name="email" placeholder={copy.email} className="input" />
+        <input required name="phone" placeholder={copy.phone} className="input" />
+        <textarea required name="message" placeholder={copy.message} rows={4} className="input" />
 
         <button
           type="submit"
           disabled={status.type === "loading"}
           className="cursor-pointer rounded-full bg-[#17140f] px-4 py-2 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-[#7d7365]"
         >
-          {status.type === "loading" ? "Gönderiliyor..." : "Talep Gönder"}
+          {status.type === "loading" ? copy.submitting : copy.submit}
         </button>
 
         {status.type === "success" ? <p className="text-sm text-emerald-700">{status.message}</p> : null}

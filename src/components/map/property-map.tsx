@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { LatLngTuple } from "leaflet";
 
-import { formatPrice } from "@/lib/format";
+import { PriceText } from "@/components/price-text";
+import { useSitePreferences } from "@/components/use-site-preferences";
 import type { MapPortfolio, MapStyleKey } from "@/components/map/property-map-canvas";
+import { mapComponentCopy } from "@/lib/site-copy";
+import { htmlLangForLanguage } from "@/lib/site-preferences";
 
 const PropertyMapCanvas = dynamic(
   () => import("@/components/map/property-map-canvas").then((module) => module.PropertyMapCanvas),
@@ -52,6 +55,8 @@ function averageCenter(items: MapPortfolio[]): LatLngTuple {
 }
 
 export function PropertyMap({ portfolios }: PropertyMapProps) {
+  const { language } = useSitePreferences();
+  const copy = mapComponentCopy(language);
   const [portfolioQuery, setPortfolioQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
   const [locationSearch, setLocationSearch] = useState<SearchState>({ type: "idle" });
@@ -86,7 +91,7 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
   async function handleLocationSearch() {
     const query = locationQuery.trim();
     if (!query) {
-      setLocationSearch({ type: "error", message: "Lütfen bir konum girin." });
+      setLocationSearch({ type: "error", message: copy.enterLocation });
       return;
     }
 
@@ -97,20 +102,20 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
         `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
         {
           headers: {
-            "Accept-Language": "tr",
+            "Accept-Language": htmlLangForLanguage(language),
           },
         },
       );
 
       if (!response.ok) {
-        throw new Error("Konum aranırken hata oluştu.");
+        throw new Error(copy.searchError);
       }
 
       const results = (await response.json()) as Array<{ lat: string; lon: string }>;
       const first = results[0];
 
       if (!first) {
-        setLocationSearch({ type: "error", message: "Konum bulunamadı. Daha net arayın." });
+        setLocationSearch({ type: "error", message: copy.locationNotFound });
         return;
       }
 
@@ -118,7 +123,7 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
       setViewZoom(13);
       setLocationSearch({ type: "idle" });
     } catch {
-      setLocationSearch({ type: "error", message: "Konum servisine ulaşılamadı." });
+      setLocationSearch({ type: "error", message: copy.serviceUnavailable });
     }
   }
 
@@ -126,25 +131,25 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
     <section className="luxury-card p-4 sm:p-6" id="harita">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <span className="section-kicker">Harita Üzerinden Keşfet</span>
+          <span className="section-kicker">{copy.kicker}</span>
           <h2 className="mt-2 text-[2rem] leading-none font-semibold text-[#1f1a14]">
-            Portföy Lokasyon Haritası
+            {copy.title}
           </h2>
           <p className="mt-2 text-sm text-[#655c50]">
-            Haritada ilanları görün, konum araması yapın ve ilgili portföye doğrudan gidin.
+            {copy.body}
           </p>
         </div>
-        <p className="text-sm text-[#6d6356]">{filteredPortfolios.length} sonuç</p>
+        <p className="text-sm text-[#6d6356]">{filteredPortfolios.length} {copy.results}</p>
       </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7e6d53]">
-          Harita Görünümü
+          {copy.mapStyle}
         </p>
         {[
-          { key: "minimal", label: "Minimal" },
-          { key: "koyu", label: "Koyu" },
-          { key: "uydu", label: "Uydu" },
+          { key: "minimal", label: copy.styles.minimal },
+          { key: "koyu", label: copy.styles.koyu },
+          { key: "uydu", label: copy.styles.uydu },
         ].map((style) => (
           <button
             key={style.key}
@@ -167,7 +172,7 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
             <input
               value={portfolioQuery}
               onChange={(event) => setPortfolioQuery(event.target.value)}
-              placeholder="Portföy ara (başlık, ilçe, kod)"
+              placeholder={copy.listingSearch}
               className="input"
             />
             <button
@@ -179,7 +184,7 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
               }}
               className="cursor-pointer rounded-full border border-[#d2c4af] px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#6f5a3c] transition hover:bg-[#f1e6d5]"
             >
-              Temizle
+              {copy.clear}
             </button>
           </div>
 
@@ -187,7 +192,7 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
             <input
               value={locationQuery}
               onChange={(event) => setLocationQuery(event.target.value)}
-              placeholder="Haritada konum ara (örn. Nişantaşı, İstanbul)"
+              placeholder={copy.locationSearch}
               className="input"
             />
             <button
@@ -195,7 +200,7 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
               onClick={handleLocationSearch}
               className="cursor-pointer rounded-full bg-[#17140f] px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-black"
             >
-              Konum Ara
+              {copy.searchLocation}
             </button>
           </div>
 
@@ -213,7 +218,7 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
 
         <aside className="rounded-2xl border border-[#d9cdbb] bg-[#fffdf8] p-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8a6f45]">
-            Harita Sonuçları
+            {copy.mapResults}
           </p>
 
           <div className="mt-3 space-y-2">
@@ -226,16 +231,16 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
                 <p className="mt-1 text-xs text-[#6d6253]">
                   {portfolio.city} / {portfolio.district}
                 </p>
-                <p className="mt-1 text-xs font-semibold text-[#6a4f22]">{formatPrice(portfolio.price)}</p>
+                <p className="mt-1 text-xs font-semibold text-[#6a4f22]"><PriceText amount={portfolio.price} /></p>
                 <Link href={`/ilan/${portfolio.slug}`} className="mt-1 inline-block text-xs font-semibold underline">
-                  Portföyü Aç
+                  {copy.openListing}
                 </Link>
               </article>
             ))}
 
             {filteredPortfolios.length === 0 ? (
               <p className="rounded-xl border border-dashed border-[#d8cbb7] p-3 text-xs text-[#6d6253]">
-                Haritada gösterilecek sonuç yok.
+                {copy.noMapResults}
               </p>
             ) : null}
           </div>
