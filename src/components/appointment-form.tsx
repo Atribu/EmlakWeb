@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 
 type AppointmentFormProps = {
   propertySlug: string;
@@ -17,8 +17,6 @@ const visitTypes = ["Yerinde ziyaret", "Video görüşme", "Ofiste toplantı"];
 
 export function AppointmentForm({ propertySlug, propertyTitle }: AppointmentFormProps) {
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
-
-  const minDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,7 +68,7 @@ export function AppointmentForm({ propertySlug, propertyTitle }: AppointmentForm
         <input required name="phone" placeholder="Telefon" className="input" />
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <input required type="date" min={minDate} name="preferredDate" className="input" />
+          <input required type="date" name="preferredDate" className="input" />
           <input required type="time" name="preferredTime" className="input" />
         </div>
 

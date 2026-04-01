@@ -1,0 +1,39 @@
+[
+  {
+    "id": "usr-portal-1",
+    "name": "Oguz Kilinc",
+    "role": "portal_admin",
+    "email": "oguzkilinc.ant@gmail.com",
+    "phone": "+90 555 000 00 00",
+    "username": "oguzkilinc.ant@gmail.com",
+    "password": "qweasd11."
+  },
+  {
+    "id": "usr-1",
+    "name": "Operasyon Admin",
+    "role": "admin",
+    "email": "admin@demolanding.com",
+    "phone": "+90 212 900 00 01",
+    "username": "admin",
+    "password": "admin123"
+  },
+  {
+    "id": "usr-2",
+    "name": "Ayşe Demir",
+    "role": "portfolio_manager",
+    "email": "ayse.demir@demolanding.com",
+    "phone": "+90 532 111 22 33",
+    "username": "ayse",
+    "password": "ayse123",
+    "advisorId": "adv-1"
+  },
+  {
+    "id": "usr-3",
+    "name": "İçerik Editörü",
+    "role": "editor",
+    "email": "icerik@demolanding.com",
+    "phone": "+90 212 900 00 03",
+    "username": "icerik",
+    "password": "icerik123"
+  }
+]

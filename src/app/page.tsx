@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { PropertyCard } from "@/components/property-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser } from "@/lib/auth";
 import { listAdvisors, listProperties } from "@/lib/data-store";
 import { formatPrice } from "@/lib/format";
+import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { homeListingSchema } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -16,8 +17,6 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [currentUser] = await Promise.all([getCurrentUser()]);
-
   const properties = listProperties();
   const advisors = listAdvisors();
   const advisorMap = new Map(advisors.map((advisor) => [advisor.id, advisor]));
@@ -28,7 +27,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader />
 
       <main className="w-full pb-24">
         <section className="frame-wide fade-up relative min-h-[88vh] overflow-hidden rounded-[1.6rem] border border-[#3f3022] bg-[#0d151f] shadow-[0_58px_102px_-68px_rgba(0,0,0,0.95)]">
@@ -37,7 +36,7 @@ export default async function HomePage() {
             loop
             muted
             playsInline
-            preload="metadata"
+            preload="none"
             poster={heroImage}
             className="absolute inset-0 h-full w-full object-cover"
           >
@@ -121,9 +120,14 @@ export default async function HomePage() {
 
           {heroProperty ? (
             <article className="relative overflow-hidden rounded-[1.2rem] border border-[#403123] bg-[#0e151f] shadow-[0_34px_60px_-44px_rgba(0,0,0,0.92)]">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${heroProperty.coverImage})` }}
+              <Image
+                src={heroProperty.coverImage}
+                alt={heroProperty.title}
+                fetchPriority="low"
+                unoptimized={isUnoptimizedImageSrc(heroProperty.coverImage)}
+                fill
+                sizes="(max-width: 1280px) 100vw, 36vw"
+                className="absolute inset-0 object-cover"
               />
               <div className="hero-overlay absolute inset-0" />
 
@@ -156,7 +160,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-5 xl:grid-cols-2">
             {featured.map((property) => (
               <PropertyCard key={property.id} property={property} advisor={advisorMap.get(property.advisorId)} />
             ))}

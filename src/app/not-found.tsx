@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 export default function NotFound() {
   return (
     <div className="min-h-screen">
-      <SiteHeader user={null} />
+      <SiteHeader />
       <main className="mx-auto flex w-full max-w-4xl flex-col items-center px-4 py-20 text-center sm:px-6">
         <p className="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-rose-700">
           404

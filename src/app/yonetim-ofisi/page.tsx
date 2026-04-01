@@ -3,12 +3,27 @@ import { redirect } from "next/navigation";
 
 import { AdvisorEditor } from "@/components/panel/advisor-editor";
 import { AdvisorManagement } from "@/components/panel/advisor-management";
+import { BlogDelete } from "@/components/panel/blog-delete";
 import { BlogEditor } from "@/components/panel/blog-editor";
 import { BlogForm } from "@/components/panel/blog-form";
 import { LeadPipelineBoard } from "@/components/panel/lead-pipeline-board";
+import { PortfolioDelete } from "@/components/panel/portfolio-delete";
 import { PortfolioEditor } from "@/components/panel/portfolio-editor";
 import { PortfolioForm } from "@/components/panel/portfolio-form";
+import { UserManagement } from "@/components/panel/user-management";
 import { SiteHeader } from "@/components/site-header";
+import {
+  assignableUserRoles,
+  canAccessOverview,
+  canCreateOrEditPortfolios,
+  canDeletePortfolios,
+  canManageAdvisors,
+  canManageBlogs,
+  canManageLeads,
+  canManageUsers,
+  filterLeadsForActor,
+  filterUsersForActor,
+} from "@/lib/access-control";
 import { getCurrentUser } from "@/lib/auth";
 import {
   dashboardSummary,
@@ -19,18 +34,21 @@ import {
   listProperties,
   listUsers,
 } from "@/lib/data-store";
-import { roleLabel } from "@/lib/format";
+import { formatDateTR, roleLabel } from "@/lib/format";
 import type { LeadStage } from "@/lib/types";
 
 type PanelTab =
   | "overview"
   | "portfolio-create"
   | "portfolio-edit"
+  | "portfolio-delete"
   | "blog-create"
   | "blog-edit"
+  | "blog-delete"
   | "advisor-manage"
   | "advisor-edit"
-  | "leads";
+  | "leads"
+  | "user-manage";
 
 type AdminOfficePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -40,22 +58,59 @@ const panelTabs: Array<{ id: PanelTab; label: string; hint: string }> = [
   { id: "overview", label: "Genel Bakış", hint: "Özet ve hızlı tablolar" },
   { id: "portfolio-create", label: "Portföy Yükle", hint: "Yeni ilan oluştur" },
   { id: "portfolio-edit", label: "Portföy Düzenle", hint: "Mevcut ilanı güncelle" },
+  { id: "portfolio-delete", label: "Portföy Sil", hint: "Yayındaki ilanı kaldır" },
   { id: "blog-create", label: "Blog Ekle", hint: "SEO içerik yayınla" },
   { id: "blog-edit", label: "Blog Düzenle", hint: "Yayınlanan yazıyı güncelle" },
+  { id: "blog-delete", label: "Blog Sil", hint: "Yayındaki yazıyı kaldır" },
   { id: "advisor-manage", label: "Danışman Ekle/Sil", hint: "Kayıt yönetimi" },
   { id: "advisor-edit", label: "Danışman Düzenle", hint: "Bilgileri güncelle" },
   { id: "leads", label: "CRM Lead Pipeline", hint: "Aşama takibi" },
+  { id: "user-manage", label: "Kullanıcı Yönetimi", hint: "Hesap ve rol oluştur" },
 ];
 
 const defaultTab: PanelTab = "overview";
 
-function resolveTab(value: string | undefined): PanelTab {
-  if (!value) {
-    return defaultTab;
+function visibleTabsForRole(role: string): PanelTab[] {
+  const output: PanelTab[] = [];
+
+  if (canAccessOverview(role)) {
+    output.push("overview");
   }
 
-  const matched = panelTabs.find((item) => item.id === value);
-  return matched ? matched.id : defaultTab;
+  if (canCreateOrEditPortfolios(role)) {
+    output.push("portfolio-create", "portfolio-edit");
+  }
+
+  if (canDeletePortfolios(role)) {
+    output.push("portfolio-delete");
+  }
+
+  if (canManageBlogs(role)) {
+    output.push("blog-create", "blog-edit", "blog-delete");
+  }
+
+  if (canManageAdvisors(role)) {
+    output.push("advisor-manage", "advisor-edit");
+  }
+
+  if (canManageLeads(role)) {
+    output.push("leads");
+  }
+
+  if (canManageUsers(role)) {
+    output.push("user-manage");
+  }
+
+  return output;
+}
+
+function resolveTab(value: string | undefined, allowedTabs: PanelTab[]): PanelTab {
+  if (!value) {
+    return allowedTabs[0] ?? defaultTab;
+  }
+
+  const matched = allowedTabs.find((item) => item === value);
+  return matched ?? allowedTabs[0] ?? defaultTab;
 }
 
 export default async function AdminOfficePage({ searchParams }: AdminOfficePageProps) {
@@ -68,27 +123,30 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
   const resolvedSearchParams = await searchParams;
   const requestedTabRaw = resolvedSearchParams.tab;
   const requestedTab = Array.isArray(requestedTabRaw) ? requestedTabRaw[0] : requestedTabRaw;
-  const activeTab = resolveTab(requestedTab);
+  const allowedTabs = visibleTabsForRole(currentUser.role);
+  const activeTab = resolveTab(requestedTab, allowedTabs);
+  const visibleTabs = panelTabs.filter((tab) => allowedTabs.includes(tab.id));
 
   const advisors = listAdvisors();
   const properties = listProperties();
-  const users = listUsers();
+  const allUsers = listUsers();
+  const users = filterUsersForActor(currentUser, allUsers);
   const summary = dashboardSummary();
   const blogPosts = listBlogPosts();
-  const leads = listLeads();
+  const allLeads = listLeads();
+  const leads = filterLeadsForActor(currentUser, allLeads);
   const stageSummary = leadStageSummary();
-  const appointmentLeadCount = leads.filter((lead) => lead.source === "appointment_form").length;
+  const appointmentLeadCount = allLeads.filter((lead) => lead.source === "appointment_form").length;
   const advisorStats = advisors.map((advisor) => ({
     ...advisor,
     propertyCount: properties.filter((property) => property.advisorId === advisor.id).length,
-    linkedUserCount: users.filter((user) => user.advisorId === advisor.id).length,
+    linkedUserCount: allUsers.filter((user) => user.advisorId === advisor.id).length,
   }));
   const advisorMap = new Map(advisors.map((advisor) => [advisor.id, advisor]));
-  const canManageLeads = currentUser.role === "admin" || currentUser.role === "advisor";
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader initialUser={currentUser} />
 
       <main className="mx-auto w-full max-w-[1320px] px-4 pb-12 pt-6 sm:px-6">
         <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -99,7 +157,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
             </p>
 
             <nav className="mt-5 space-y-2">
-              {panelTabs.map((tab) => {
+              {visibleTabs.map((tab) => {
                 const isActive = tab.id === activeTab;
                 return (
                   <Link
@@ -134,22 +192,49 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
 
             {activeTab === "portfolio-create" ? <PortfolioForm advisors={advisors} /> : null}
             {activeTab === "portfolio-edit" ? <PortfolioEditor initialProperties={properties} advisors={advisors} /> : null}
+            {activeTab === "portfolio-delete" ? (
+              <PortfolioDelete
+                initialProperties={properties}
+                advisors={advisors}
+                canManage={canDeletePortfolios(currentUser.role)}
+              />
+            ) : null}
             {activeTab === "blog-create" ? <BlogForm defaultAuthorName={currentUser.name} /> : null}
             {activeTab === "blog-edit" ? <BlogEditor initialPosts={blogPosts} /> : null}
+            {activeTab === "blog-delete" ? (
+              <BlogDelete
+                initialPosts={blogPosts}
+                canManage={canManageBlogs(currentUser.role)}
+              />
+            ) : null}
             {activeTab === "advisor-manage" ? (
-              <AdvisorManagement initialAdvisors={advisorStats} canManage={currentUser.role === "admin"} />
+              <AdvisorManagement
+                initialAdvisors={advisorStats}
+                canManage={canManageAdvisors(currentUser.role)}
+              />
             ) : null}
             {activeTab === "advisor-edit" ? (
-              <AdvisorEditor initialAdvisors={advisors} canManage={currentUser.role === "admin"} />
+              <AdvisorEditor
+                initialAdvisors={advisors}
+                canManage={canManageAdvisors(currentUser.role)}
+              />
             ) : null}
             {activeTab === "leads" ? (
-              canManageLeads ? (
-                <LeadPipelineBoard initialLeads={leads} properties={properties} />
+              canManageLeads(currentUser.role) ? (
+                <LeadPipelineBoard initialLeads={leads} properties={properties} currentUser={currentUser} advisors={advisors} />
               ) : (
                 <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-                  CRM Pipeline sadece admin ve danışman rolünde kullanılabilir.
+                  CRM Pipeline sadece portal admin, admin ve danışman rolünde kullanılabilir.
                 </section>
               )
+            ) : null}
+            {activeTab === "user-manage" ? (
+              <UserManagement
+                currentUser={currentUser}
+                initialUsers={users}
+                assignableRoles={assignableUserRoles(currentUser.role)}
+                advisors={advisors}
+              />
             ) : null}
           </section>
         </div>
@@ -207,7 +292,7 @@ function OverviewSection({
       <section className="grid gap-6 xl:grid-cols-2">
         <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="text-xl font-semibold tracking-tight text-slate-900">Kullanıcı Rolleri</h3>
-          <p className="mt-2 text-sm text-slate-600">Admin, danışman ve içerik yükleyici hesapları.</p>
+          <p className="mt-2 text-sm text-slate-600">Portal admin, admin, danışman, portföy ve içerik hesapları.</p>
 
           <ul className="mt-4 space-y-3">
             {users.map((user) => (
@@ -284,7 +369,7 @@ function OverviewSection({
                     </Link>
                   </td>
                   <td className="py-2 pr-3">{post.authorName}</td>
-                  <td className="py-2 pr-3">{new Date(post.publishedAt).toLocaleDateString("tr-TR")}</td>
+                  <td className="py-2 pr-3">{formatDateTR(post.publishedAt)}</td>
                   <td className="py-2 pr-3 text-emerald-700">Meta Hazır</td>
                 </tr>
               ))}

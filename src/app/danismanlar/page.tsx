@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser } from "@/lib/auth";
 import { listAdvisors, listProperties } from "@/lib/data-store";
 import { formatPhoneForHref } from "@/lib/format";
+import { isUnoptimizedImageSrc } from "@/lib/image-src";
 
 export const metadata: Metadata = {
   title: "Danışmanlar | PortföySatış",
@@ -12,14 +13,12 @@ export const metadata: Metadata = {
 };
 
 export default async function DanismanlarPage() {
-  const [currentUser] = await Promise.all([getCurrentUser()]);
-
   const advisors = listAdvisors();
   const properties = listProperties();
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader />
 
       <main className="w-full pb-24">
         <section className="frame-wide fade-up relative overflow-hidden rounded-[1.4rem] border border-[#3f3022] bg-[#0f1621] p-7 text-[#f4ead8] shadow-[0_48px_88px_-64px_rgba(0,0,0,0.95)] sm:p-10">
@@ -37,7 +36,19 @@ export default async function DanismanlarPage() {
             const whatsappHref = `https://wa.me/${formatPhoneForHref(advisor.whatsapp)}`;
 
             return (
-              <article key={advisor.id} className="luxury-card p-5">
+              <article key={advisor.id} className="luxury-card overflow-hidden p-5">
+                <div className="mb-5 overflow-hidden rounded-[1.35rem] border border-[#deceb7] bg-[#f9f2e7]">
+                  <Image
+                    src={advisor.image}
+                    alt={advisor.name}
+                    fetchPriority="low"
+                    unoptimized={isUnoptimizedImageSrc(advisor.image)}
+                    width={900}
+                    height={720}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    className="h-72 w-full object-cover"
+                  />
+                </div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8d7348]">Portföy Danışmanı</p>
                 <h2 className="mt-2 text-[2rem] leading-none font-semibold text-[#1f1a14]">{advisor.name}</h2>
                 <p className="mt-1 text-sm text-[#5f5548]">{advisor.title}</p>

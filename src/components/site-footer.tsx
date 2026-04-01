@@ -31,7 +31,7 @@ export function SiteFooter() {
       </div>
 
       <div className="mt-4 flex flex-col gap-3 border-t border-[#e5dbc9] pt-4 text-sm sm:flex-row sm:items-center sm:justify-between">
-        <p>© {new Date().getFullYear()} PortföySatış. Tüm hakları saklıdır.</p>
+        <p suppressHydrationWarning>© {new Date().getFullYear()} PortföySatış. Tüm hakları saklıdır.</p>
         <Link
           href="/yetkili-giris"
           className="w-fit rounded-full border border-[#ccb795] px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6f5b3d] transition hover:bg-[#f3eadc]"

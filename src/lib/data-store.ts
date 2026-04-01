@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { initialAdvisors, initialBlogPosts, initialProperties, initialUsers } from "@/lib/mock-data";
+import { pickSampleAdvisorImageForSeed } from "@/lib/sample-advisor-images";
 import { pickSampleImageSet } from "@/lib/sample-images";
 import type {
   Advisor,
@@ -11,11 +12,13 @@ import type {
   CreateBlogPostInput,
   CreateLeadInput,
   CreatePropertyInput,
+  CreateUserInput,
   LeadStage,
   Property,
   PropertyFilter,
   SafeUser,
   User,
+  UserRole,
 } from "@/lib/types";
 
 const cityNormalizer: Record<string, string> = {
@@ -36,7 +39,43 @@ const store = {
 };
 
 const demoDataDir = path.join(process.cwd(), ".demo-data");
+const advisorStorePath = path.join(demoDataDir, "advisors.json");
+const propertyStorePath = path.join(demoDataDir, "properties.json");
 const blogStorePath = path.join(demoDataDir, "blog-posts.json");
+const userStorePath = path.join(demoDataDir, "users.json");
+const leadStorePath = path.join(demoDataDir, "leads.json");
+
+type DiskCacheKey = "advisors" | "properties" | "blogPosts" | "users" | "leads";
+
+const diskCacheState: Record<DiskCacheKey, { initialized: boolean; mtimeMs: number | null }> = {
+  advisors: { initialized: false, mtimeMs: null },
+  properties: { initialized: false, mtimeMs: null },
+  blogPosts: { initialized: false, mtimeMs: null },
+  users: { initialized: false, mtimeMs: null },
+  leads: { initialized: false, mtimeMs: null },
+};
+
+function fileMtimeMs(filePath: string): number | null {
+  try {
+    return fs.statSync(filePath).mtimeMs;
+  } catch {
+    return null;
+  }
+}
+
+function hasDiskResourceChanged(key: DiskCacheKey, filePath: string): boolean {
+  const nextMtimeMs = fileMtimeMs(filePath);
+  const cache = diskCacheState[key];
+  const changed = !cache.initialized || cache.mtimeMs !== nextMtimeMs;
+  cache.initialized = true;
+  cache.mtimeMs = nextMtimeMs;
+  return changed;
+}
+
+function rememberDiskResourceState(key: DiskCacheKey, filePath: string) {
+  diskCacheState[key].initialized = true;
+  diskCacheState[key].mtimeMs = fileMtimeMs(filePath);
+}
 
 function ensureDemoDataDir() {
   if (!fs.existsSync(demoDataDir)) {
@@ -48,8 +87,249 @@ function writeBlogPostsToDisk(posts: BlogPost[]) {
   try {
     ensureDemoDataDir();
     fs.writeFileSync(blogStorePath, JSON.stringify(posts, null, 2), "utf-8");
+    rememberDiskResourceState("blogPosts", blogStorePath);
   } catch (error) {
     console.error("[demo-blog-store-write-error]", error);
+  }
+}
+
+function writeAdvisorsToDisk(advisors: Advisor[]) {
+  try {
+    ensureDemoDataDir();
+    fs.writeFileSync(advisorStorePath, JSON.stringify(advisors, null, 2), "utf-8");
+    rememberDiskResourceState("advisors", advisorStorePath);
+  } catch (error) {
+    console.error("[demo-advisor-store-write-error]", error);
+  }
+}
+
+function writePropertiesToDisk(properties: Property[]) {
+  try {
+    ensureDemoDataDir();
+    fs.writeFileSync(propertyStorePath, JSON.stringify(properties, null, 2), "utf-8");
+    rememberDiskResourceState("properties", propertyStorePath);
+  } catch (error) {
+    console.error("[demo-property-store-write-error]", error);
+  }
+}
+
+function writeUsersToDisk(users: User[]) {
+  try {
+    ensureDemoDataDir();
+    fs.writeFileSync(userStorePath, JSON.stringify(users, null, 2), "utf-8");
+    rememberDiskResourceState("users", userStorePath);
+  } catch (error) {
+    console.error("[demo-user-store-write-error]", error);
+  }
+}
+
+function writeLeadsToDisk(leads: ContactLead[]) {
+  try {
+    ensureDemoDataDir();
+    fs.writeFileSync(leadStorePath, JSON.stringify(leads, null, 2), "utf-8");
+    rememberDiskResourceState("leads", leadStorePath);
+  } catch (error) {
+    console.error("[demo-lead-store-write-error]", error);
+  }
+}
+
+function readPropertiesFromDisk(): Property[] | null {
+  try {
+    if (!fs.existsSync(propertyStorePath)) {
+      return null;
+    }
+
+    const raw = fs.readFileSync(propertyStorePath, "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    const valid = parsed.filter((item) => item && typeof item === "object") as Property[];
+    return valid;
+  } catch (error) {
+    console.error("[demo-property-store-read-error]", error);
+    return null;
+  }
+}
+
+function readAdvisorsFromDisk(): Advisor[] | null {
+  try {
+    if (!fs.existsSync(advisorStorePath)) {
+      return null;
+    }
+
+    const raw = fs.readFileSync(advisorStorePath, "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    const valid = parsed
+      .filter((item) => item && typeof item === "object")
+      .map((item, index) => {
+        const advisor = item as Advisor & { image?: string };
+        return {
+          ...advisor,
+          image:
+            typeof advisor.image === "string" && advisor.image.trim()
+              ? advisor.image.trim()
+              : pickSampleAdvisorImageForSeed(`${advisor.id ?? advisor.email ?? index}`),
+        } satisfies Advisor;
+      });
+    return valid;
+  } catch (error) {
+    console.error("[demo-advisor-store-read-error]", error);
+    return null;
+  }
+}
+
+function normalizeStoredUserRole(role: unknown): UserRole {
+  if (
+    role === "portal_admin" ||
+    role === "admin" ||
+    role === "portfolio_manager" ||
+    role === "advisor" ||
+    role === "editor"
+  ) {
+    return role;
+  }
+
+  return "editor";
+}
+
+function readUsersFromDisk(): User[] | null {
+  try {
+    if (!fs.existsSync(userStorePath)) {
+      return null;
+    }
+
+    const raw = fs.readFileSync(userStorePath, "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    return parsed
+      .filter((item) => item && typeof item === "object")
+      .map((item, index) => {
+        const user = item as Partial<User> & { role?: unknown };
+        const email =
+          typeof user.email === "string" && user.email.trim()
+            ? user.email.trim().toLocaleLowerCase("tr")
+            : `kullanici-${index + 1}@ornek.com`;
+
+        return {
+          id: typeof user.id === "string" && user.id.trim() ? user.id.trim() : `usr-${crypto.randomUUID()}`,
+          name: typeof user.name === "string" && user.name.trim() ? user.name.trim() : `Kullanıcı ${index + 1}`,
+          role: normalizeStoredUserRole(user.role),
+          email,
+          phone: typeof user.phone === "string" ? user.phone.trim() : "",
+          username:
+            typeof user.username === "string" && user.username.trim()
+              ? user.username.trim()
+              : email,
+          password: typeof user.password === "string" ? user.password : "",
+          advisorId:
+            typeof user.advisorId === "string" && user.advisorId.trim()
+              ? user.advisorId.trim()
+              : undefined,
+        } satisfies User;
+      });
+  } catch (error) {
+    console.error("[demo-user-store-read-error]", error);
+    return null;
+  }
+}
+
+function syncAdvisorsFromDisk() {
+  if (!hasDiskResourceChanged("advisors", advisorStorePath)) {
+    return;
+  }
+
+  const diskAdvisors = readAdvisorsFromDisk();
+
+  if (diskAdvisors) {
+    store.advisors = diskAdvisors;
+    return;
+  }
+
+  if (!fs.existsSync(advisorStorePath)) {
+    writeAdvisorsToDisk(store.advisors);
+  }
+}
+
+function syncUsersFromDisk() {
+  if (!hasDiskResourceChanged("users", userStorePath)) {
+    return;
+  }
+
+  const diskUsers = readUsersFromDisk();
+
+  if (diskUsers) {
+    store.users = diskUsers;
+    return;
+  }
+
+  if (!fs.existsSync(userStorePath)) {
+    writeUsersToDisk(store.users);
+  }
+}
+
+function readLeadsFromDisk(): ContactLead[] | null {
+  try {
+    if (!fs.existsSync(leadStorePath)) {
+      return null;
+    }
+
+    const raw = fs.readFileSync(leadStorePath, "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    return parsed.filter((item) => item && typeof item === "object") as ContactLead[];
+  } catch (error) {
+    console.error("[demo-lead-store-read-error]", error);
+    return null;
+  }
+}
+
+function syncLeadsFromDisk() {
+  if (!hasDiskResourceChanged("leads", leadStorePath)) {
+    return;
+  }
+
+  const diskLeads = readLeadsFromDisk();
+
+  if (diskLeads) {
+    store.leads = diskLeads;
+    return;
+  }
+
+  if (!fs.existsSync(leadStorePath)) {
+    writeLeadsToDisk(store.leads);
+  }
+}
+
+function syncPropertiesFromDisk() {
+  if (!hasDiskResourceChanged("properties", propertyStorePath)) {
+    return;
+  }
+
+  const diskProperties = readPropertiesFromDisk();
+
+  if (diskProperties) {
+    store.properties = diskProperties;
+    return;
+  }
+
+  if (!fs.existsSync(propertyStorePath)) {
+    writePropertiesToDisk(store.properties);
   }
 }
 
@@ -75,9 +355,13 @@ function readBlogPostsFromDisk(): BlogPost[] | null {
 }
 
 function syncBlogPostsFromDisk() {
+  if (!hasDiskResourceChanged("blogPosts", blogStorePath)) {
+    return;
+  }
+
   const diskPosts = readBlogPostsFromDisk();
 
-  if (diskPosts && diskPosts.length > 0) {
+  if (diskPosts) {
     store.blogPosts = diskPosts;
     return;
   }
@@ -191,14 +475,17 @@ function inferCoordinates(input: CreatePropertyInput): { latitude: number; longi
 }
 
 export function listAdvisors(): Advisor[] {
+  syncAdvisorsFromDisk();
   return [...store.advisors];
 }
 
 export function getAdvisorById(advisorId: string): Advisor | undefined {
+  syncAdvisorsFromDisk();
   return store.advisors.find((advisor) => advisor.id === advisorId);
 }
 
 function advisorUsage(advisorId: string): { propertyCount: number; linkedUserCount: number } {
+  syncUsersFromDisk();
   return {
     propertyCount: store.properties.filter((property) => property.advisorId === advisorId).length,
     linkedUserCount: store.users.filter((user) => user.advisorId === advisorId).length,
@@ -206,6 +493,7 @@ function advisorUsage(advisorId: string): { propertyCount: number; linkedUserCou
 }
 
 export function createAdvisor(input: CreateAdvisorInput): Advisor {
+  syncAdvisorsFromDisk();
   const name = input.name.trim();
   const title = input.title.trim();
   const phone = input.phone.trim();
@@ -232,13 +520,16 @@ export function createAdvisor(input: CreateAdvisorInput): Advisor {
     whatsapp,
     email,
     focusArea,
+    image: input.image || pickSampleAdvisorImageForSeed(email),
   };
 
   store.advisors.unshift(advisor);
+  writeAdvisorsToDisk(store.advisors);
   return advisor;
 }
 
 export function updateAdvisorById(advisorId: string, input: CreateAdvisorInput): Advisor {
+  syncAdvisorsFromDisk();
   const advisor = getAdvisorById(advisorId);
   if (!advisor) {
     throw new Error("Danışman bulunamadı.");
@@ -268,11 +559,14 @@ export function updateAdvisorById(advisorId: string, input: CreateAdvisorInput):
   advisor.whatsapp = whatsapp;
   advisor.email = email;
   advisor.focusArea = focusArea;
+  advisor.image = input.image || advisor.image;
+  writeAdvisorsToDisk(store.advisors);
 
   return advisor;
 }
 
 export function deleteAdvisor(advisorId: string): Advisor {
+  syncAdvisorsFromDisk();
   const advisorIndex = store.advisors.findIndex((advisor) => advisor.id === advisorId);
   if (advisorIndex === -1) {
     throw new Error("Danışman bulunamadı.");
@@ -292,10 +586,12 @@ export function deleteAdvisor(advisorId: string): Advisor {
   }
 
   const [removed] = store.advisors.splice(advisorIndex, 1);
+  writeAdvisorsToDisk(store.advisors);
   return removed;
 }
 
 export function listProperties(filter: PropertyFilter = {}): Property[] {
+  syncPropertiesFromDisk();
   const query = filter.query ? normalizeText(filter.query) : "";
 
   return store.properties
@@ -344,10 +640,12 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
 }
 
 export function getPropertyBySlug(slug: string): Property | undefined {
+  syncPropertiesFromDisk();
   return store.properties.find((property) => property.slug === slug);
 }
 
 export function createProperty(input: CreatePropertyInput, actorId: string): Property {
+  syncPropertiesFromDisk();
   const advisor = getAdvisorById(input.advisorId);
   if (!advisor) {
     throw new Error("Seçilen danışman bulunamadı.");
@@ -372,6 +670,7 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
   };
 
   store.properties.unshift(property);
+  writePropertiesToDisk(store.properties);
 
   // Demo store keeps local state only while server process is alive.
   void actorId;
@@ -380,6 +679,7 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
 }
 
 export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): Property {
+  syncPropertiesFromDisk();
   const property = getPropertyBySlug(slug);
   if (!property) {
     throw new Error("Portföy bulunamadı.");
@@ -416,32 +716,53 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
   property.coverImage = input.coverImage || property.coverImage;
   property.galleryImages = input.galleryImages.length > 0 ? input.galleryImages : property.galleryImages;
   property.imageLabels = input.imageLabels.length > 0 ? input.imageLabels : property.imageLabels;
+  writePropertiesToDisk(store.properties);
 
   return property;
 }
 
+export function deletePropertyBySlug(slug: string): Property {
+  syncPropertiesFromDisk();
+  const propertyIndex = store.properties.findIndex((property) => property.slug === slug);
+
+  if (propertyIndex === -1) {
+    throw new Error("Portföy bulunamadı.");
+  }
+
+  const [removed] = store.properties.splice(propertyIndex, 1);
+  writePropertiesToDisk(store.properties);
+
+  return removed;
+}
+
 export function listCities(): string[] {
+  syncPropertiesFromDisk();
   return Array.from(new Set(store.properties.map((property) => property.city))).sort((a, b) =>
     a.localeCompare(b, "tr"),
   );
 }
 
 export function listTypes(): string[] {
+  syncPropertiesFromDisk();
   return Array.from(new Set(store.properties.map((property) => property.type))).sort((a, b) =>
     a.localeCompare(b, "tr"),
   );
 }
 
 export function listRoomOptions(): string[] {
+  syncPropertiesFromDisk();
   return Array.from(new Set(store.properties.map((property) => property.rooms))).sort((a, b) =>
     a.localeCompare(b, "tr"),
   );
 }
 
-export function authenticateUser(username: string, password: string): SafeUser | null {
+export function authenticateUser(identifier: string, password: string): SafeUser | null {
+  syncUsersFromDisk();
+  const normalizedIdentifier = identifier.toLocaleLowerCase("tr");
   const user = store.users.find(
     (candidate) =>
-      candidate.username.toLocaleLowerCase("tr") === username.toLocaleLowerCase("tr") &&
+      (candidate.username.toLocaleLowerCase("tr") === normalizedIdentifier ||
+        candidate.email.toLocaleLowerCase("tr") === normalizedIdentifier) &&
       candidate.password === password,
   );
 
@@ -449,15 +770,124 @@ export function authenticateUser(username: string, password: string): SafeUser |
 }
 
 export function getUserById(userId: string): SafeUser | null {
+  syncUsersFromDisk();
   const user = store.users.find((candidate) => candidate.id === userId);
   return user ? toSafeUser(user) : null;
 }
 
 export function listUsers(): SafeUser[] {
-  return store.users.map(toSafeUser);
+  syncUsersFromDisk();
+  const roleOrder: Record<string, number> = {
+    portal_admin: 0,
+    admin: 1,
+    portfolio_manager: 2,
+    advisor: 2,
+    editor: 3,
+  };
+
+  return [...store.users]
+    .sort((left, right) => {
+      const roleDiff = (roleOrder[left.role] ?? 99) - (roleOrder[right.role] ?? 99);
+      if (roleDiff !== 0) {
+        return roleDiff;
+      }
+
+      return left.name.localeCompare(right.name, "tr");
+    })
+    .map(toSafeUser);
+}
+
+export function createUser(input: CreateUserInput): SafeUser {
+  syncUsersFromDisk();
+  syncAdvisorsFromDisk();
+  const name = input.name.trim();
+  const email = input.email.trim().toLocaleLowerCase("tr");
+  const phone = input.phone.trim();
+  const password = input.password.trim();
+  const role = input.role;
+  const advisorId = input.advisorId?.trim() || undefined;
+
+  if (!name || !email || !phone || !password || !role) {
+    throw new Error("Kullanıcı alanları eksik.");
+  }
+
+  if (!["portal_admin", "admin", "portfolio_manager", "advisor", "editor"].includes(role)) {
+    throw new Error("Geçersiz kullanıcı rolü.");
+  }
+
+  if (password.length < 6) {
+    throw new Error("Şifre en az 6 karakter olmalıdır.");
+  }
+
+  const duplicateEmail = store.users.some(
+    (user) =>
+      user.email.toLocaleLowerCase("tr") === email ||
+      user.username.toLocaleLowerCase("tr") === email,
+  );
+
+  if (duplicateEmail) {
+    throw new Error("Bu e-posta ile kayıtlı bir kullanıcı zaten var.");
+  }
+
+  if (advisorId) {
+    const advisor = getAdvisorById(advisorId);
+
+    if (!advisor) {
+      throw new Error("Seçilen danışman bulunamadı.");
+    }
+  }
+
+  if (role === "advisor") {
+    if (!advisorId) {
+      throw new Error("Danışman hesabı için bağlı danışman seçmelisiniz.");
+    }
+
+    const linkedAdvisorExists = store.users.some(
+      (user) => user.role === "advisor" && user.advisorId === advisorId,
+    );
+
+    if (linkedAdvisorExists) {
+      throw new Error("Bu danışman için zaten bir panel hesabı bulunuyor.");
+    }
+  }
+
+  const user: User = {
+    id: `usr-${crypto.randomUUID()}`,
+    name,
+    role,
+    email,
+    phone,
+    username: email,
+    password,
+    advisorId,
+  };
+
+  store.users.unshift(user);
+  writeUsersToDisk(store.users);
+  return toSafeUser(user);
+}
+
+export function deleteUserById(userId: string): SafeUser {
+  syncUsersFromDisk();
+  const userIndex = store.users.findIndex((candidate) => candidate.id === userId);
+
+  if (userIndex === -1) {
+    throw new Error("Kullanıcı bulunamadı.");
+  }
+
+  const [removed] = store.users.splice(userIndex, 1);
+
+  if (removed.role === "portal_admin" && !store.users.some((user) => user.role === "portal_admin")) {
+    store.users.splice(userIndex, 0, removed);
+    throw new Error("Sistemde en az bir portal admin hesabı kalmalıdır.");
+  }
+
+  writeUsersToDisk(store.users);
+  return toSafeUser(removed);
 }
 
 export function createLead(input: CreateLeadInput): ContactLead {
+  syncLeadsFromDisk();
   const stage = input.stage ?? "new";
   if (!validLeadStages.includes(stage)) {
     throw new Error("Geçersiz lead aşaması.");
@@ -474,6 +904,7 @@ export function createLead(input: CreateLeadInput): ContactLead {
   };
 
   store.leads.unshift(lead);
+  writeLeadsToDisk(store.leads);
   return lead;
 }
 
@@ -562,11 +993,27 @@ export function updateBlogPostBySlug(slug: string, input: CreateBlogPostInput): 
   return post;
 }
 
+export function deleteBlogPostBySlug(slug: string): BlogPost {
+  syncBlogPostsFromDisk();
+  const postIndex = store.blogPosts.findIndex((post) => post.slug === slug);
+
+  if (postIndex === -1) {
+    throw new Error("Blog yazısı bulunamadı.");
+  }
+
+  const [removed] = store.blogPosts.splice(postIndex, 1);
+  writeBlogPostsToDisk(store.blogPosts);
+
+  return removed;
+}
+
 export function listLeads(): ContactLead[] {
+  syncLeadsFromDisk();
   return [...store.leads].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 }
 
 export function getLeadById(leadId: string): ContactLead | undefined {
+  syncLeadsFromDisk();
   return store.leads.find((lead) => lead.id === leadId);
 }
 
@@ -575,6 +1022,7 @@ export function updateLeadStage(input: {
   stage: LeadStage;
   pipelineNote?: string;
 }): ContactLead {
+  syncLeadsFromDisk();
   if (!validLeadStages.includes(input.stage)) {
     throw new Error("Geçersiz lead aşaması.");
   }
@@ -589,11 +1037,13 @@ export function updateLeadStage(input: {
     lead.pipelineNote = input.pipelineNote.trim() || undefined;
   }
   lead.updatedAt = new Date().toISOString();
+  writeLeadsToDisk(store.leads);
 
   return lead;
 }
 
 export function leadStageSummary() {
+  syncLeadsFromDisk();
   const summary: Record<LeadStage, number> = {
     new: 0,
     called: 0,
@@ -611,6 +1061,10 @@ export function leadStageSummary() {
 }
 
 export function dashboardSummary() {
+  syncAdvisorsFromDisk();
+  syncPropertiesFromDisk();
+  syncBlogPostsFromDisk();
+  syncLeadsFromDisk();
   return {
     propertyCount: store.properties.length,
     blogCount: store.blogPosts.length,

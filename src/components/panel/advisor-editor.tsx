@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { MAX_WEBP_UPLOAD_MB, validateWebpFile } from "@/lib/portfolio-images";
 import type { Advisor } from "@/lib/types";
 
 type AdvisorEditorProps = {
@@ -35,19 +36,22 @@ export function AdvisorEditor({ initialAdvisors, canManage }: AdvisorEditorProps
 
     const form = event.currentTarget;
     const data = new FormData(form);
+    const imageFile = data.get("imageFile");
     setStatus({ type: "loading" });
+
+    if (imageFile instanceof File && imageFile.size > 0) {
+      try {
+        validateWebpFile(imageFile, "Danışman görseli");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Danışman görseli doğrulanamadı.";
+        setStatus({ type: "error", message });
+        return;
+      }
+    }
 
     const response = await fetch(`/api/advisors/${selectedAdvisor.id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: data.get("name"),
-        title: data.get("title"),
-        phone: data.get("phone"),
-        whatsapp: data.get("whatsapp"),
-        email: data.get("email"),
-        focusArea: data.get("focusArea"),
-      }),
+      body: data,
     });
 
     if (!response.ok) {
@@ -109,6 +113,19 @@ export function AdvisorEditor({ initialAdvisors, canManage }: AdvisorEditorProps
         <input required type="email" name="email" defaultValue={selectedAdvisor.email} placeholder="E-posta" className="input" />
         <input required name="phone" defaultValue={selectedAdvisor.phone} placeholder="Telefon (+90 ...)" className="input" />
         <input required name="whatsapp" defaultValue={selectedAdvisor.whatsapp} placeholder="WhatsApp (+90 ...)" className="input" />
+        <label className="md:col-span-2">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+            Danışman Görselini Güncelle (.webp)
+          </span>
+          <input type="file" accept=".webp,image/webp" name="imageFile" className="input" />
+        </label>
+        <div className="md:col-span-2 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+          <div className="h-56 bg-cover bg-center" style={{ backgroundImage: `url(${selectedAdvisor.image})` }} />
+          <p className="px-3 py-2 text-xs text-slate-600">Mevcut danışman görseli</p>
+        </div>
+        <p className="text-xs text-slate-500 md:col-span-2">
+          Görsel kuralı: yalnızca `.webp`, en fazla {MAX_WEBP_UPLOAD_MB} MB.
+        </p>
 
         <button
           type="submit"

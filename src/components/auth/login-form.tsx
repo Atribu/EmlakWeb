@@ -9,17 +9,11 @@ type LoginFormProps = {
 
 type Status = { type: "idle" } | { type: "loading" } | { type: "error"; message: string };
 
-const demoAccounts = [
-  { label: "Admin", username: "admin", password: "admin123" },
-  { label: "Danışman", username: "ayse", password: "ayse123" },
-  { label: "İçerik", username: "icerik", password: "icerik123" },
-];
-
 export function LoginForm({ nextPath }: LoginFormProps) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>({ type: "idle" });
-  const [credentials, setCredentials] = useState<{ username: string; password: string }>({
-    username: "",
+  const [credentials, setCredentials] = useState<{ identifier: string; password: string }>({
+    identifier: "",
     password: "",
   });
 
@@ -39,7 +33,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        username: data.get("username") ?? credentials.username,
+        identifier: data.get("identifier") ?? credentials.identifier,
         password: data.get("password") ?? credentials.password,
       }),
     });
@@ -55,25 +49,26 @@ export function LoginForm({ nextPath }: LoginFormProps) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+    <div className="max-w-xl">
       <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Yönetim Paneli Girişi</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Demo sürümde `admin`, `danışman` ve `içerik yükleyici` rollerini test edebilirsiniz.
+          Yetkili hesabınızın e-posta adresi ve şifresi ile giriş yapın.
         </p>
 
         <div className="mt-5 space-y-3">
           <input
             required
-            name="username"
-            value={credentials.username}
+            type="email"
+            name="identifier"
+            value={credentials.identifier}
             onChange={(event) =>
               setCredentials((previous) => ({
                 ...previous,
-                username: event.target.value,
+                identifier: event.target.value,
               }))
             }
-            placeholder="Kullanıcı adı"
+            placeholder="E-posta adresi"
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-500"
           />
           <input
@@ -102,27 +97,6 @@ export function LoginForm({ nextPath }: LoginFormProps) {
 
         {status.type === "error" ? <p className="mt-3 text-sm text-rose-700">{status.message}</p> : null}
       </form>
-
-      <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Demo Hesaplar</h2>
-        <div className="mt-4 space-y-3">
-          {demoAccounts.map((account) => (
-            <button
-              key={account.username}
-              type="button"
-              onClick={() =>
-                setCredentials({ username: account.username, password: account.password })
-              }
-              className="w-full cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-slate-400"
-            >
-              <p className="text-sm font-semibold text-slate-900">{account.label}</p>
-              <p className="mt-1 text-xs text-slate-600">
-                {account.username} / {account.password}
-              </p>
-            </button>
-          ))}
-        </div>
-      </aside>
     </div>
   );
 }

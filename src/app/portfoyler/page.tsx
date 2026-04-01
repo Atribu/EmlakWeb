@@ -4,7 +4,6 @@ import Link from "next/link";
 import { PropertyCard } from "@/components/property-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser } from "@/lib/auth";
 import { listAdvisors, listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
 
 export const metadata: Metadata = {
@@ -36,7 +35,7 @@ function toNumber(value: string): number | undefined {
 }
 
 export default async function PortfoylerPage({ searchParams }: PortfoylerPageProps) {
-  const [params, currentUser] = await Promise.all([searchParams, getCurrentUser()]);
+  const params = await searchParams;
 
   const query = readString(params.q).trim();
   const city = readString(params.city).trim();
@@ -63,7 +62,7 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader />
 
       <main className="w-full pb-24">
         <section className="frame-wide fade-up relative overflow-hidden rounded-[1.4rem] border border-[#3f3022] bg-[#0f1621] p-7 text-[#f4ead8] shadow-[0_48px_88px_-64px_rgba(0,0,0,0.95)] sm:p-10">
@@ -74,84 +73,100 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
           </p>
         </section>
 
-        <section className="frame panel-dark mt-7 rounded-[1.15rem] p-4 sm:p-5">
-          <form className="grid gap-2 sm:grid-cols-2 lg:grid-cols-7" method="GET">
-            <input
-              name="q"
-              defaultValue={query}
-              placeholder="İlan, bölge veya kod"
-              className="input dark-input lg:col-span-2"
-            />
-
-            <select name="city" defaultValue={city} className="input dark-input">
-              <option value="">Şehir</option>
-              {cities.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-
-            <select name="type" defaultValue={type} className="input dark-input">
-              <option value="">Tip</option>
-              {types.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-
-            <select name="rooms" defaultValue={rooms} className="input dark-input">
-              <option value="">Oda</option>
-              {roomOptions.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-
-            <input
-              name="minPrice"
-              defaultValue={minPriceValue}
-              type="number"
-              min={0}
-              placeholder="Min fiyat"
-              className="input dark-input"
-            />
-            <input
-              name="maxPrice"
-              defaultValue={maxPriceValue}
-              type="number"
-              min={0}
-              placeholder="Max fiyat"
-              className="input dark-input"
-            />
-
-            <button type="submit" className="btn-gold cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition lg:col-span-1">
-              Filtrele
-            </button>
-          </form>
-
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-[#b9a889]">
-            <p>{properties.length} aktif sonuç</p>
-            <Link href="/harita" className="font-semibold text-[#dcc69f] underline">
-              Harita görünümüne geç
-            </Link>
-          </div>
-        </section>
-
         <section className="frame mt-8">
-          {properties.length === 0 ? (
-            <div className="luxury-card p-8 text-center text-sm text-[#645b50]">
-              Filtreye uygun ilan bulunamadı. Arama kriterlerini genişletip tekrar deneyin.
+          <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+            <aside className="panel-dark h-fit rounded-[1.2rem] p-4 sm:p-5 xl:sticky xl:top-24">
+              <div className="border-b border-white/10 pb-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">Portfolio Filter</p>
+                <h2 className="mt-2 text-[1.75rem] leading-none font-semibold text-[#f2e7d4]">Portföy Filtrele</h2>
+                <p className="mt-2 text-sm leading-6 text-[#c7b79b]">
+                  Bölge, tip, oda ve bütçe kriterlerine göre ideal ilanları hızlıca daraltın.
+                </p>
+              </div>
+
+              <form className="mt-5 grid gap-3" method="GET">
+                <input
+                  name="q"
+                  defaultValue={query}
+                  placeholder="İlan, bölge veya kod"
+                  className="input dark-input"
+                />
+
+                <select name="city" defaultValue={city} className="input dark-input">
+                  <option value="">Şehir</option>
+                  {cities.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+
+                <select name="type" defaultValue={type} className="input dark-input">
+                  <option value="">Tip</option>
+                  {types.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+
+                <select name="rooms" defaultValue={rooms} className="input dark-input">
+                  <option value="">Oda</option>
+                  {roomOptions.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                  <input
+                    name="minPrice"
+                    defaultValue={minPriceValue}
+                    type="number"
+                    min={0}
+                    placeholder="Min fiyat"
+                    className="input dark-input"
+                  />
+                  <input
+                    name="maxPrice"
+                    defaultValue={maxPriceValue}
+                    type="number"
+                    min={0}
+                    placeholder="Max fiyat"
+                    className="input dark-input"
+                  />
+                </div>
+
+                <button type="submit" className="btn-gold mt-2 cursor-pointer rounded-full px-4 py-3 text-sm font-semibold transition">
+                  Filtrele
+                </button>
+              </form>
+
+              <div className="mt-5 rounded-[1rem] border border-white/10 bg-white/5 p-4 text-sm text-[#c7b79b]">
+                <p>
+                  Aktif sonuç: <strong className="text-[#fff4df]">{properties.length}</strong>
+                </p>
+                <Link href="/harita" className="mt-2 inline-flex font-semibold text-[#e1c898] underline">
+                  Harita görünümüne geç
+                </Link>
+              </div>
+            </aside>
+
+            <div className="min-w-0">
+              {properties.length === 0 ? (
+                <div className="luxury-card p-8 text-center text-sm text-[#645b50]">
+                  Filtreye uygun ilan bulunamadı. Arama kriterlerini genişletip tekrar deneyin.
+                </div>
+              ) : (
+                <div className="grid gap-5">
+                  {properties.map((property) => (
+                    <PropertyCard key={property.id} property={property} advisor={advisorMap.get(property.advisorId)} />
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              {properties.map((property) => (
-                <PropertyCard key={property.id} property={property} advisor={advisorMap.get(property.advisorId)} />
-              ))}
-            </div>
-          )}
+          </div>
         </section>
 
         <SiteFooter />

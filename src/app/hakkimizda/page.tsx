@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser } from "@/lib/auth";
 import { dashboardSummary } from "@/lib/data-store";
 
 export const metadata: Metadata = {
@@ -11,12 +10,11 @@ export const metadata: Metadata = {
 };
 
 export default async function HakkimizdaPage() {
-  const [currentUser] = await Promise.all([getCurrentUser()]);
   const summary = dashboardSummary();
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader />
 
       <main className="w-full pb-24">
         <section className="frame-wide fade-up relative overflow-hidden rounded-[1.4rem] border border-[#3f3022] bg-[#0f1621] p-7 text-[#f4ead8] shadow-[0_48px_88px_-64px_rgba(0,0,0,0.95)] sm:p-10">

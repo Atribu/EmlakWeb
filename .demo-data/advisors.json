@@ -1,0 +1,32 @@
+[
+  {
+    "id": "adv-1",
+    "name": "Ayşe Demir",
+    "title": "Kıdemli Konut Danışmanı",
+    "phone": "+90 532 111 22 33",
+    "whatsapp": "+905321112233",
+    "email": "ayse.demir@demolanding.com",
+    "focusArea": "Kadıköy / Moda",
+    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80"
+  },
+  {
+    "id": "adv-2",
+    "name": "Mehmet Kaya",
+    "title": "Yatırım Uzmanı",
+    "phone": "+90 533 444 55 66",
+    "whatsapp": "+905334445566",
+    "email": "mehmet.kaya@demolanding.com",
+    "focusArea": "Beşiktaş / Levent",
+    "image": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80"
+  },
+  {
+    "id": "adv-3",
+    "name": "Selin Yıldız",
+    "title": "Lüks Portföy Danışmanı",
+    "phone": "+90 534 777 88 99",
+    "whatsapp": "+905347778899",
+    "email": "selin.yildiz@demolanding.com",
+    "focusArea": "Sarıyer / Zekeriyaköy",
+    "image": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80"
+  }
+]

@@ -1,4 +1,5 @@
 import { pickSampleImageSet } from "@/lib/sample-images";
+import { pickSampleAdvisorImage } from "@/lib/sample-advisor-images";
 import type { Advisor, BlogPost, Property, User } from "@/lib/types";
 
 const imageSet0 = pickSampleImageSet(0);
@@ -17,6 +18,7 @@ export const initialAdvisors: Advisor[] = [
     whatsapp: "+905321112233",
     email: "ayse.demir@demolanding.com",
     focusArea: "Kadıköy / Moda",
+    image: pickSampleAdvisorImage(0),
   },
   {
     id: "adv-2",
@@ -26,6 +28,7 @@ export const initialAdvisors: Advisor[] = [
     whatsapp: "+905334445566",
     email: "mehmet.kaya@demolanding.com",
     focusArea: "Beşiktaş / Levent",
+    image: pickSampleAdvisorImage(1),
   },
   {
     id: "adv-3",
@@ -35,13 +38,23 @@ export const initialAdvisors: Advisor[] = [
     whatsapp: "+905347778899",
     email: "selin.yildiz@demolanding.com",
     focusArea: "Sarıyer / Zekeriyaköy",
+    image: pickSampleAdvisorImage(2),
   },
 ];
 
 export const initialUsers: User[] = [
   {
+    id: "usr-portal-1",
+    name: "Oguz Kilinc",
+    role: "portal_admin",
+    email: "oguzkilinc.ant@gmail.com",
+    phone: "+90 555 000 00 00",
+    username: "oguzkilinc.ant@gmail.com",
+    password: "qweasd11.",
+  },
+  {
     id: "usr-1",
-    name: "Portal Admin",
+    name: "Operasyon Admin",
     role: "admin",
     email: "admin@demolanding.com",
     phone: "+90 212 900 00 01",
@@ -51,7 +64,7 @@ export const initialUsers: User[] = [
   {
     id: "usr-2",
     name: "Ayşe Demir",
-    role: "advisor",
+    role: "portfolio_manager",
     email: "ayse.demir@demolanding.com",
     phone: "+90 532 111 22 33",
     username: "ayse",

@@ -28,7 +28,7 @@ export default async function AuthorizedLoginPage({ searchParams }: LoginPagePro
 
   return (
     <div className="min-h-screen">
-      <SiteHeader user={currentUser} />
+      <SiteHeader />
 
       <main className="mx-auto w-full max-w-5xl px-4 pb-12 pt-8 sm:px-6">
         <LoginForm nextPath={nextPath} />

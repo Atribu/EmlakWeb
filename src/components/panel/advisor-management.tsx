@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { MAX_WEBP_UPLOAD_MB, validateWebpFile } from "@/lib/portfolio-images";
 import type { Advisor } from "@/lib/types";
 
 type AdvisorWithStats = Advisor & {
@@ -35,22 +36,26 @@ export function AdvisorManagement({ initialAdvisors, canManage }: AdvisorManagem
 
     const form = event.currentTarget;
     const data = new FormData(form);
+    const imageFile = data.get("imageFile");
 
     setStatus({ type: "loading" });
 
+    if (!(imageFile instanceof File) || imageFile.size === 0) {
+      setStatus({ type: "error", message: "Danışman görseli yüklemek zorunludur." });
+      return;
+    }
+
+    try {
+      validateWebpFile(imageFile, "Danışman görseli");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Danışman görseli doğrulanamadı.";
+      setStatus({ type: "error", message });
+      return;
+    }
+
     const response = await fetch("/api/advisors", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: data.get("name"),
-        title: data.get("title"),
-        phone: data.get("phone"),
-        whatsapp: data.get("whatsapp"),
-        email: data.get("email"),
-        focusArea: data.get("focusArea"),
-      }),
+      body: data,
     });
 
     if (!response.ok) {
@@ -123,6 +128,15 @@ export function AdvisorManagement({ initialAdvisors, canManage }: AdvisorManagem
           <input required type="email" name="email" placeholder="E-posta" className="input" />
           <input required name="phone" placeholder="Telefon (+90 ...)" className="input" />
           <input required name="whatsapp" placeholder="WhatsApp (+90 ...)" className="input" />
+          <label className="md:col-span-2">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+              Danışman Görseli (.webp)
+            </span>
+            <input required type="file" accept=".webp,image/webp" name="imageFile" className="input" />
+          </label>
+          <p className="text-xs text-slate-500 md:col-span-2">
+            Görsel kuralı: yalnızca `.webp`, en fazla {MAX_WEBP_UPLOAD_MB} MB.
+          </p>
 
           <button
             type="submit"
@@ -154,13 +168,20 @@ export function AdvisorManagement({ initialAdvisors, canManage }: AdvisorManagem
             return (
               <article key={advisor.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-slate-900">{advisor.name}</p>
-                    <p className="text-sm text-slate-600">{advisor.title}</p>
-                    <p className="text-sm text-slate-500">{advisor.focusArea}</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="h-20 w-20 shrink-0 rounded-2xl border border-slate-200 bg-cover bg-center bg-no-repeat"
+                      style={{ backgroundImage: `url(${advisor.image})` }}
+                      aria-hidden
+                    />
+                    <div>
+                      <p className="font-semibold text-slate-900">{advisor.name}</p>
+                      <p className="text-sm text-slate-600">{advisor.title}</p>
+                      <p className="text-sm text-slate-500">{advisor.focusArea}</p>
+                      <p className="mt-1 text-xs text-slate-500">
                       Aktif portföy: {advisor.propertyCount} • Bağlı kullanıcı: {advisor.linkedUserCount}
-                    </p>
+                      </p>
+                    </div>
                   </div>
 
                   <button
