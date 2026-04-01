@@ -7,8 +7,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { parseBlogContent } from "@/lib/blog-content";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/data-store";
-import { formatDateTR } from "@/lib/format";
+import { blogDetailPageCopy } from "@/lib/site-copy";
+import { formatDate } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
+import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 import { blogMetadata, blogPostSchema } from "@/lib/seo";
 
 type BlogDetailPageProps = {
@@ -86,6 +88,8 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
 }
 
 export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
+  const language = await getServerSiteLanguage();
+  const copy = blogDetailPageCopy(language);
   const resolvedParams = await params;
   const post = getBlogPostBySlug(resolvedParams.slug);
 
@@ -132,10 +136,10 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
             <div className="absolute bottom-0 left-0 right-0 p-6 text-[#f4ead8] sm:p-9">
               <Link href="/blog" className="text-sm font-semibold text-[#ebd8bb] underline">
-                ← Blog listesine dön
+                {copy.back}
               </Link>
               <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">
-                {formatDateTR(post.publishedAt)} • {post.authorName}
+                {formatDate(post.publishedAt, language)} • {post.authorName}
               </p>
               <h1 className="mt-2 max-w-4xl text-[2.2rem] leading-[1.02] font-semibold sm:text-[3.4rem]">{post.title}</h1>
             </div>
@@ -268,7 +272,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
           <aside className="space-y-4">
             {tableOfContents.length > 0 ? (
               <section className="luxury-card p-5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8d7348]">Icindekiler</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8d7348]">{copy.contents}</p>
                 <nav className="mt-3 space-y-2">
                   {tableOfContents.map((item) => (
                     <a
@@ -284,7 +288,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             ) : null}
 
             <section className="luxury-card p-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8d7348]">Etiketler</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8d7348]">{copy.tags}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
                   <span
@@ -298,13 +302,13 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             </section>
 
             <section className="luxury-card p-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8d7348]">İlgili Yazılar</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8d7348]">{copy.related}</p>
               <div className="mt-3 space-y-3">
                 {relatedPosts.map((item) => (
                   <article key={item.id} className="rounded-xl border border-[#e3d7c4] bg-white p-3">
                     <h2 className="text-sm font-semibold text-[#241f18]">{item.title}</h2>
                     <Link href={`/blog/${item.slug}`} className="mt-1 inline-block text-xs font-semibold underline">
-                      Oku
+                      {copy.read}
                     </Link>
                   </article>
                 ))}

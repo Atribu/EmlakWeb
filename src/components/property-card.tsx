@@ -6,8 +6,19 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
-import { formatPhoneForHref, formatPrice } from "@/lib/format";
+import { PriceText } from "@/components/price-text";
+import { useSitePreferences } from "@/components/use-site-preferences";
+import { formatPhoneForHref } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
+import {
+  propertyCardCopy,
+  propertyWhatsAppInquiry,
+  translateFloorLabel,
+  translateHeatingLabel,
+  translatePropertyType,
+  translateRoomLabel,
+} from "@/lib/site-copy";
+import { localeForLanguage } from "@/lib/site-preferences";
 import type { Advisor, Property } from "@/lib/types";
 
 type PropertyCardProps = {
@@ -105,6 +116,8 @@ function CameraIcon() {
 
 export function PropertyCard({ property, advisor }: PropertyCardProps) {
   const router = useRouter();
+  const { language } = useSitePreferences();
+  const copy = propertyCardCopy(language);
   const gallery = useMemo(() => {
     const images = [property.coverImage, ...property.galleryImages].filter((image) => Boolean(image?.trim()));
     return Array.from(new Set(images));
@@ -113,11 +126,13 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const activeImage = gallery[activeImageIndex] ?? property.coverImage;
-  const locationLabel = `${property.neighborhood} - ${property.district} - ${property.city}`.toLocaleUpperCase("tr");
+  const locationLabel = `${property.neighborhood} - ${property.district} - ${property.city}`.toLocaleUpperCase(
+    localeForLanguage(language),
+  );
   const quickHref =
     advisor
       ? `https://wa.me/${formatPhoneForHref(advisor.whatsapp)}?text=${encodeURIComponent(
-          `${property.title} ilanı hakkında hızlı bilgi almak istiyorum.`,
+          propertyWhatsAppInquiry(language, property.title),
         )}`
       : undefined;
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : undefined;
@@ -186,7 +201,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
 
           <div className="absolute left-3 top-3 flex flex-wrap gap-2">
             <span className="rounded-full border border-white/40 bg-[#0d1117]/56 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-              {property.type}
+              {translatePropertyType(property.type, language)}
             </span>
             <span className="rounded-full border border-white/36 bg-white/18 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
               {property.city}
@@ -198,7 +213,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
               <button
                 type="button"
                 onClick={() => stepGallery(-1)}
-                aria-label="Önceki görsel"
+                aria-label={copy.previousImage}
                 className="absolute left-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/42 bg-[#0b0f14]/34 text-white backdrop-blur transition hover:bg-[#0b0f14]/52"
               >
                 <ArrowIcon direction="left" />
@@ -206,7 +221,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
               <button
                 type="button"
                 onClick={() => stepGallery(1)}
-                aria-label="Sonraki görsel"
+                aria-label={copy.nextImage}
                 className="absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/42 bg-[#0b0f14]/34 text-white backdrop-blur transition hover:bg-[#0b0f14]/52"
               >
                 <ArrowIcon direction="right" />
@@ -227,7 +242,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
         <div
           tabIndex={0}
           role="link"
-          aria-label={`${property.title} detay sayfasını aç`}
+          aria-label={`${property.title} ${copy.openDetail}`}
           onClick={handleCardClick}
           onKeyDown={handleCardKeyDown}
           className="flex min-w-0 cursor-pointer flex-col p-5 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d2232d]/45 focus-visible:ring-inset sm:p-6"
@@ -244,14 +259,14 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
               </div>
 
               <div className="rounded-full border border-[#e3d7c8] bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8a7452]">
-                Satılık Portföy
+                {copy.saleBadge}
               </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <Metric icon={<BedIcon />} label="Oda" value={property.rooms} />
-              <Metric icon={<AreaIcon />} label="Alan" value={`${property.areaM2} m²`} />
-              <Metric icon={<FloorIcon />} label="Kat" value={property.floor} />
+              <Metric icon={<BedIcon />} label={copy.rooms} value={translateRoomLabel(property.rooms, language)} />
+              <Metric icon={<AreaIcon />} label={copy.area} value={`${property.areaM2} m²`} />
+              <Metric icon={<FloorIcon />} label={copy.floor} value={translateFloorLabel(property.floor, language)} />
             </div>
           </div>
 
@@ -274,22 +289,22 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
                     className="h-11 w-11 rounded-full border border-[#ddceb8] object-cover"
                   />
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#90816e]">Danışman</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#90816e]">{copy.advisor}</p>
                     <p className="truncate text-sm font-semibold text-[#2f281f]">{advisor.name}</p>
                   </div>
                 </div>
               ) : null}
 
               <div className="rounded-2xl border border-[#f1d3d5] bg-[#fff5f6] px-4 py-3 text-center">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b34a51]">Portföy Tipi</p>
-                <p className="mt-1 text-sm font-semibold text-[#8f262d]">{property.heating}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b34a51]">{copy.portfolioType}</p>
+                <p className="mt-1 text-sm font-semibold text-[#8f262d]">{translateHeatingLabel(property.heating, language)}</p>
               </div>
             </div>
 
             <div className="min-w-0 xl:text-right">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7f6d5d]">Başlangıç Fiyatı</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7f6d5d]">{copy.startingPrice}</p>
               <p className="mt-1 break-words text-[clamp(1.55rem,4vw,2.35rem)] leading-[0.96] font-semibold text-[#d2232d]">
-                {formatPrice(property.price)}
+                <PriceText amount={property.price} />
               </p>
             </div>
           </div>
@@ -303,7 +318,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
                 className="inline-flex items-center justify-center gap-2 rounded-[1rem] border border-[#cfd6df] bg-white px-5 py-3 text-sm font-semibold text-[#344256] transition hover:border-[#a9b5c4] hover:bg-[#f6f8fb]"
               >
                 <ContactIcon />
-                Hızlı İletişim
+                {copy.quickContact}
               </a>
             ) : phoneHref ? (
               <a
@@ -311,7 +326,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
                 className="inline-flex items-center justify-center gap-2 rounded-[1rem] border border-[#cfd6df] bg-white px-5 py-3 text-sm font-semibold text-[#344256] transition hover:border-[#a9b5c4] hover:bg-[#f6f8fb]"
               >
                 <ContactIcon />
-                Hemen Ara
+                {copy.callNow}
               </a>
             ) : (
               <Link
@@ -319,7 +334,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
                 className="inline-flex items-center justify-center gap-2 rounded-[1rem] border border-[#cfd6df] bg-white px-5 py-3 text-sm font-semibold text-[#344256] transition hover:border-[#a9b5c4] hover:bg-[#f6f8fb]"
               >
                 <ContactIcon />
-                Hızlı İletişim
+                {copy.quickContact}
               </Link>
             )}
 
@@ -327,7 +342,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
               href={`/ilan/${property.slug}`}
               className="inline-flex items-center justify-center rounded-[1rem] border border-[#e04f56] bg-white px-5 py-3 text-sm font-semibold tracking-[0.02em] text-[#cf1f2b] transition hover:bg-[#fff5f5]"
             >
-              Detaylı Bilgi
+              {copy.detailedInfo}
             </Link>
           </div>
         </div>

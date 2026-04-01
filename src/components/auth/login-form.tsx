@@ -3,6 +3,9 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useSitePreferences } from "@/components/use-site-preferences";
+import { loginFormCopy } from "@/lib/site-copy";
+
 type LoginFormProps = {
   nextPath: string;
 };
@@ -11,6 +14,8 @@ type Status = { type: "idle" } | { type: "loading" } | { type: "error"; message:
 
 export function LoginForm({ nextPath }: LoginFormProps) {
   const router = useRouter();
+  const { language } = useSitePreferences();
+  const copy = loginFormCopy(language);
   const [status, setStatus] = useState<Status>({ type: "idle" });
   const [credentials, setCredentials] = useState<{ identifier: string; password: string }>({
     identifier: "",
@@ -18,8 +23,8 @@ export function LoginForm({ nextPath }: LoginFormProps) {
   });
 
   const actionLabel = useMemo(
-    () => (status.type === "loading" ? "Giriş yapılıyor..." : "Panel Girişi"),
-    [status.type],
+    () => (status.type === "loading" ? copy.submitting : copy.submit),
+    [copy.submit, copy.submitting, status.type],
   );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -40,7 +45,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setStatus({ type: "error", message: payload?.message ?? "Giriş başarısız." });
+      setStatus({ type: "error", message: payload?.message ?? copy.fallbackError });
       return;
     }
 
@@ -51,9 +56,9 @@ export function LoginForm({ nextPath }: LoginFormProps) {
   return (
     <div className="max-w-xl">
       <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Yönetim Paneli Girişi</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{copy.title}</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Yetkili hesabınızın e-posta adresi ve şifresi ile giriş yapın.
+          {copy.body}
         </p>
 
         <div className="mt-5 space-y-3">
@@ -68,7 +73,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
                 identifier: event.target.value,
               }))
             }
-            placeholder="E-posta adresi"
+            placeholder={copy.email}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-500"
           />
           <input
@@ -82,7 +87,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
                 password: event.target.value,
               }))
             }
-            placeholder="Şifre"
+            placeholder={copy.password}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-500"
           />
         </div>

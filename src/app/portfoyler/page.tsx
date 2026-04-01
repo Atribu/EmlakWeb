@@ -5,6 +5,8 @@ import { PropertyCard } from "@/components/property-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listAdvisors, listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
+import { portfolioPageCopy, translatePropertyType, translateRoomLabel } from "@/lib/site-copy";
+import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
   title: "Portföyler | PortföySatış",
@@ -35,6 +37,8 @@ function toNumber(value: string): number | undefined {
 }
 
 export default async function PortfoylerPage({ searchParams }: PortfoylerPageProps) {
+  const language = await getServerSiteLanguage();
+  const copy = portfolioPageCopy(language);
   const params = await searchParams;
 
   const query = readString(params.q).trim();
@@ -66,10 +70,10 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
 
       <main className="w-full pb-24">
         <section className="frame-wide fade-up relative overflow-hidden rounded-[1.4rem] border border-[#3f3022] bg-[#0f1621] p-7 text-[#f4ead8] shadow-[0_48px_88px_-64px_rgba(0,0,0,0.95)] sm:p-10">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">Portfolio Collection</p>
-          <h1 className="mt-3 text-[2.4rem] leading-[0.95] font-semibold sm:text-[3.8rem]">Premium Portföyler</h1>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">{copy.heroKicker}</p>
+          <h1 className="mt-3 text-[2.4rem] leading-[0.95] font-semibold sm:text-[3.8rem]">{copy.heroTitle}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[#d7c8ad] sm:text-base">
-            Kriterlerinize göre filtreleyin, detayları inceleyin ve doğrudan danışmana ulaşın.
+            {copy.heroBody}
           </p>
         </section>
 
@@ -77,10 +81,10 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
           <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
             <aside className="panel-dark h-fit rounded-[1.2rem] p-4 sm:p-5 xl:sticky xl:top-24">
               <div className="border-b border-white/10 pb-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">Portfolio Filter</p>
-                <h2 className="mt-2 text-[1.75rem] leading-none font-semibold text-[#f2e7d4]">Portföy Filtrele</h2>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">{copy.filterKicker}</p>
+                <h2 className="mt-2 text-[1.75rem] leading-none font-semibold text-[#f2e7d4]">{copy.filterTitle}</h2>
                 <p className="mt-2 text-sm leading-6 text-[#c7b79b]">
-                  Bölge, tip, oda ve bütçe kriterlerine göre ideal ilanları hızlıca daraltın.
+                  {copy.filterBody}
                 </p>
               </div>
 
@@ -88,12 +92,12 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
                 <input
                   name="q"
                   defaultValue={query}
-                  placeholder="İlan, bölge veya kod"
+                  placeholder={copy.searchPlaceholder}
                   className="input dark-input"
                 />
 
                 <select name="city" defaultValue={city} className="input dark-input">
-                  <option value="">Şehir</option>
+                  <option value="">{copy.cityPlaceholder}</option>
                   {cities.map((item) => (
                     <option key={item} value={item}>
                       {item}
@@ -102,19 +106,19 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
                 </select>
 
                 <select name="type" defaultValue={type} className="input dark-input">
-                  <option value="">Tip</option>
+                  <option value="">{copy.typePlaceholder}</option>
                   {types.map((item) => (
                     <option key={item} value={item}>
-                      {item}
+                      {translatePropertyType(item, language)}
                     </option>
                   ))}
                 </select>
 
                 <select name="rooms" defaultValue={rooms} className="input dark-input">
-                  <option value="">Oda</option>
+                  <option value="">{copy.roomPlaceholder}</option>
                   {roomOptions.map((item) => (
                     <option key={item} value={item}>
-                      {item}
+                      {translateRoomLabel(item, language)}
                     </option>
                   ))}
                 </select>
@@ -125,7 +129,7 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
                     defaultValue={minPriceValue}
                     type="number"
                     min={0}
-                    placeholder="Min fiyat"
+                    placeholder={copy.minPricePlaceholder}
                     className="input dark-input"
                   />
                   <input
@@ -133,22 +137,22 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
                     defaultValue={maxPriceValue}
                     type="number"
                     min={0}
-                    placeholder="Max fiyat"
+                    placeholder={copy.maxPricePlaceholder}
                     className="input dark-input"
                   />
                 </div>
 
                 <button type="submit" className="btn-gold mt-2 cursor-pointer rounded-full px-4 py-3 text-sm font-semibold transition">
-                  Filtrele
+                  {copy.submit}
                 </button>
               </form>
 
               <div className="mt-5 rounded-[1rem] border border-white/10 bg-white/5 p-4 text-sm text-[#c7b79b]">
                 <p>
-                  Aktif sonuç: <strong className="text-[#fff4df]">{properties.length}</strong>
+                  {copy.activeResults}: <strong className="text-[#fff4df]">{properties.length}</strong>
                 </p>
                 <Link href="/harita" className="mt-2 inline-flex font-semibold text-[#e1c898] underline">
-                  Harita görünümüne geç
+                  {copy.mapView}
                 </Link>
               </div>
             </aside>
@@ -156,7 +160,7 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
             <div className="min-w-0">
               {properties.length === 0 ? (
                 <div className="luxury-card p-8 text-center text-sm text-[#645b50]">
-                  Filtreye uygun ilan bulunamadı. Arama kriterlerini genişletip tekrar deneyin.
+                  {copy.noResults}
                 </div>
               ) : (
                 <div className="grid gap-5">

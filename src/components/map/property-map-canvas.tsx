@@ -5,7 +5,9 @@ import { DivIcon, type LatLngTuple } from "leaflet";
 import { useEffect, useMemo } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 
-import { formatPrice } from "@/lib/format";
+import { PriceText } from "@/components/price-text";
+import { useSitePreferences } from "@/components/use-site-preferences";
+import { mapComponentCopy } from "@/lib/site-copy";
 
 export type MapPortfolio = {
   id: string;
@@ -78,6 +80,8 @@ export function PropertyMapCanvas({
   zoom,
   mapStyle,
 }: PropertyMapCanvasProps) {
+  const { language } = useSitePreferences();
+  const copy = mapComponentCopy(language);
   const markers = useMemo(
     () =>
       portfolios.filter(
@@ -115,13 +119,13 @@ export function PropertyMapCanvas({
                   {portfolio.city} / {portfolio.district} / {portfolio.neighborhood}
                 </p>
                 <p className="text-xs font-semibold text-[#6a4f22]">
-                  {formatPrice(portfolio.price)}
+                  <PriceText amount={portfolio.price} />
                 </p>
                 {portfolio.advisorName ? (
-                  <p className="text-xs text-slate-500">Danışman: {portfolio.advisorName}</p>
+                  <p className="text-xs text-slate-500">{copy.advisor}: {portfolio.advisorName}</p>
                 ) : null}
                 <Link href={`/ilan/${portfolio.slug}`} className="text-xs font-semibold underline">
-                  İlan Detayı
+                  {copy.detail}
                 </Link>
               </div>
             </Popup>

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 
+import { FloatingContactDock } from "@/components/floating-contact-dock";
+import { SitePreferencesProvider } from "@/components/site-preferences-provider";
 import { baseMetadata } from "@/lib/seo";
+import { getServerHtmlLang, getServerSitePreferences } from "@/lib/site-preferences-server";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -17,14 +20,24 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = baseMetadata();
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [htmlLang, initialPreferences] = await Promise.all([
+    getServerHtmlLang(),
+    getServerSitePreferences(),
+  ]);
+
   return (
-    <html lang="tr">
-      <body className={`${manrope.variable} ${cormorant.variable} antialiased`}>{children}</body>
+    <html lang={htmlLang}>
+      <body className={`${manrope.variable} ${cormorant.variable} antialiased`}>
+        <SitePreferencesProvider initialPreferences={initialPreferences}>
+          {children}
+          <FloatingContactDock />
+        </SitePreferencesProvider>
+      </body>
     </html>
   );
 }

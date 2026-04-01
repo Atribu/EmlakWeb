@@ -2,6 +2,9 @@
 
 import { FormEvent, useState } from "react";
 
+import { useSitePreferences } from "@/components/use-site-preferences";
+import { appointmentFormCopy } from "@/lib/site-copy";
+
 type AppointmentFormProps = {
   propertySlug: string;
   propertyTitle: string;
@@ -13,9 +16,9 @@ type SubmitState =
   | { type: "success"; message: string }
   | { type: "error"; message: string };
 
-const visitTypes = ["Yerinde ziyaret", "Video görüşme", "Ofiste toplantı"];
-
 export function AppointmentForm({ propertySlug, propertyTitle }: AppointmentFormProps) {
+  const { language } = useSitePreferences();
+  const copy = appointmentFormCopy(language);
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -44,7 +47,7 @@ export function AppointmentForm({ propertySlug, propertyTitle }: AppointmentForm
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
       setStatus({
         type: "error",
-        message: payload?.message ?? "Randevu gönderilirken bir sorun oluştu.",
+        message: payload?.message ?? copy.fallbackError,
       });
       return;
     }
@@ -56,16 +59,18 @@ export function AppointmentForm({ propertySlug, propertyTitle }: AppointmentForm
 
   return (
     <section className="rounded-2xl border border-[#ddcfbc] bg-[#fffdf9] p-6 shadow-sm">
-      <span className="section-kicker">Randevu Planla</span>
-      <h2 className="mt-3 text-[1.9rem] font-semibold leading-none text-[#221b13]">Ziyaret Talebi Oluştur</h2>
+      <span className="section-kicker">{copy.kicker}</span>
+      <h2 className="mt-3 text-[1.9rem] font-semibold leading-none text-[#221b13]">{copy.title}</h2>
       <p className="mt-2 text-sm text-[#665c4f]">
-        {propertyTitle} için tarih/saat seçip danışmanla hızlı randevu oluşturabilirsiniz.
+        {copy.bodyPrefix
+          ? `${copy.bodyPrefix} ${propertyTitle} ${copy.bodySuffix}`
+          : `${propertyTitle} ${copy.bodySuffix}`}
       </p>
 
       <form onSubmit={onSubmit} className="mt-5 grid gap-3">
-        <input required name="name" placeholder="Ad Soyad" className="input" />
-        <input required type="email" name="email" placeholder="E-posta" className="input" />
-        <input required name="phone" placeholder="Telefon" className="input" />
+        <input required name="name" placeholder={copy.name} className="input" />
+        <input required type="email" name="email" placeholder={copy.email} className="input" />
+        <input required name="phone" placeholder={copy.phone} className="input" />
 
         <div className="grid gap-3 sm:grid-cols-2">
           <input required type="date" name="preferredDate" className="input" />
@@ -73,7 +78,7 @@ export function AppointmentForm({ propertySlug, propertyTitle }: AppointmentForm
         </div>
 
         <select required name="visitType" className="input">
-          {visitTypes.map((type) => (
+          {copy.visitTypes.map((type) => (
             <option key={type} value={type}>
               {type}
             </option>
@@ -83,7 +88,7 @@ export function AppointmentForm({ propertySlug, propertyTitle }: AppointmentForm
         <textarea
           required
           name="message"
-          placeholder="Randevu notunuz"
+          placeholder={copy.message}
           rows={3}
           className="input"
         />
@@ -93,7 +98,7 @@ export function AppointmentForm({ propertySlug, propertyTitle }: AppointmentForm
           disabled={status.type === "loading"}
           className="cursor-pointer rounded-full bg-[#1f1a14] px-4 py-2 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-[#786b59]"
         >
-          {status.type === "loading" ? "Gönderiliyor..." : "Randevu Talebi Gönder"}
+          {status.type === "loading" ? copy.submitting : copy.submit}
         </button>
 
         {status.type === "success" ? <p className="text-sm text-emerald-700">{status.message}</p> : null}
