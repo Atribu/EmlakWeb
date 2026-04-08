@@ -37,13 +37,45 @@ function FloatingButton({
       rel="noreferrer"
       aria-label={label}
       title={label}
-      className={`group flex h-12 w-12 items-center justify-center rounded-full border border-white/15 ${accent} text-white shadow-[0_18px_38px_-22px_rgba(0,0,0,0.65)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02]`}
+      className={`group relative flex h-14 w-14 items-center justify-center rounded-[1.1rem] border border-white/18 ${accent} text-white shadow-[0_22px_42px_-22px_rgba(0,0,0,0.48)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02]`}
     >
       {children}
       <span className="pointer-events-none absolute right-[calc(100%+0.8rem)] rounded-full border border-[#dac39d] bg-[#fffaf1] px-3 py-1 text-[11px] font-semibold whitespace-nowrap text-[#35291d] opacity-0 shadow-[0_16px_30px_-26px_rgba(30,24,17,0.8)] transition duration-200 group-hover:opacity-100">
         {label}
       </span>
     </a>
+  );
+}
+
+function MobileDockButton({
+  label,
+  accent,
+  onClick,
+  href,
+  children,
+}: {
+  label: string;
+  accent: string;
+  onClick?: () => void;
+  href?: string;
+  children: ReactNode;
+}) {
+  const className = `flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-[1rem] px-2 text-center text-[11px] font-semibold ${accent} text-white shadow-[0_20px_36px_-24px_rgba(0,0,0,0.35)] transition active:scale-[0.98]`;
+
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" aria-label={label} className={className}>
+        {children}
+        <span>{label}</span>
+      </a>
+    );
+  }
+
+  return (
+    <button type="button" onClick={onClick} aria-label={label} className={className}>
+      {children}
+      <span>{label}</span>
+    </button>
   );
 }
 
@@ -122,9 +154,9 @@ export function FloatingContactDock() {
   const whatsappHref = `https://wa.me/${formatPhoneForHref(CHANNELS.whatsappPhone)}?text=${whatsappText}`;
 
   return (
-    <div className="pointer-events-none fixed right-4 bottom-4 z-[80] flex flex-col items-end gap-3 sm:right-6 sm:bottom-6">
+    <div className="pointer-events-none fixed right-3 bottom-3 left-3 z-[80] flex flex-col items-end gap-3 sm:right-6 sm:bottom-6 sm:left-auto">
       {isAssistantOpen ? (
-        <div className="pointer-events-auto w-[min(92vw,21rem)] overflow-hidden rounded-[1.35rem] border border-[#dbc7a3] bg-[#fffaf2] shadow-[0_28px_66px_-30px_rgba(16,12,8,0.55)]">
+        <div className="pointer-events-auto w-full max-w-[21rem] overflow-hidden rounded-[1.35rem] border border-[#dbc7a3] bg-[#fffaf2] shadow-[0_28px_66px_-30px_rgba(16,12,8,0.55)] sm:w-[min(92vw,21rem)]">
           <div className="bg-[linear-gradient(135deg,#101b27_0%,#172738_58%,#1f3245_100%)] px-5 py-4 text-[#f7ecda]">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -180,7 +212,7 @@ export function FloatingContactDock() {
         </div>
       ) : null}
 
-      <div className="pointer-events-auto flex flex-col items-end gap-2">
+      <div className="pointer-events-auto hidden flex-col items-end gap-2 sm:flex">
         <FloatingButton href={CHANNELS.instagramUrl} label={copy.instagram} accent="bg-[linear-gradient(135deg,#6f2dbd_0%,#d62976_55%,#f77737_100%)]">
           <InstagramIcon />
         </FloatingButton>
@@ -194,7 +226,7 @@ export function FloatingContactDock() {
           aria-label={copy.quickMessage}
           title={copy.quickMessage}
           onClick={() => setIsAssistantOpen((current) => !current)}
-          className="group relative flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-[linear-gradient(135deg,#14202d_0%,#24384c_100%)] text-white shadow-[0_18px_38px_-22px_rgba(0,0,0,0.65)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02]"
+          className="group relative flex h-14 w-14 items-center justify-center rounded-[1.1rem] border border-white/18 bg-[linear-gradient(135deg,#14202d_0%,#24384c_100%)] text-white shadow-[0_22px_42px_-22px_rgba(0,0,0,0.48)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02]"
         >
           <SparkIcon />
           <span className="pointer-events-none absolute right-[calc(100%+0.8rem)] rounded-full border border-[#dac39d] bg-[#fffaf1] px-3 py-1 text-[11px] font-semibold whitespace-nowrap text-[#35291d] opacity-0 shadow-[0_16px_30px_-26px_rgba(30,24,17,0.8)] transition duration-200 group-hover:opacity-100">
@@ -205,6 +237,30 @@ export function FloatingContactDock() {
         <FloatingButton href={whatsappHref} label={copy.whatsapp} accent="bg-[linear-gradient(135deg,#1ca84f_0%,#25d366_100%)]">
           <WhatsAppIcon />
         </FloatingButton>
+      </div>
+
+      <div className="pointer-events-auto w-full sm:hidden">
+        <div className="grid grid-cols-4 gap-2 rounded-[1.35rem] border border-[rgba(220,208,189,0.9)] bg-[rgba(255,252,247,0.96)] p-2 shadow-[0_28px_54px_-30px_rgba(16,23,34,0.24)] backdrop-blur">
+          <MobileDockButton label={copy.instagram} href={CHANNELS.instagramUrl} accent="bg-[linear-gradient(135deg,#6f2dbd_0%,#d62976_55%,#f77737_100%)]">
+            <InstagramIcon />
+          </MobileDockButton>
+
+          <MobileDockButton label={copy.telegram} href={CHANNELS.telegramUrl} accent="bg-[linear-gradient(135deg,#1d8fff_0%,#2aa3ff_100%)]">
+            <TelegramIcon />
+          </MobileDockButton>
+
+          <MobileDockButton
+            label={copy.quickMessage}
+            onClick={() => setIsAssistantOpen((current) => !current)}
+            accent="bg-[linear-gradient(135deg,#14202d_0%,#24384c_100%)]"
+          >
+            <SparkIcon />
+          </MobileDockButton>
+
+          <MobileDockButton label={copy.whatsapp} href={whatsappHref} accent="bg-[linear-gradient(135deg,#1ca84f_0%,#25d366_100%)]">
+            <WhatsAppIcon />
+          </MobileDockButton>
+        </div>
       </div>
     </div>
   );

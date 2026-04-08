@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
+import { HomeQuickSearch } from "@/components/home-quick-search";
 import { PriceText } from "@/components/price-text";
 import { PropertyCard } from "@/components/property-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { listAdvisors, listProperties } from "@/lib/data-store";
+import { listAdvisors, listCities, listProperties, listTypes } from "@/lib/data-store";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { homePageCopy, summarizeLocationStockLabel } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
@@ -54,6 +55,8 @@ export default async function HomePage() {
   const language = await getServerSiteLanguage();
   const copy = homePageCopy(language);
   const properties = listProperties();
+  const cities = listCities();
+  const types = listTypes();
   const advisors = listAdvisors();
   const advisorMap = new Map(advisors.map((advisor) => [advisor.id, advisor]));
   const featured = properties.slice(0, 4);
@@ -173,73 +176,132 @@ export default async function HomePage() {
     subtitle: copy.locationCards["signature-selection"].subtitle,
   };
 
+  const quickSearchLinks = popularLocations.slice(0, 4).map((location) => ({
+    label: location.title,
+    href: location.href,
+  }));
+
   return (
     <div className="min-h-screen">
       <SiteHeader />
 
       <main className="w-full pb-24">
-        <section className="frame-wide fade-up relative min-h-[88vh] overflow-hidden rounded-[1.6rem] border border-[#3f3022] bg-[#0d151f] shadow-[0_58px_102px_-68px_rgba(0,0,0,0.95)]">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="none"
-            poster={heroImage}
-            className="absolute inset-0 h-full w-full object-cover"
-          >
-            <source src="/videos/hero-loop.mp4" type="video/mp4" />
-          </video>
+        <section className="frame-wide fade-up relative overflow-hidden rounded-[2rem] border border-[var(--line-strong)] bg-[linear-gradient(180deg,rgba(255,252,247,0.98)_0%,rgba(247,242,235,0.92)_100%)] px-4 py-4 shadow-[0_40px_100px_-68px_rgba(14,22,35,0.38)] sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(194,121,82,0.14),transparent_32%),radial-gradient(circle_at_right_center,rgba(29,56,92,0.12),transparent_34%)]" />
 
-          <div className="hero-overlay absolute inset-0" />
-
-          <div className="relative z-10 flex min-h-[88vh] items-end">
-            <div className="w-full p-6 text-[#f5ebdb] sm:p-10 lg:p-14">
-              <div className="max-w-4xl">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#d8bc8d]">
+          <div className="relative grid gap-4 xl:grid-cols-[minmax(0,1.02fr)_minmax(360px,0.98fr)]">
+            <div className="overflow-hidden rounded-[1.8rem] border border-white/80 bg-[linear-gradient(180deg,#fffdf9_0%,#f8f3eb_100%)] p-6 shadow-[0_24px_70px_-56px_rgba(15,21,32,0.45)] sm:p-8 lg:p-10">
+              <div className="max-w-3xl">
+                <p className="inline-flex rounded-full bg-[rgba(29,56,92,0.08)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
                   {copy.heroKicker}
                 </p>
-                <h1 className="mt-5 text-[2.45rem] leading-[0.95] font-semibold sm:text-[4.45rem] xl:text-[5.35rem]">
+                <h1 className="mt-5 max-w-3xl text-[2.65rem] leading-[0.94] font-semibold text-[var(--ink-950)] sm:text-[4.25rem] xl:text-[5rem]">
                   {copy.heroTitle}
                 </h1>
-                <p className="mt-5 max-w-2xl text-sm leading-7 text-[#dfd0b6] sm:text-base">
+                <p className="mt-5 max-w-2xl text-[1rem] leading-8 text-[var(--ink-600)] sm:text-[1.08rem]">
                   {copy.heroBody}
                 </p>
 
-                <div className="mt-7 flex flex-wrap gap-2 text-sm">
-                  <Link href="/portfoyler" className="btn-gold rounded-full px-5 py-2.5 font-semibold transition">
+                <div className="mt-7 flex flex-wrap gap-3 text-sm">
+                  <Link
+                    href="/portfoyler"
+                    className="btn-gold inline-flex min-h-12 items-center justify-center rounded-full px-6 text-sm font-semibold transition hover:-translate-y-0.5"
+                  >
                     {copy.ctaListings}
                   </Link>
-                  <Link href="/harita" className="btn-ghost-light rounded-full px-5 py-2.5 font-semibold transition">
+                  <Link
+                    href="/harita"
+                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white px-6 text-sm font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)]"
+                  >
                     {copy.ctaMap}
                   </Link>
-                  <Link href="/iletisim" className="btn-ghost-light rounded-full px-5 py-2.5 font-semibold transition">
+                  <Link
+                    href="/iletisim"
+                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[rgba(29,56,92,0.06)] px-6 text-sm font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:bg-[rgba(29,56,92,0.1)]"
+                  >
                     {copy.ctaContact}
                   </Link>
                 </div>
               </div>
 
-              <div className="mt-9 grid gap-2 sm:grid-cols-3">
+              <div className="mt-8 grid gap-3 sm:grid-cols-3">
                 {[
                   { label: copy.stats.activeListings, value: String(properties.length) },
                   { label: copy.stats.premiumAdvisors, value: String(advisors.length) },
                   { label: copy.stats.averageClose, value: copy.averageCloseValue },
                 ].map((item) => (
-                  <article key={item.label} className="metric-chip rounded-xl px-3 py-2 backdrop-blur">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-[#bda681]">{item.label}</p>
-                    <p className="mt-1 text-lg font-semibold text-[#f2e3ca]">{item.value}</p>
+                  <article
+                    key={item.label}
+                    className="rounded-[1.35rem] border border-[var(--line-strong)] bg-white/90 px-4 py-4 shadow-[0_22px_34px_-30px_rgba(25,34,49,0.28)]"
+                  >
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--ink-500)]">{item.label}</p>
+                    <p className="mt-2 text-[1.4rem] font-semibold text-[var(--brand-primary)]">{item.value}</p>
                   </article>
                 ))}
               </div>
             </div>
+
+            <div className="relative min-h-[320px] overflow-hidden rounded-[1.8rem] border border-[rgba(29,56,92,0.14)] bg-[var(--brand-primary)] shadow-[0_38px_70px_-42px_rgba(13,21,33,0.6)] sm:min-h-[420px]">
+              <Image
+                src={heroImage}
+                alt={heroProperty?.title ?? "Öne çıkan premium portföy"}
+                fill
+                priority
+                sizes="(max-width: 1279px) 100vw, 46vw"
+                unoptimized={isUnoptimizedImageSrc(heroImage)}
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,14,22,0.14)_0%,rgba(8,14,22,0.46)_58%,rgba(8,14,22,0.72)_100%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_34%)]" />
+
+              <div className="absolute left-4 top-4 inline-flex rounded-full border border-white/30 bg-[rgba(8,14,22,0.34)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur sm:left-6 sm:top-6">
+                {heroProperty?.city} {heroProperty?.district ? `• ${heroProperty.district}` : ""}
+              </div>
+
+              <div className="absolute inset-x-4 bottom-4 rounded-[1.5rem] border border-white/18 bg-[rgba(8,14,22,0.52)] p-4 text-white backdrop-blur-md sm:inset-x-6 sm:bottom-6 sm:p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#f0d3a9]">
+                      {heroProperty?.listingRef ?? copy.featuredKicker}
+                    </p>
+                    <h2 className="mt-2 max-w-xl text-[1.7rem] leading-[1.02] font-semibold text-white sm:text-[2.1rem]">
+                      {heroProperty?.title ?? copy.featuredTitle}
+                    </h2>
+                  </div>
+
+                  {heroProperty ? (
+                    <div className="rounded-[1.15rem] bg-white/14 px-4 py-3 text-left shadow-[0_24px_40px_-32px_rgba(0,0,0,0.6)]">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#f3dcb9]">
+                        {copy.startingBand}
+                      </p>
+                      <p className="mt-2 text-[1.45rem] font-semibold text-white">
+                        <PriceText amount={heroProperty.price} />
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+
+                {heroProperty?.description ? (
+                  <p className="mt-4 max-w-2xl text-sm leading-6 text-[rgba(255,247,235,0.86)]">
+                    {heroProperty.description}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="relative mt-4 xl:-mt-10">
+            <HomeQuickSearch cities={cities} types={types} quickLinks={quickSearchLinks} />
           </div>
         </section>
 
-        <section className="frame mt-14">
+        <section className="frame mt-16">
           <div className="mb-5 flex items-end justify-between gap-3">
             <div>
               <span className="section-kicker">{copy.featuredKicker}</span>
-              <h2 className="mt-2 text-[2.2rem] leading-none font-semibold text-[#1d1812]">{copy.featuredTitle}</h2>
+              <h2 className="mt-3 text-[2.4rem] leading-none font-semibold text-[#1d1812] sm:text-[2.85rem]">
+                {copy.featuredTitle}
+              </h2>
             </div>
             <Link href="/portfoyler" className="text-sm font-semibold text-[#6a4f22] underline">
               {copy.viewAll}
@@ -253,7 +315,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="frame mt-14">
+        <section className="frame mt-16">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <span className="section-kicker">{copy.locationsKicker}</span>
