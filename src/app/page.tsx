@@ -214,10 +214,10 @@ export default async function HomePage() {
               <p className="inline-flex rounded-full bg-[rgba(29,56,92,0.08)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
                 {copy.heroKicker}
               </p>
-              <h1 className="mt-5 max-w-3xl text-[2.45rem] leading-[0.94] font-semibold text-[var(--ink-950)] sm:text-[3.7rem] xl:text-[4.35rem]">
+              <h1 className="mt-5 max-w-3xl text-[2.1rem] leading-[0.96] font-semibold text-[var(--ink-950)] sm:text-[3rem] xl:text-[3.4rem]">
                 {copy.heroTitle}
               </h1>
-              <p className="mt-5 max-w-2xl text-[1rem] leading-8 text-[var(--ink-600)] sm:text-[1.06rem]">
+              <p className="mt-5 max-w-2xl text-[0.96rem] leading-7 text-[var(--ink-600)]">
                 {copy.heroBody}
               </p>
 
@@ -277,7 +277,7 @@ export default async function HomePage() {
               <div className="absolute inset-x-4 bottom-4 sm:inset-x-6 sm:bottom-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="rounded-[1.45rem] border border-white/16 bg-[rgba(8,14,22,0.42)] px-4 py-4 text-white backdrop-blur-md sm:max-w-[70%]">
-                    <h2 className="text-[1.5rem] leading-[1.02] font-semibold sm:text-[1.9rem]">
+                    <h2 className="text-[1.25rem] leading-[1.06] font-semibold sm:text-[1.55rem]">
                       {heroPropertyTitle}
                     </h2>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white/90">
@@ -305,7 +305,7 @@ export default async function HomePage() {
                         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f1d7b0]">
                           {copy.startingBand}
                         </p>
-                        <p className="mt-2 text-[1.35rem] font-semibold">
+                        <p className="mt-2 text-[1.18rem] font-semibold">
                           <PriceText amount={heroProperty.price} />
                         </p>
                       </div>
@@ -328,7 +328,7 @@ export default async function HomePage() {
           <div className="mb-5 flex items-end justify-between gap-3">
             <div>
               <span className="section-kicker">{copy.featuredKicker}</span>
-              <h2 className="mt-3 text-[2.4rem] leading-none font-semibold text-[#1d1812] sm:text-[2.85rem]">
+              <h2 className="mt-3 text-[1.9rem] leading-none font-semibold text-[#1d1812] sm:text-[2.2rem]">
                 {copy.featuredTitle}
               </h2>
             </div>
@@ -348,10 +348,10 @@ export default async function HomePage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <span className="section-kicker">{copy.locationsKicker}</span>
-              <h2 className="mt-3 text-[2.2rem] leading-[0.95] font-semibold text-[#1d1812] sm:text-[3rem]">
+              <h2 className="mt-3 text-[1.9rem] leading-[0.98] font-semibold text-[#1d1812] sm:text-[2.2rem]">
                 {copy.locationsTitle}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-[#62584c] sm:text-base">
+              <p className="mt-3 text-[0.95rem] leading-7 text-[#62584c]">
                 {copy.locationsBody}
               </p>
             </div>
@@ -393,10 +393,10 @@ export default async function HomePage() {
                     <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#dfc79d]">
                       {location.subtitle}
                     </p>
-                    <h3 className="mt-3 text-[1.8rem] leading-[0.95] font-semibold sm:text-[2.4rem]">
+                    <h3 className="mt-3 text-[1.5rem] leading-[1] font-semibold sm:text-[1.9rem]">
                       {location.title}
                     </h3>
-                    <p className="mt-3 max-w-xl text-sm leading-6 text-[#ebe0cc]">{location.blurb}</p>
+                    <p className="mt-3 max-w-xl text-[13px] leading-6 text-[#ebe0cc]">{location.blurb}</p>
 
                     <div className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-white/14 pt-4">
                       <div>

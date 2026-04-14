@@ -51,6 +51,18 @@ const userStorePath = path.join(demoDataDir, "users.json");
 const leadStorePath = path.join(demoDataDir, "leads.json");
 const sellerLeadStorePath = path.join(demoDataDir, "seller-leads.json");
 
+const REQUIRED_DEMO_USERS: User[] = [
+  {
+    id: "usr-admin-demo",
+    name: "Demo Admin",
+    role: "admin",
+    email: "admin@admin",
+    phone: "+90 555 111 11 11",
+    username: "admin@admin",
+    password: "admin",
+  },
+];
+
 type DiskCacheKey = "advisors" | "properties" | "blogPosts" | "users" | "leads" | "sellerLeads";
 
 const diskCacheState: Record<DiskCacheKey, { initialized: boolean; mtimeMs: number | null }> = {
@@ -287,13 +299,31 @@ function syncUsersFromDisk() {
   const diskUsers = readUsersFromDisk();
 
   if (diskUsers) {
-    store.users = diskUsers;
+    store.users = ensureRequiredDemoUsers(diskUsers);
+    if (store.users.length !== diskUsers.length) {
+      writeUsersToDisk(store.users);
+    }
     return;
   }
 
   if (!fs.existsSync(userStorePath)) {
+    store.users = ensureRequiredDemoUsers(store.users);
     writeUsersToDisk(store.users);
   }
+}
+
+function ensureRequiredDemoUsers(users: User[]): User[] {
+  const existingKeys = new Set(
+    users.flatMap((user) => [user.email.toLocaleLowerCase("tr"), user.username.toLocaleLowerCase("tr")]),
+  );
+
+  const missingUsers = REQUIRED_DEMO_USERS.filter(
+    (user) =>
+      !existingKeys.has(user.email.toLocaleLowerCase("tr")) &&
+      !existingKeys.has(user.username.toLocaleLowerCase("tr")),
+  );
+
+  return missingUsers.length > 0 ? [...missingUsers, ...users] : users;
 }
 
 function readLeadsFromDisk(): ContactLead[] | null {

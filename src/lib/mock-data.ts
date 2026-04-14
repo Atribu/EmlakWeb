@@ -62,6 +62,15 @@ export const initialUsers: User[] = [
     password: "admin123",
   },
   {
+    id: "usr-admin-demo",
+    name: "Demo Admin",
+    role: "admin",
+    email: "admin@admin",
+    phone: "+90 555 111 11 11",
+    username: "admin@admin",
+    password: "admin",
+  },
+  {
     id: "usr-2",
     name: "Ayşe Demir",
     role: "portfolio_manager",

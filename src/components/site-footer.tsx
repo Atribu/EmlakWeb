@@ -125,13 +125,6 @@ export function SiteFooter() {
             <a href="mailto:hello@portfoysatis.com" className="mt-2 block text-sm text-[var(--ink-600)]">
               hello@portfoysatis.com
             </a>
-
-            <Link
-              href="/yetkili-giris"
-              className="mt-4 inline-flex min-h-11 items-center rounded-full bg-[var(--brand-primary)] px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[#27466e]"
-            >
-              {copy.login}
-            </Link>
           </div>
         </div>
       </div>

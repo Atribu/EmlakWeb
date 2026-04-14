@@ -28,6 +28,18 @@ function ChevronIcon() {
 }
 
 export function HeaderMarketControls() {
+  return <HeaderMarketControlsInner />;
+}
+
+type HeaderMarketControlsProps = {
+  className?: string;
+  menuAlign?: "left" | "right";
+};
+
+export function HeaderMarketControlsInner({
+  className = "",
+  menuAlign = "left",
+}: HeaderMarketControlsProps = {}) {
   const router = useRouter();
   const languageMenuRef = useRef<HTMLDetailsElement>(null);
   const currencyMenuRef = useRef<HTMLDetailsElement>(null);
@@ -61,7 +73,7 @@ export function HeaderMarketControls() {
   }
 
   return (
-    <div className="flex items-center gap-2 text-[11px] text-[var(--brand-primary)]">
+    <div className={`flex items-center gap-2 text-[11px] text-[var(--brand-primary)] ${className}`}>
       <details ref={languageMenuRef} className="relative">
         <summary
           className="flex h-11 min-w-11 cursor-pointer list-none items-center justify-center gap-2 rounded-full border border-[var(--line-strong)] bg-white px-3 text-[var(--brand-primary)] shadow-[0_18px_36px_-30px_rgba(22,32,48,0.34)] transition hover:border-[var(--brand-accent)] [&::-webkit-details-marker]:hidden"
@@ -77,7 +89,7 @@ export function HeaderMarketControls() {
           <ChevronIcon />
         </summary>
 
-        <div className="absolute left-0 top-[calc(100%+0.75rem)] z-30 w-48 overflow-hidden rounded-[1.2rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] p-2 shadow-[0_28px_54px_-32px_rgba(16,23,34,0.34)] backdrop-blur">
+        <div className={`absolute top-[calc(100%+0.75rem)] z-30 w-48 overflow-hidden rounded-[1.2rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] p-2 shadow-[0_28px_54px_-32px_rgba(16,23,34,0.34)] backdrop-blur ${menuAlign === "right" ? "right-0" : "left-0"}`}>
           {languageOptions.map((option) => (
             <button
               key={option.code}
@@ -118,7 +130,7 @@ export function HeaderMarketControls() {
           <ChevronIcon />
         </summary>
 
-        <div className="absolute left-0 top-[calc(100%+0.75rem)] z-30 w-44 overflow-hidden rounded-[1.2rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] p-2 shadow-[0_28px_54px_-32px_rgba(16,23,34,0.34)] backdrop-blur">
+        <div className={`absolute top-[calc(100%+0.75rem)] z-30 w-44 overflow-hidden rounded-[1.2rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] p-2 shadow-[0_28px_54px_-32px_rgba(16,23,34,0.34)] backdrop-blur ${menuAlign === "right" ? "right-0" : "left-0"}`}>
           {currencyOptions.map((option) => (
             <button
               key={option.code}

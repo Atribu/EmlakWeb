@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useState, type FormEvent } from "react";
+import { startTransition, useMemo, useState, type FormEvent } from "react";
 
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { translatePropertyType } from "@/lib/site-copy";
@@ -130,6 +130,18 @@ export function HomeQuickSearch({ cities, types, quickLinks }: HomeQuickSearchPr
   const { language } = useSitePreferences();
   const copy = searchCopy[language];
   const [form, setForm] = useState<SearchState>(initialState);
+  const uniqueQuickLinks = useMemo(() => {
+    const seen = new Set<string>();
+
+    return quickLinks.filter((item) => {
+      const key = `${item.label}::${item.href}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }, [quickLinks]);
 
   function updateField<K extends keyof SearchState>(key: K, value: SearchState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -179,18 +191,18 @@ export function HomeQuickSearch({ cities, types, quickLinks }: HomeQuickSearchPr
               <span className="inline-flex rounded-full bg-[rgba(29,56,92,0.08)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-primary)]">
                 {copy.eyebrow}
               </span>
-              <p className="text-sm leading-6 text-[var(--ink-600)]">
+              <p className="text-[13px] leading-5 text-[var(--ink-600)]">
                 {copy.body}
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {quickLinks.slice(0, 4).map((item) => (
+            {uniqueQuickLinks.slice(0, 4).map((item) => (
               <Link
                 key={`${item.href}-${item.label}`}
                 href={item.href}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)] hover:bg-[rgba(255,245,235,0.9)]"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white px-4 text-[13px] font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)] hover:bg-[rgba(255,245,235,0.9)]"
               >
                 {item.label}
               </Link>

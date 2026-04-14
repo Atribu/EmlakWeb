@@ -51,12 +51,7 @@ export function SiteHeaderAuth({ initialUser = null }: SiteHeaderAuthProps) {
   }, []);
 
   if (!hydrated && !user) {
-    return (
-      <div
-        aria-hidden
-        className="h-[46px] w-[152px] rounded-full border border-[var(--line-strong)] bg-white"
-      />
-    );
+    return null;
   }
 
   if (user) {
@@ -82,13 +77,5 @@ export function SiteHeaderAuth({ initialUser = null }: SiteHeaderAuthProps) {
     );
   }
 
-  return (
-    <Link
-      href="/yetkili-giris"
-      className="rounded-full border border-[var(--line-strong)] bg-white px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.17em] text-[var(--brand-primary)] shadow-[0_18px_36px_-30px_rgba(22,32,48,0.34)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(29,56,92,0.04)]"
-    >
-      <span className="sm:hidden">{copy.authShortLogin}</span>
-      <span className="hidden sm:inline">{copy.authLogin}</span>
-    </Link>
-  );
+  return null;
 }

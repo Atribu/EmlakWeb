@@ -45,7 +45,7 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
   return (
     <Link
       href={`/ilan/${property.slug}`}
-      className="group block overflow-hidden rounded-[1.45rem] border border-[var(--line-strong)] bg-[linear-gradient(180deg,#fffdfa_0%,#fbf7f0_100%)] shadow-[0_24px_46px_-34px_rgba(24,20,14,0.28)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_54px_-36px_rgba(18,24,36,0.34)]"
+      className="group block overflow-hidden rounded-[1.55rem] border border-[var(--line-strong)] bg-[linear-gradient(180deg,#fffdfa_0%,#fbf7f0_100%)] shadow-[0_24px_46px_-34px_rgba(24,20,14,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_54px_-36px_rgba(18,24,36,0.28)]"
     >
       <div className="relative aspect-[4/2.55] overflow-hidden bg-[#d8cab5]">
         <Image
@@ -78,13 +78,13 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-accent-strong)]">
               {property.listingRef}
             </p>
-            <h3 className="mt-2 text-[1.15rem] leading-6 font-semibold text-[var(--ink-950)]">
+            <h3 className="mt-2 line-clamp-2 text-[1rem] leading-5 font-semibold text-[var(--ink-950)]">
               {propertyTitle}
             </h3>
           </div>
         </div>
 
-        <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-500)]">
+        <p className="mt-2 text-[11px] font-medium tracking-[0.08em] text-[var(--ink-500)]">
           {property.neighborhood} / {property.district}
         </p>
 
@@ -95,22 +95,19 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
           <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--brand-primary)]">
             {property.areaM2} m²
           </span>
-          <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--brand-primary)]">
-            {property.city}
-          </span>
         </div>
 
         <div className="mt-5 flex items-end justify-between gap-3 border-t border-[rgba(220,208,189,0.72)] pt-4">
-          <div>
+          <div className="rounded-[1rem] border border-[var(--line-strong)] bg-white px-3.5 py-3">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
               {copy.startingPrice}
             </p>
-            <p className="mt-1 text-[1.28rem] font-semibold text-[var(--brand-primary)]">
+            <p className="mt-1 text-[1.12rem] font-semibold text-[var(--brand-primary)]">
               <PriceText amount={property.price} />
             </p>
           </div>
 
-          <span className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--brand-accent-strong)]">
+          <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-[var(--brand-accent-strong)]">
             {copy.details}
             <span aria-hidden className="transition group-hover:translate-x-1">
               →
