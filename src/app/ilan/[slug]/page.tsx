@@ -12,6 +12,12 @@ import { SiteHeader } from "@/components/site-header";
 import { getAdvisorById, getPropertyBySlug } from "@/lib/data-store";
 import { formatPhoneForHref } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
+import {
+  propertyDescriptionForLanguage,
+  propertyFeaturesForLanguage,
+  propertyHighlightsForLanguage,
+  propertyTitleForLanguage,
+} from "@/lib/property-content";
 import { getProjectMeta } from "@/lib/project-meta";
 import {
   propertyDetailPageCopy,
@@ -56,11 +62,15 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
   const advisor = getAdvisorById(property.advisorId);
   const projectMeta = getProjectMeta(property);
   const listingSchema = propertySchema(property);
+  const propertyTitle = propertyTitleForLanguage(property, language);
+  const propertyDescription = propertyDescriptionForLanguage(property, language);
+  const propertyHighlights = propertyHighlightsForLanguage(property, language);
+  const propertyFeatures = propertyFeaturesForLanguage(property, language);
 
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : null;
   const whatsappHref = advisor
     ? `https://wa.me/${formatPhoneForHref(advisor.whatsapp)}?text=${encodeURIComponent(
-        propertyDetailWhatsAppInquiry(language, property.title, property.listingRef),
+        propertyDetailWhatsAppInquiry(language, propertyTitle, property.listingRef),
       )}`
     : null;
 
@@ -75,7 +85,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
 
         <section className="luxury-card mt-4 overflow-hidden">
           <PropertyDetailGallery
-            title={property.title}
+            title={propertyTitle}
             listingRef={property.listingRef}
             locationLabel={`${property.city} / ${property.district} / ${property.neighborhood}`}
             coverImage={property.coverImage}
@@ -100,11 +110,11 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
                 <DetailItem label={copy.labels.delivery} value={translateDeliveryDate(projectMeta.deliveryDate, language)} compact />
               </div>
 
-              <p className="mt-6 text-sm leading-7 text-[#5f5649]">{property.description}</p>
+              <p className="mt-6 text-sm leading-7 text-[#5f5649]">{propertyDescription}</p>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <InfoList title={copy.highlights} items={property.highlights} />
-                <InfoList title={copy.features} items={property.features} />
+                <InfoList title={copy.highlights} items={propertyHighlights} />
+                <InfoList title={copy.features} items={propertyFeatures} />
               </div>
             </div>
 
@@ -158,8 +168,8 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
                 </aside>
               ) : null}
 
-              <AppointmentForm propertySlug={property.slug} propertyTitle={property.title} />
-              <ContactForm propertySlug={property.slug} propertyTitle={property.title} />
+              <AppointmentForm propertySlug={property.slug} propertyTitle={propertyTitle} />
+              <ContactForm propertySlug={property.slug} propertyTitle={propertyTitle} />
             </div>
           </div>
         </section>

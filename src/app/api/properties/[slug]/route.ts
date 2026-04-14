@@ -17,6 +17,10 @@ import {
   PORTFOLIO_ROOM_FIELDS,
   makeRoomImageLabel,
 } from "@/lib/portfolio-images";
+import {
+  readPropertyTranslationsFromFormData,
+  readPropertyTranslationsFromPayload,
+} from "@/lib/property-content";
 import type { CreatePropertyInput, Property, PropertyType } from "@/lib/types";
 
 const validTypes: PropertyType[] = ["Daire", "Villa", "Rezidans", "Arsa", "Ofis"];
@@ -114,6 +118,7 @@ function parseInput(value: unknown): CreatePropertyInput {
     highlights: parseList(payload.highlights, "Öne çıkanlar"),
     features: parseList(payload.features, "Özellikler"),
     imageLabels: parseList(payload.imageLabels, "Görsel etiketleri"),
+    translations: readPropertyTranslationsFromPayload(payload.translations),
   };
 }
 
@@ -219,6 +224,7 @@ async function parseFormDataInput(formData: FormData, existing: Property): Promi
     highlights: parseCommaSeparatedList(formData.get("highlights"), "Öne çıkanlar"),
     features: parseCommaSeparatedList(formData.get("features"), "Özellikler"),
     imageLabels,
+    translations: readPropertyTranslationsFromFormData(formData),
   };
 }
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { PropertyTranslationFields } from "@/components/panel/property-translation-fields";
 import {
   MAX_IMAGES_PER_ROOM,
   MAX_PORTFOLIO_REQUEST_MB,
@@ -187,7 +188,6 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
       </div>
 
       <form key={selectedProperty.slug} onSubmit={handleSubmit} className="mt-5 grid gap-3 md:grid-cols-2">
-        <input required name="title" defaultValue={selectedProperty.title} placeholder="Portföy başlığı" className="input" />
         <input required name="city" defaultValue={selectedProperty.city} placeholder="Şehir" className="input" />
         <input required name="district" defaultValue={selectedProperty.district} placeholder="İlçe" className="input" />
         <input
@@ -299,27 +299,12 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
           ))}
         </div>
 
-        <textarea
-          required
-          name="description"
-          rows={4}
-          defaultValue={selectedProperty.description}
-          placeholder="İlan açıklaması"
-          className="input md:col-span-2"
-        />
-        <input
-          required
-          name="highlights"
-          defaultValue={selectedProperty.highlights.join(", ")}
-          placeholder="Öne çıkanlar (virgülle)"
-          className="input md:col-span-2"
-        />
-        <input
-          required
-          name="features"
-          defaultValue={selectedProperty.features.join(", ")}
-          placeholder="Özellikler (virgülle)"
-          className="input md:col-span-2"
+        <PropertyTranslationFields
+          defaultTitle={selectedProperty.title}
+          defaultDescription={selectedProperty.description}
+          defaultHighlights={selectedProperty.highlights}
+          defaultFeatures={selectedProperty.features}
+          defaultTranslations={selectedProperty.translations}
         />
 
         <button

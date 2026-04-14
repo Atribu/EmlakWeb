@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { initialAdvisors, initialBlogPosts, initialProperties, initialUsers } from "@/lib/mock-data";
+import { sanitizePropertyTranslations } from "@/lib/property-content";
 import { pickSampleAdvisorImageForSeed } from "@/lib/sample-advisor-images";
 import { pickSampleImageSet } from "@/lib/sample-images";
 import type {
@@ -683,6 +684,14 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
           property.district,
           property.neighborhood,
           property.listingRef,
+          ...(property.translations
+            ? Object.values(property.translations).flatMap((translation) => [
+                translation?.title ?? "",
+                translation?.description ?? "",
+                ...(translation?.highlights ?? []),
+                ...(translation?.features ?? []),
+              ])
+            : []),
         ].join(" "),
       );
 
@@ -708,6 +717,7 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
   const location = inferCoordinates(input);
   const property: Property = {
     ...input,
+    translations: sanitizePropertyTranslations(input.translations),
     latitude: location.latitude,
     longitude: location.longitude,
     coverImage: input.coverImage || sampleSet.cover,
@@ -768,6 +778,7 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
   property.coverImage = input.coverImage || property.coverImage;
   property.galleryImages = input.galleryImages.length > 0 ? input.galleryImages : property.galleryImages;
   property.imageLabels = input.imageLabels.length > 0 ? input.imageLabels : property.imageLabels;
+  property.translations = sanitizePropertyTranslations(input.translations);
   writePropertiesToDisk(store.properties);
 
   return property;

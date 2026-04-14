@@ -169,21 +169,20 @@ export function HomeQuickSearch({ cities, types, quickLinks }: HomeQuickSearchPr
   }
 
   return (
-    <section className="relative z-20 overflow-hidden rounded-[1.7rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.96)] p-4 shadow-[0_28px_70px_-44px_rgba(19,24,38,0.34)] backdrop-blur xl:px-6 xl:py-5">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(201,124,78,0.1),transparent_32%),radial-gradient(circle_at_left_center,rgba(29,56,92,0.08),transparent_34%)]" />
+    <section className="relative overflow-hidden rounded-[1.75rem] border border-[var(--line-strong)] bg-[rgba(255,253,249,0.98)] p-4 shadow-[0_28px_58px_-42px_rgba(18,24,36,0.28)] backdrop-blur xl:px-6 xl:py-5">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_right_center,rgba(29,56,92,0.08),transparent_32%),radial-gradient(circle_at_left_top,rgba(201,124,78,0.08),transparent_28%)]" />
 
-      <div className="relative flex flex-col gap-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-accent-strong)]">
-              {copy.eyebrow}
-            </p>
-            <h2 className="mt-2 text-[1.75rem] leading-[0.98] font-semibold text-[var(--ink-950)] sm:text-[2.3rem]">
-              {copy.title}
-            </h2>
-            <p className="mt-2 text-sm leading-7 text-[var(--ink-600)] sm:text-[1rem]">
-              {copy.body}
-            </p>
+      <div className="relative flex flex-col gap-4">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex rounded-full bg-[rgba(29,56,92,0.08)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-primary)]">
+                {copy.eyebrow}
+              </span>
+              <p className="text-sm leading-6 text-[var(--ink-600)]">
+                {copy.body}
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -191,7 +190,7 @@ export function HomeQuickSearch({ cities, types, quickLinks }: HomeQuickSearchPr
               <Link
                 key={`${item.href}-${item.label}`}
                 href={item.href}
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)] hover:bg-[rgba(255,245,235,0.9)]"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)] hover:bg-[rgba(255,245,235,0.9)]"
               >
                 {item.label}
               </Link>
@@ -199,7 +198,7 @@ export function HomeQuickSearch({ cities, types, quickLinks }: HomeQuickSearchPr
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_repeat(2,minmax(0,0.8fr))_repeat(2,minmax(0,0.7fr))_auto]">
+        <form onSubmit={handleSubmit} className="grid gap-3 xl:grid-cols-[minmax(0,1.25fr)_repeat(2,minmax(0,0.82fr))_repeat(2,minmax(0,0.72fr))_auto]">
           <label className="flex flex-col gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
               {copy.keywordLabel}
@@ -286,24 +285,9 @@ export function HomeQuickSearch({ cities, types, quickLinks }: HomeQuickSearchPr
               <circle cx="8.75" cy="8.75" r="4.75" stroke="currentColor" strokeWidth="1.8" />
               <path d="m12.5 12.5 3.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
-            {copy.submit}
+              {copy.submit}
           </button>
         </form>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
-            {copy.quickLinksLabel}
-          </span>
-          {quickLinks.slice(0, 5).map((item) => (
-            <Link
-              key={`inline-${item.href}-${item.label}`}
-              href={item.href}
-              className="inline-flex min-h-10 items-center rounded-full bg-[var(--surface-muted)] px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-[rgba(29,56,92,0.08)]"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
       </div>
     </section>
   );

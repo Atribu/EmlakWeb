@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { PropertyTranslationFields } from "@/components/panel/property-translation-fields";
 import {
   MAX_IMAGES_PER_ROOM,
   MAX_PORTFOLIO_REQUEST_MB,
@@ -132,7 +133,6 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-5 grid gap-3 md:grid-cols-2">
-        <input required name="title" placeholder="Portföy başlığı" className="input" />
         <input required name="city" placeholder="Şehir" className="input" />
         <input required name="district" placeholder="İlçe" className="input" />
         <input required name="neighborhood" placeholder="Mahalle" className="input" />
@@ -200,14 +200,7 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
           {MAX_IMAGES_PER_ROOM} görsel, toplam yükleme en fazla {MAX_PORTFOLIO_REQUEST_MB} MB.
         </p>
 
-        <textarea required name="description" rows={4} placeholder="İlan açıklaması" className="input md:col-span-2" />
-        <input
-          required
-          name="highlights"
-          placeholder="Öne çıkanlar (virgülle)"
-          className="input md:col-span-2"
-        />
-        <input required name="features" placeholder="Özellikler (virgülle)" className="input md:col-span-2" />
+        <PropertyTranslationFields />
 
         <button
           type="submit"

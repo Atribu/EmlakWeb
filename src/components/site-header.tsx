@@ -21,6 +21,14 @@ function ChevronIcon() {
   );
 }
 
+function ArrowIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5" aria-hidden>
+      <path d="M7.5 5.75 12 10l-4.5 4.25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
   const { language } = useSitePreferences();
   const copy = headerCopy(language);
@@ -52,28 +60,35 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
               <div key={group.href} className="group relative">
                 <Link
                   href={group.href}
-                  className="flex min-h-11 items-center gap-1 rounded-full px-4 py-2 transition hover:bg-[rgba(29,56,92,0.07)] hover:text-[var(--brand-primary)] focus-visible:bg-[rgba(29,56,92,0.07)] focus-visible:text-[var(--brand-primary)] focus-visible:outline-none"
+                  className="flex min-h-10 items-center gap-1 rounded-full px-4 py-2 transition hover:bg-[rgba(29,56,92,0.07)] hover:text-[var(--brand-primary)] focus-visible:bg-[rgba(29,56,92,0.07)] focus-visible:text-[var(--brand-primary)] focus-visible:outline-none"
                 >
                   {group.label}
                   <ChevronIcon />
                 </Link>
 
-                <div className="pointer-events-none invisible absolute top-full left-1/2 z-30 w-max -translate-x-1/2 translate-y-2 pt-4 opacity-0 transition duration-200 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                  <div className={`overflow-hidden rounded-[1.35rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] shadow-[0_34px_70px_-34px_rgba(22,30,42,0.28)] backdrop-blur-xl ${group.panelClassName ?? "w-[30rem]"}`}>
-                    <div className="border-b border-[rgba(220,208,189,0.72)] bg-[linear-gradient(135deg,rgba(201,124,78,0.08)_0%,rgba(29,56,92,0.03)_72%)] px-5 py-4">
+                <div className="pointer-events-none invisible absolute top-full left-1/2 z-30 w-max -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition duration-200 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                  <div className={`min-w-[34rem] overflow-hidden rounded-[1.35rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] shadow-[0_34px_70px_-34px_rgba(22,30,42,0.28)] backdrop-blur-xl ${group.panelClassName ?? "w-[36rem]"}`}>
+                    <div className="border-b border-[rgba(220,208,189,0.72)] bg-[linear-gradient(135deg,rgba(201,124,78,0.08)_0%,rgba(29,56,92,0.03)_72%)] px-4 py-3">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-accent-strong)]">{group.label}</p>
-                      <p className="mt-2 max-w-[26rem] text-sm leading-6 text-[var(--ink-600)]">{group.description}</p>
+                      <p className="mt-1.5 max-w-[30rem] line-clamp-2 text-[13px] leading-5 text-[var(--ink-600)]">
+                        {group.description}
+                      </p>
                     </div>
 
-                    <div className="grid gap-2 p-3 sm:grid-cols-2">
+                    <div className="flex flex-col p-1.5">
                       {group.items.map((item) => (
                         <Link
                           key={`${item.href}-${item.label}`}
                           href={item.href}
-                          className="rounded-[1rem] border border-[var(--line-strong)] bg-white px-4 py-3 transition hover:border-[var(--brand-accent)] hover:bg-[rgba(29,56,92,0.03)]"
+                          className="group/item flex items-center justify-between gap-3 rounded-[0.95rem] border border-transparent bg-white px-3.5 py-2.5 transition hover:border-[var(--line-strong)] hover:bg-[rgba(29,56,92,0.03)]"
                         >
-                          <p className="text-[0.84rem] font-semibold tracking-[0.01em] text-[var(--brand-primary)]">{item.label}</p>
-                          <p className="mt-1 text-xs leading-5 text-[var(--ink-500)]">{item.description}</p>
+                          <div className="min-w-0">
+                            <p className="text-[0.82rem] font-semibold tracking-[0.01em] text-[var(--brand-primary)]">{item.label}</p>
+                            <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-[var(--ink-500)]">{item.description}</p>
+                          </div>
+                          <span className="shrink-0 text-[var(--brand-accent-strong)] transition group-hover/item:translate-x-0.5">
+                            <ArrowIcon />
+                          </span>
                         </Link>
                       ))}
                     </div>
@@ -101,30 +116,35 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                 </svg>
               </summary>
 
-              <div className="absolute right-0 top-[calc(100%+0.9rem)] z-30 w-[min(92vw,26rem)] overflow-hidden rounded-[1.35rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] shadow-[0_34px_70px_-34px_rgba(22,30,42,0.28)] backdrop-blur-xl">
-                <div className="border-b border-[rgba(220,208,189,0.72)] px-5 py-4">
+              <div className="absolute right-0 top-[calc(100%+0.9rem)] z-30 w-[min(92vw,25rem)] overflow-hidden rounded-[1.35rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] shadow-[0_34px_70px_-34px_rgba(22,30,42,0.28)] backdrop-blur-xl">
+                <div className="border-b border-[rgba(220,208,189,0.72)] px-4 py-3">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-accent-strong)]">{navigation.mobileTitle}</p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--ink-600)]">
+                  <p className="mt-1.5 line-clamp-2 text-[13px] leading-5 text-[var(--ink-600)]">
                     {navigation.mobileDescription}
                   </p>
                 </div>
 
-                <div className="max-h-[70vh] space-y-3 overflow-y-auto p-4">
+                <div className="max-h-[70vh] space-y-2.5 overflow-y-auto p-3.5">
                   {navigation.menuGroups.map((group) => (
                     <details key={group.href} className="rounded-[1rem] border border-[var(--line-strong)] bg-white">
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold tracking-[0.03em] text-[var(--brand-primary)] [&::-webkit-details-marker]:hidden">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 text-sm font-semibold tracking-[0.03em] text-[var(--brand-primary)] [&::-webkit-details-marker]:hidden">
                         <span>{group.label}</span>
                         <ChevronIcon />
                       </summary>
-                      <div className="grid gap-2 border-t border-[rgba(220,208,189,0.72)] px-3 py-3">
+                      <div className="flex flex-col gap-1 border-t border-[rgba(220,208,189,0.72)] px-3 py-2.5">
                         {group.items.map((item) => (
                           <Link
                             key={`${group.href}-${item.href}-${item.label}`}
                             href={item.href}
-                            className="rounded-[0.95rem] border border-[var(--line-strong)] bg-[rgba(29,56,92,0.03)] px-3 py-3 transition hover:bg-[rgba(29,56,92,0.06)]"
+                            className="flex items-center justify-between gap-3 rounded-[0.95rem] border border-transparent bg-[rgba(29,56,92,0.03)] px-3 py-2.5 transition hover:border-[var(--line-strong)] hover:bg-[rgba(29,56,92,0.06)]"
                           >
-                            <p className="text-sm font-semibold text-[var(--brand-primary)]">{item.label}</p>
-                            <p className="mt-1 text-xs leading-5 text-[var(--ink-500)]">{item.description}</p>
+                            <div className="min-w-0">
+                              <p className="text-[13px] font-semibold text-[var(--brand-primary)]">{item.label}</p>
+                              <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-[var(--ink-500)]">{item.description}</p>
+                            </div>
+                            <span className="shrink-0 text-[var(--brand-accent-strong)]">
+                              <ArrowIcon />
+                            </span>
                           </Link>
                         ))}
                       </div>

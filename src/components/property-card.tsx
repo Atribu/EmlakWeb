@@ -10,6 +10,7 @@ import { PriceText } from "@/components/price-text";
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { formatPhoneForHref } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
+import { propertyDescriptionForLanguage, propertyTitleForLanguage } from "@/lib/property-content";
 import {
   propertyCardCopy,
   propertyWhatsAppInquiry,
@@ -118,6 +119,8 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
   const router = useRouter();
   const { language } = useSitePreferences();
   const copy = propertyCardCopy(language);
+  const propertyTitle = propertyTitleForLanguage(property, language);
+  const propertyDescription = propertyDescriptionForLanguage(property, language);
   const gallery = useMemo(() => {
     const images = [property.coverImage, ...property.galleryImages].filter((image) => Boolean(image?.trim()));
     return Array.from(new Set(images));
@@ -132,7 +135,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
   const quickHref =
     advisor
       ? `https://wa.me/${formatPhoneForHref(advisor.whatsapp)}?text=${encodeURIComponent(
-          propertyWhatsAppInquiry(language, property.title),
+          propertyWhatsAppInquiry(language, propertyTitle),
         )}`
       : undefined;
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : undefined;
@@ -189,7 +192,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
         <div className="relative min-h-[320px] overflow-hidden bg-[#d8cab5] sm:min-h-[360px] lg:min-h-full">
           <Image
             src={activeImage}
-            alt={property.title}
+            alt={propertyTitle}
             fetchPriority="low"
             unoptimized={isUnoptimizedImageSrc(activeImage)}
             fill
@@ -242,7 +245,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
         <div
           tabIndex={0}
           role="link"
-          aria-label={`${property.title} ${copy.openDetail}`}
+          aria-label={`${propertyTitle} ${copy.openDetail}`}
           onClick={handleCardClick}
           onKeyDown={handleCardKeyDown}
           className="flex min-w-0 cursor-pointer flex-col p-5 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d2232d]/45 focus-visible:ring-inset sm:p-6"
@@ -251,7 +254,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="text-[1.55rem] leading-[1.1] font-semibold text-[#1e293b] sm:text-[1.75rem]">
-                  {property.title}
+                  {propertyTitle}
                 </h3>
                 <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5d6168]">
                   {locationLabel}
@@ -271,7 +274,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
           </div>
 
           <div className="border-b border-dashed border-[#d7cebf] py-4">
-            <p className="text-[15px] leading-7 text-[#5f5548]">{truncateText(property.description, 185)}</p>
+            <p className="text-[15px] leading-7 text-[#5f5548]">{truncateText(propertyDescription, 185)}</p>
           </div>
 
           <div className="grid gap-4 border-b border-dashed border-[#d7cebf] py-4 xl:grid-cols-[minmax(0,1fr)_minmax(180px,auto)] xl:items-end">
