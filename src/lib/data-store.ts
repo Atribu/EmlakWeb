@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { initialAdvisors, initialBlogPosts, initialProperties, initialUsers } from "@/lib/mock-data";
 import { sanitizePropertyTranslations } from "@/lib/property-content";
+import { sanitizePropertyInfoItems } from "@/lib/property-info-items";
 import { pickSampleAdvisorImageForSeed } from "@/lib/sample-advisor-images";
 import { pickSampleImageSet } from "@/lib/sample-images";
 import type {
@@ -684,6 +685,7 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
           property.district,
           property.neighborhood,
           property.listingRef,
+          ...(property.infoItems?.map((item) => item.value) ?? []),
           ...(property.translations
             ? Object.values(property.translations).flatMap((translation) => [
                 translation?.title ?? "",
@@ -707,8 +709,7 @@ export function getPropertyBySlug(slug: string): Property | undefined {
 
 export function createProperty(input: CreatePropertyInput, actorId: string): Property {
   syncPropertiesFromDisk();
-  const advisor = getAdvisorById(input.advisorId);
-  if (!advisor) {
+  if (input.advisorId && !getAdvisorById(input.advisorId)) {
     throw new Error("Seçilen danışman bulunamadı.");
   }
 
@@ -717,6 +718,8 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
   const location = inferCoordinates(input);
   const property: Property = {
     ...input,
+    advisorId: input.advisorId?.trim() ?? "",
+    infoItems: sanitizePropertyInfoItems(input.infoItems),
     translations: sanitizePropertyTranslations(input.translations),
     latitude: location.latitude,
     longitude: location.longitude,
@@ -747,8 +750,7 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
     throw new Error("Portföy bulunamadı.");
   }
 
-  const advisor = getAdvisorById(input.advisorId);
-  if (!advisor) {
+  if (input.advisorId && !getAdvisorById(input.advisorId)) {
     throw new Error("Seçilen danışman bulunamadı.");
   }
 
@@ -771,7 +773,8 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
   property.description = input.description.trim();
   property.highlights = input.highlights;
   property.features = input.features;
-  property.advisorId = input.advisorId;
+  property.infoItems = sanitizePropertyInfoItems(input.infoItems);
+  property.advisorId = input.advisorId?.trim() ?? "";
   property.latitude = location.latitude;
   property.longitude = location.longitude;
   property.coverColor = input.coverColor;

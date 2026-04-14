@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { validateWebpFile } from "@/lib/portfolio-images";
+import { validatePortfolioImageFile } from "@/lib/portfolio-images";
 
 const uploadPublicRoot = "/uploads/properties";
 const uploadDiskRoot = path.join(process.cwd(), "public", "uploads", "properties");
@@ -35,6 +35,23 @@ function normalizeFileName(value: string): string {
   return `${safeSegment(stripped, "gorsel")}.webp`;
 }
 
+async function convertImageToWebp(file: File, fieldLabel: string): Promise<Buffer> {
+  validatePortfolioImageFile(file, fieldLabel);
+
+  try {
+    const sharp = (await import("sharp")).default;
+    const source = Buffer.from(await file.arrayBuffer());
+
+    return await sharp(source)
+      .rotate()
+      .webp({ quality: 82 })
+      .toBuffer();
+  } catch (error) {
+    console.error("[property-image-convert-error]", error);
+    throw new Error(`${fieldLabel} işlenemedi. Lütfen farklı bir jpg, png veya webp dosyası deneyin.`);
+  }
+}
+
 async function ensurePropertyUploadDirectory(storageKey: string) {
   const safeStorageKey = safeSegment(storageKey, "portfoy");
   const directory = path.join(uploadDiskRoot, safeStorageKey);
@@ -63,16 +80,18 @@ export function buildRoomImageFileName(roomLabel: string, index: number, total: 
   return `${baseName}-${index + 1}.webp`;
 }
 
+export function buildGalleryImageFileName(index: number): string {
+  return `gallery-${index + 1}.webp`;
+}
+
 export async function savePropertyImageFile(
   file: File,
   options: { storageKey: string; fileName: string; fieldLabel: string },
 ): Promise<string> {
-  validateWebpFile(file, options.fieldLabel);
-
   const { directory, safeStorageKey } = await ensurePropertyUploadDirectory(options.storageKey);
   const safeFileName = normalizeFileName(options.fileName);
   const diskPath = path.join(directory, safeFileName);
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = await convertImageToWebp(file, options.fieldLabel);
 
   await fs.writeFile(diskPath, buffer);
 

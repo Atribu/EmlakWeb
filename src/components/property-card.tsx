@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 import { PriceText } from "@/components/price-text";
+import { PropertyInfoIcon } from "@/components/property-info-icon";
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { formatPhoneForHref } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
@@ -139,6 +140,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
         )}`
       : undefined;
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : undefined;
+  const propertyInfoItems = property.infoItems?.filter((item) => item.value.trim().length > 0).slice(0, 4) ?? [];
 
   function stepGallery(direction: -1 | 1) {
     if (gallery.length <= 1) {
@@ -276,6 +278,25 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
           <div className="border-b border-dashed border-[#d7cebf] py-4">
             <p className="text-[15px] leading-7 text-[#5f5548]">{truncateText(propertyDescription, 185)}</p>
           </div>
+
+          {propertyInfoItems.length > 0 ? (
+            <div className="border-b border-dashed border-[#d7cebf] py-4">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {propertyInfoItems.map((item, index) => (
+                  <div
+                    key={`${item.icon}-${item.value}-${index}`}
+                    className="flex min-w-0 items-center gap-3 rounded-[1rem] border border-[#e4d8c8] bg-white px-3 py-3"
+                    title={item.value}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#ddd0c0] bg-[#f7f2ea] text-[#5b4a36]">
+                      <PropertyInfoIcon icon={item.icon} />
+                    </span>
+                    <p className="truncate text-sm font-semibold text-[#2f281f]">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid gap-4 border-b border-dashed border-[#d7cebf] py-4 xl:grid-cols-[minmax(0,1fr)_minmax(180px,auto)] xl:items-end">
             <div className="flex flex-wrap items-center gap-3">
