@@ -214,7 +214,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
                   {copy.language} / {copy.currency}
                 </p>
-                <HeaderMarketControlsInner className="mt-3" menuAlign="right" />
+                <HeaderMarketControlsInner className="mt-3" variant="mobile-dropdown" />
               </div>
 
               <div className="space-y-2">

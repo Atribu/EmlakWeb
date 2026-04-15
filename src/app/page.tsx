@@ -7,7 +7,7 @@ import { HomeQuickSearch } from "@/components/home-quick-search";
 import { PriceText } from "@/components/price-text";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { listAdvisors, listCities, listProperties, listTypes } from "@/lib/data-store";
+import { listAdvisors, listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { propertyTitleForLanguage } from "@/lib/property-content";
 import { homePageCopy, summarizeLocationStockLabel, translatePropertyType } from "@/lib/site-copy";
@@ -58,6 +58,7 @@ export default async function HomePage() {
   const properties = listProperties();
   const cities = listCities();
   const types = listTypes();
+  const roomOptions = listRoomOptions();
   const advisors = listAdvisors();
   const featured = properties.slice(0, 4);
   const heroProperty = featured[0];
@@ -205,7 +206,7 @@ export default async function HomePage() {
 
       <main className="w-full pb-24">
         <section className="frame-wide mt-4 fade-up">
-          <HomeQuickSearch cities={cities} types={types} quickLinks={quickSearchLinks} />
+          <HomeQuickSearch cities={cities} types={types} roomOptions={roomOptions} quickLinks={quickSearchLinks} />
         </section>
 
         <section className="frame-wide mt-4 fade-up">
