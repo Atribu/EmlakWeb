@@ -7,10 +7,10 @@ import { HomeQuickSearch } from "@/components/home-quick-search";
 import { PriceText } from "@/components/price-text";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { listAdvisors, listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
+import { listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { propertyTitleForLanguage } from "@/lib/property-content";
-import { homePageCopy, summarizeLocationStockLabel, translatePropertyType } from "@/lib/site-copy";
+import { homePageCopy, summarizeLocationStockLabel } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 import { homeListingSchema } from "@/lib/seo";
 import type { Property } from "@/lib/types";
@@ -33,6 +33,36 @@ type PopularLocationCard = {
   priceValue: number | null;
   className: string;
 };
+
+function TrustIcon({ type }: { type: "shield" | "support" | "globe" }) {
+  if (type === "support") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden>
+        <path d="M6.5 15.5v-2a5.5 5.5 0 0 1 11 0v2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        <rect x="4" y="14" width="3.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
+        <rect x="16.5" y="14" width="3.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M12 6.5a3.5 3.5 0 0 1 3.5 3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (type === "globe") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden>
+        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M4.5 12h15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        <path d="M12 4c2.2 2.3 3.4 5 3.4 8s-1.2 5.7-3.4 8c-2.2-2.3-3.4-5-3.4-8S9.8 6.3 12 4Z" stroke="currentColor" strokeWidth="1.7" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden>
+      <path d="M12 3.75 18.5 6v5.4c0 4.1-2.74 7.86-6.5 8.85-3.76-.99-6.5-4.75-6.5-8.85V6L12 3.75Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="m9.2 12.15 1.8 1.8 3.8-4.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function isPlaceholderProperty(property: Property) {
   return [property.slug, property.title, property.city, property.district, property.neighborhood]
@@ -59,8 +89,8 @@ export default async function HomePage() {
   const cities = listCities();
   const types = listTypes();
   const roomOptions = listRoomOptions();
-  const advisors = listAdvisors();
   const featured = properties.slice(0, 4);
+  const featuredPreview = featured.slice(0, 3);
   const heroProperty = featured[0];
   const heroImage = heroProperty?.coverImage ?? "/next.svg";
   const listingSchema = homeListingSchema(properties);
@@ -181,21 +211,38 @@ export default async function HomePage() {
     ? `${heroProperty.city}${heroProperty.district ? ` • ${heroProperty.district}` : ""}`
     : copy.featuredKicker;
   const heroPropertyTitle = heroProperty ? propertyTitleForLanguage(heroProperty, language) : copy.featuredTitle;
-  const heroVideoSrc = "/videos/hero-loop.mp4";
-  const heroDetailLabel =
+  const heroGuideLabel =
     language === "TR"
-      ? "Portföy Detayı"
+      ? "Satın Alma Rehberi"
       : language === "EN"
-        ? "View Listing"
+        ? "Buying Guide"
         : language === "RU"
-          ? "Смотреть объект"
-          : "عرض العقار";
-
-  const heroStats = [
-    { label: copy.stats.activeListings, value: String(properties.length) },
-    { label: copy.stats.premiumAdvisors, value: String(advisors.length) },
-    { label: copy.stats.averageClose, value: copy.averageCloseValue },
-  ];
+          ? "Гид покупателя"
+          : "دليل الشراء";
+  const trustItems =
+    language === "TR"
+      ? [
+          { key: "secure", title: "Güvenli Yatırım", text: "Resmi sözleşme ve yasal güvence", icon: "shield" as const },
+          { key: "support", title: "Uzman Danışmanlık", text: "Size özel profesyonel destek", icon: "support" as const },
+          { key: "global", title: "Uluslararası Hizmet", text: "Birçok dilde müşteri desteği", icon: "globe" as const },
+        ]
+      : language === "EN"
+        ? [
+            { key: "secure", title: "Secure Investment", text: "Official contracts and legal assurance", icon: "shield" as const },
+            { key: "support", title: "Expert Guidance", text: "Dedicated professional support", icon: "support" as const },
+            { key: "global", title: "International Service", text: "Support in multiple languages", icon: "globe" as const },
+          ]
+        : language === "RU"
+          ? [
+              { key: "secure", title: "Безопасная инвестиция", text: "Официальный договор и правовая защита", icon: "shield" as const },
+              { key: "support", title: "Экспертное сопровождение", text: "Персональная профессиональная помощь", icon: "support" as const },
+              { key: "global", title: "Международный сервис", text: "Поддержка на нескольких языках", icon: "globe" as const },
+            ]
+          : [
+              { key: "secure", title: "استثمار آمن", text: "عقود رسمية وضمان قانوني", icon: "shield" as const },
+              { key: "support", title: "استشارة متخصصة", text: "دعم مهني مخصص لكم", icon: "support" as const },
+              { key: "global", title: "خدمة دولية", text: "دعم عملاء بعدة لغات", icon: "globe" as const },
+            ];
 
   return (
     <div className="min-h-screen">
@@ -203,176 +250,77 @@ export default async function HomePage() {
 
       <main className="w-full pb-24">
         <section className="frame-wide mt-4 fade-up">
-          <div className="relative overflow-hidden rounded-[2rem] border border-[rgba(29,56,92,0.14)] bg-[var(--brand-primary)] shadow-[0_38px_68px_-44px_rgba(13,21,33,0.48)]">
-            <video
-              className="absolute inset-0 h-full w-full object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              poster={heroImage}
-            >
-              <source src={heroVideoSrc} type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,14,22,0.18)_0%,rgba(8,14,22,0.18)_32%,rgba(8,14,22,0.62)_100%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(201,124,78,0.16),transparent_30%)]" />
+          <div className="rounded-[2.15rem] border border-[#e3d6c3] bg-[linear-gradient(180deg,#fffdfa_0%,#f9f3e9_100%)] px-5 py-6 shadow-[0_32px_64px_-46px_rgba(22,30,42,0.22)] sm:px-7 sm:py-8 xl:px-10 xl:pt-10 xl:pb-14">
+            <div className="grid gap-7 xl:grid-cols-[minmax(0,0.82fr)_minmax(460px,1.18fr)] xl:items-center">
+              <div className="max-w-xl">
+                <div className="flex gap-4">
+                  <span className="hidden w-[4px] rounded-full bg-[linear-gradient(180deg,var(--brand-accent)_0%,#d3ab76_100%)] sm:block" />
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-accent-strong)]">
+                      {copy.heroKicker}
+                    </p>
+                    <h1 className="mt-4 max-w-lg text-[2.05rem] leading-[0.94] font-semibold text-[var(--ink-950)] sm:text-[3rem] xl:text-[3.55rem]">
+                      {copy.heroTitle}
+                    </h1>
+                    <p className="mt-5 max-w-md text-[0.96rem] leading-7 text-[var(--ink-600)]">
+                      {copy.heroBody}
+                    </p>
 
-            <div className="relative flex min-h-[39rem] flex-col justify-between px-4 py-5 sm:min-h-[45rem] sm:px-6 sm:py-6 xl:min-h-[50rem] xl:px-8 xl:py-8">
-              <div className="flex flex-wrap gap-2">
-                <span className="inline-flex rounded-full border border-white/24 bg-[rgba(8,14,22,0.34)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
-                  {heroLocationLabel}
-                </span>
-                {heroProperty?.listingRef ? (
-                  <span className="inline-flex rounded-full border border-white/20 bg-white/14 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
-                    {heroProperty.listingRef}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="max-w-3xl text-white">
-                <p className="inline-flex rounded-full border border-white/14 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#f6dfb9] backdrop-blur">
-                  {copy.heroKicker}
-                </p>
-                <h1 className="mt-4 max-w-3xl text-[1.9rem] leading-[1.02] font-semibold sm:text-[2.7rem] xl:text-[3.2rem]">
-                  {copy.heroTitle}
-                </h1>
-                <p className="mt-4 max-w-2xl text-[0.94rem] leading-7 text-white/86 sm:text-[1rem]">
-                  {copy.heroBody}
-                </p>
-              </div>
-
-              <div className="w-full">
-                <div className="mx-auto max-w-5xl">
-                  <HomeQuickSearch
-                    cities={cities}
-                    types={types}
-                    roomOptions={roomOptions}
-                    variant="overlay"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="frame-wide mt-8 fade-up">
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,0.96fr)_minmax(380px,1.04fr)]">
-            <div className="rounded-[2rem] border border-[var(--line-strong)] bg-[rgba(255,253,248,0.98)] p-6 shadow-[0_30px_60px_-46px_rgba(18,24,36,0.2)] sm:p-8 lg:p-10">
-              <p className="inline-flex rounded-full bg-[rgba(29,56,92,0.08)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
-                {copy.heroKicker}
-              </p>
-              <h2 className="mt-5 max-w-3xl text-[1.58rem] leading-[1.02] font-semibold text-[var(--ink-950)] sm:text-[2.15rem] xl:text-[2.55rem]">
-                {copy.heroTitle}
-              </h2>
-              <p className="mt-5 max-w-2xl text-[0.96rem] leading-7 text-[var(--ink-600)]">
-                {copy.heroBody}
-              </p>
-
-              <div className="mt-7 flex flex-wrap gap-3 text-sm">
-                <Link
-                  href="/portfoyler"
-                  className="btn-gold inline-flex min-h-12 items-center justify-center rounded-full px-6 text-sm font-semibold transition hover:-translate-y-0.5"
-                >
-                  {copy.ctaListings}
-                </Link>
-                <Link
-                  href="/iletisim"
-                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white px-6 text-sm font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)]"
-                >
-                  {copy.ctaContact}
-                </Link>
-              </div>
-
-              <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-[var(--line-strong)] bg-white/92">
-                {heroStats.map((item, index) => (
-                  <div
-                    key={item.label}
-                    className={`flex items-center justify-between gap-4 px-4 py-4 sm:px-5 ${
-                      index > 0 ? "border-t border-[rgba(220,208,189,0.72)]" : ""
-                    }`}
-                  >
-                    <p className="text-sm font-medium text-[var(--ink-600)]">{item.label}</p>
-                    <p className="text-[1.05rem] font-semibold text-[var(--brand-primary)]">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative min-h-[340px] overflow-hidden rounded-[2rem] border border-[rgba(29,56,92,0.14)] bg-[var(--brand-primary)] shadow-[0_38px_68px_-44px_rgba(13,21,33,0.48)] sm:min-h-[440px]">
-              <Image
-                src={heroImage}
-                alt={heroPropertyTitle}
-                fill
-                priority
-                sizes="(max-width: 1279px) 100vw, 52vw"
-                unoptimized={isUnoptimizedImageSrc(heroImage)}
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,14,22,0.1)_0%,rgba(8,14,22,0.16)_36%,rgba(8,14,22,0.48)_100%)]" />
-
-              <div className="absolute left-4 top-4 flex flex-wrap gap-2 sm:left-6 sm:top-6">
-                <span className="inline-flex rounded-full border border-white/24 bg-[rgba(8,14,22,0.34)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
-                  {heroLocationLabel}
-                </span>
-                {heroProperty?.listingRef ? (
-                  <span className="inline-flex rounded-full border border-white/20 bg-white/14 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
-                    {heroProperty.listingRef}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="absolute inset-x-4 bottom-4 sm:inset-x-6 sm:bottom-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div className="rounded-[1.45rem] border border-white/16 bg-[rgba(8,14,22,0.42)] px-4 py-4 text-white backdrop-blur-md sm:max-w-[70%]">
-                    <h2 className="text-[1.25rem] leading-[1.06] font-semibold sm:text-[1.55rem]">
-                      {heroPropertyTitle}
-                    </h2>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white/90">
-                      {heroProperty?.rooms ? (
-                        <span className="rounded-full border border-white/18 bg-white/10 px-3 py-1">
-                          {heroProperty.rooms}
-                        </span>
-                      ) : null}
-                      {heroProperty?.areaM2 ? (
-                        <span className="rounded-full border border-white/18 bg-white/10 px-3 py-1">
-                          {heroProperty.areaM2} m²
-                        </span>
-                      ) : null}
-                      {heroProperty?.type ? (
-                        <span className="rounded-full border border-white/18 bg-white/10 px-3 py-1">
-                          {translatePropertyType(heroProperty.type, language)}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {heroProperty ? (
-                    <div className="flex items-center gap-3 self-start sm:self-auto">
-                      <div className="rounded-[1.2rem] border border-white/16 bg-[rgba(8,14,22,0.42)] px-4 py-3 text-white backdrop-blur-md">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f1d7b0]">
-                          {copy.startingBand}
-                        </p>
-                        <p className="mt-2 text-[1.18rem] font-semibold">
-                          <PriceText amount={heroProperty.price} />
-                        </p>
-                      </div>
-
+                    <div className="mt-7 flex flex-wrap gap-3">
                       <Link
-                        href={`/ilan/${heroProperty.slug}`}
-                        className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5"
+                        href="/portfoyler"
+                        className="inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--brand-primary)] px-6 text-sm font-semibold text-white transition hover:-translate-y-0.5"
                       >
-                        {heroDetailLabel}
+                        {copy.ctaListings}
+                      </Link>
+                      <Link
+                        href="/blog"
+                        className="inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white px-6 text-sm font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)]"
+                      >
+                        {heroGuideLabel}
                       </Link>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative min-h-[18rem] overflow-hidden rounded-[1.8rem] border border-[#dfd0bd] bg-[#d8cab5] shadow-[0_30px_58px_-42px_rgba(20,24,32,0.3)] sm:min-h-[23rem] xl:min-h-[26.5rem]">
+                <Image
+                  src={heroImage}
+                  alt={heroPropertyTitle}
+                  fill
+                  priority
+                  sizes="(max-width: 1279px) 100vw, 52vw"
+                  unoptimized={isUnoptimizedImageSrc(heroImage)}
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,14,22,0.08)_0%,rgba(8,14,22,0.08)_34%,rgba(8,14,22,0.22)_100%)]" />
+
+                <div className="absolute left-4 top-4 flex flex-wrap gap-2 sm:left-5 sm:top-5">
+                  <span className="inline-flex rounded-full border border-white/26 bg-[rgba(8,14,22,0.42)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
+                    {heroLocationLabel}
+                  </span>
+                  {heroProperty?.listingRef ? (
+                    <span className="inline-flex rounded-full border border-white/20 bg-white/14 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
+                      {heroProperty.listingRef}
+                    </span>
                   ) : null}
                 </div>
               </div>
             </div>
           </div>
+
+          <div className="relative z-10 mx-auto -mt-8 max-w-6xl px-2 sm:-mt-11">
+            <HomeQuickSearch
+              cities={cities}
+              types={types}
+              roomOptions={roomOptions}
+              variant="hero-bar"
+            />
+          </div>
         </section>
 
-        <section className="frame mt-16">
+        <section className="frame-wide mt-12 fade-up sm:mt-16">
           <div className="mb-5 flex items-end justify-between gap-3">
             <div>
               <span className="section-kicker">{copy.featuredKicker}</span>
@@ -385,9 +333,23 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {featured.map((property) => (
+          <div className="grid gap-4 lg:grid-cols-3">
+            {featuredPreview.map((property) => (
               <HomeFeaturedCard key={property.id} property={property} language={language} />
+            ))}
+          </div>
+
+          <div className="mt-7 grid gap-4 rounded-[1.6rem] border border-[#e2d7c8] bg-[rgba(255,252,247,0.92)] p-5 shadow-[0_22px_42px_-36px_rgba(18,24,36,0.18)] sm:grid-cols-3 sm:p-6">
+            {trustItems.map((item) => (
+              <div key={item.key} className="flex items-start gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(201,124,78,0.1)] text-[var(--brand-accent-strong)]">
+                  <TrustIcon type={item.icon} />
+                </span>
+                <div>
+                  <p className="text-[0.95rem] font-semibold text-[var(--ink-950)]">{item.title}</p>
+                  <p className="mt-1 text-[13px] leading-6 text-[var(--ink-600)]">{item.text}</p>
+                </div>
+              </div>
             ))}
           </div>
         </section>

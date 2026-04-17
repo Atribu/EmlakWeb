@@ -12,7 +12,7 @@ type HomeQuickSearchProps = {
   cities: string[];
   types: string[];
   roomOptions: string[];
-  variant?: "default" | "overlay";
+  variant?: "default" | "overlay" | "hero-bar";
 };
 
 type SearchCopy = {
@@ -203,6 +203,135 @@ export function HomeQuickSearch({
   }
 
   const isOverlay = variant === "overlay";
+  const isHeroBar = variant === "hero-bar";
+
+  if (isHeroBar) {
+    return (
+      <section className="relative overflow-hidden rounded-[1.35rem] border border-[#e5d7c1] bg-[rgba(255,255,255,0.96)] p-4 shadow-[0_28px_56px_-34px_rgba(18,24,36,0.22)] backdrop-blur sm:p-5">
+        <form
+          onSubmit={handleSubmit}
+          className="grid gap-3 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.9fr)_minmax(0,1.08fr)_auto] lg:items-end"
+        >
+          <label className="flex flex-col gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+              {copy.cityLabel}
+            </span>
+            <select
+              value={form.city}
+              onChange={(event) => updateField("city", event.target.value)}
+              className="input min-h-[3.15rem] px-4 text-[14px]"
+            >
+              <option value="">{copy.cityPlaceholder}</option>
+              {cities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+              {copy.typeLabel}
+            </span>
+            <select
+              value={form.type}
+              onChange={(event) => updateField("type", event.target.value)}
+              className="input min-h-[3.15rem] px-4 text-[14px]"
+            >
+              <option value="">{copy.typePlaceholder}</option>
+              {types.map((type) => (
+                <option key={type} value={type}>
+                  {translatePropertyType(type as PropertyType, language)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+              {copy.maxPriceLabel}
+            </span>
+            <div className="grid min-h-[3.15rem] grid-cols-2 gap-2 rounded-[1rem] border border-[var(--line-strong)] bg-white px-3 py-2">
+              <input
+                value={form.minPrice}
+                onChange={(event) => updateField("minPrice", event.target.value)}
+                type="number"
+                min={0}
+                inputMode="numeric"
+                placeholder={copy.minPricePlaceholder}
+                className="min-w-0 border-0 bg-transparent text-[14px] text-[var(--ink-900)] outline-none placeholder:text-[var(--ink-400)]"
+              />
+              <input
+                value={form.maxPrice}
+                onChange={(event) => updateField("maxPrice", event.target.value)}
+                type="number"
+                min={0}
+                inputMode="numeric"
+                placeholder={copy.maxPricePlaceholder}
+                className="min-w-0 border-0 border-l border-[rgba(220,208,189,0.72)] bg-transparent pl-3 text-[14px] text-[var(--ink-900)] outline-none placeholder:text-[var(--ink-400)]"
+              />
+            </div>
+          </label>
+
+          <button
+            type="submit"
+            className="inline-flex min-h-[3.15rem] items-center justify-center gap-2 rounded-[1rem] bg-[var(--brand-primary)] px-6 text-[14px] font-semibold text-white shadow-[0_18px_28px_-20px_rgba(29,56,92,0.65)] transition hover:-translate-y-0.5"
+          >
+            <SearchIcon />
+            {copy.submit}
+          </button>
+        </form>
+
+        <div className="mt-3 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowAdvancedFilters((current) => !current)}
+            className="inline-flex items-center gap-2 text-[12px] font-semibold text-[var(--brand-accent-strong)] transition hover:text-[var(--brand-primary)]"
+            aria-expanded={showAdvancedFilters}
+          >
+            <FilterIcon />
+            {showAdvancedFilters ? copy.fewerFilters : copy.moreFilters}
+          </button>
+        </div>
+
+        {showAdvancedFilters ? (
+          <div className="mt-3 grid gap-3 border-t border-[rgba(220,208,189,0.72)] pt-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+                {copy.keywordLabel}
+              </span>
+              <input
+                value={form.query}
+                onChange={(event) => updateField("query", event.target.value)}
+                placeholder={copy.keywordPlaceholder}
+                className="input min-h-[3.05rem] px-4 text-[14px]"
+              />
+            </label>
+
+            <label className="flex flex-col gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+                {copy.roomsLabel}
+              </span>
+              <select
+                value={form.rooms}
+                onChange={(event) => updateField("rooms", event.target.value)}
+                className="input min-h-[3.05rem] px-4 text-[14px]"
+              >
+                <option value="">{copy.roomsPlaceholder}</option>
+                {roomOptions.map((room) => (
+                  <option key={room} value={room}>
+                    {room}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
+      </section>
+    );
+  }
+
   const wrapperClassName = isOverlay
     ? "relative overflow-hidden rounded-[1.3rem] border border-white/18 bg-[rgba(255,250,244,0.8)] p-2.5 shadow-[0_28px_48px_-34px_rgba(8,14,22,0.48)] backdrop-blur-md sm:p-3 xl:px-4 xl:py-3"
     : "relative overflow-hidden rounded-[1.55rem] border border-[var(--line-strong)] bg-[rgba(255,253,249,0.98)] p-4 shadow-[0_24px_48px_-38px_rgba(18,24,36,0.24)] backdrop-blur sm:p-5 xl:px-6 xl:py-5";

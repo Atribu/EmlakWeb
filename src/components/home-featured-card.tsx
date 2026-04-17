@@ -61,6 +61,60 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
   );
 }
 
+function PinIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+      <path
+        d="M10 16c2.6-2.87 4-5.12 4-6.95A4 4 0 1 0 6 9.05C6 10.88 7.4 13.13 10 16Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <circle cx="10" cy="9" r="1.35" fill="currentColor" />
+    </svg>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4.5 w-4.5" aria-hidden>
+      <path
+        d="M10 16.2 4.85 11.1a3.35 3.35 0 1 1 4.74-4.73L10 6.78l.41-.41a3.35 3.35 0 0 1 4.74 4.73L10 16.2Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function StatIcon({ type }: { type: "rooms" | "area" | "type" }) {
+  if (type === "area") {
+    return (
+      <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+        <path d="M5 5h3M12 5h3M5 15h3M12 15h3M5 5v3M5 12v3M15 5v3M15 12v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <rect x="7.25" y="7.25" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+      </svg>
+    );
+  }
+
+  if (type === "type") {
+    return (
+      <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+        <path d="M4.75 6.25h10.5M4.75 10h10.5M4.75 13.75h6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+      <path d="M3.5 10.25h13v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M3.5 14.25V7.75A1.75 1.75 0 0 1 5.25 6h9.5A1.75 1.75 0 0 1 16.5 7.75v6.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6 10.25V8.75A1.25 1.25 0 0 1 7.25 7.5h1.85a1.25 1.25 0 0 1 1.25 1.25v1.5" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) {
   const router = useRouter();
   const copy = featuredCardCopy[language];
@@ -143,8 +197,11 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
           <span className="rounded-full border border-white/26 bg-[rgba(8,14,22,0.54)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
             {translatePropertyType(property.type, language)}
           </span>
-          <span className="rounded-full border border-white/26 bg-white/18 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-            {property.city}
+        </div>
+
+        <div className="absolute right-3 top-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-[rgba(8,14,22,0.42)] text-white backdrop-blur-sm">
+            <HeartIcon />
           </span>
         </div>
 
@@ -177,34 +234,37 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-accent-strong)]">
-              {property.listingRef}
+            <p className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--ink-500)]">
+              <PinIcon />
+              <span>{property.city} / {property.district}</span>
             </p>
-            <h3 className="mt-2 line-clamp-2 text-[1rem] leading-5 font-semibold text-[var(--ink-950)]">
+            <h3 className="mt-2 line-clamp-2 text-[1.02rem] leading-5 font-semibold text-[var(--ink-950)]">
               {propertyTitle}
             </h3>
           </div>
         </div>
 
-        <p className="mt-2 text-[11px] font-medium tracking-[0.08em] text-[var(--ink-500)]">
-          {property.neighborhood} / {property.district}
-        </p>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--brand-primary)]">
-            {translateRoomLabel(property.rooms, language)}
-          </span>
-          <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--brand-primary)]">
-            {property.areaM2} m²
-          </span>
+        <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-[var(--ink-500)]">
+          <div className="flex items-center gap-1.5">
+            <StatIcon type="rooms" />
+            <span>{translateRoomLabel(property.rooms, language)}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <StatIcon type="area" />
+            <span>{property.areaM2} m²</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <StatIcon type="type" />
+            <span className="truncate">{property.neighborhood}</span>
+          </div>
         </div>
 
-        <div className="mt-5 flex items-end justify-between gap-3 border-t border-[rgba(220,208,189,0.72)] pt-4">
-          <div className="rounded-[1rem] border border-[var(--line-strong)] bg-white px-3.5 py-3">
+        <div className="mt-4 flex items-end justify-between gap-3 border-t border-[rgba(220,208,189,0.72)] pt-4">
+          <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
               {copy.startingPrice}
             </p>
-            <p className="mt-1 text-[1.12rem] font-semibold text-[var(--brand-primary)]">
+            <p className="mt-1 text-[1.18rem] font-semibold text-[var(--brand-primary)]">
               <PriceText amount={property.price} />
             </p>
           </div>
