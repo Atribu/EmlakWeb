@@ -177,14 +177,11 @@ export default async function HomePage() {
     subtitle: copy.locationCards["signature-selection"].subtitle,
   };
 
-  const quickSearchLinks = popularLocations.slice(0, 4).map((location) => ({
-    label: location.title,
-    href: location.href,
-  }));
   const heroLocationLabel = heroProperty
     ? `${heroProperty.city}${heroProperty.district ? ` • ${heroProperty.district}` : ""}`
     : copy.featuredKicker;
   const heroPropertyTitle = heroProperty ? propertyTitleForLanguage(heroProperty, language) : copy.featuredTitle;
+  const heroVideoSrc = "/videos/hero-loop.mp4";
   const heroDetailLabel =
     language === "TR"
       ? "Portföy Detayı"
@@ -206,18 +203,68 @@ export default async function HomePage() {
 
       <main className="w-full pb-24">
         <section className="frame-wide mt-4 fade-up">
-          <HomeQuickSearch cities={cities} types={types} roomOptions={roomOptions} quickLinks={quickSearchLinks} />
+          <div className="relative overflow-hidden rounded-[2rem] border border-[rgba(29,56,92,0.14)] bg-[var(--brand-primary)] shadow-[0_38px_68px_-44px_rgba(13,21,33,0.48)]">
+            <video
+              className="absolute inset-0 h-full w-full object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              poster={heroImage}
+            >
+              <source src={heroVideoSrc} type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,14,22,0.18)_0%,rgba(8,14,22,0.18)_32%,rgba(8,14,22,0.62)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(201,124,78,0.16),transparent_30%)]" />
+
+            <div className="relative flex min-h-[39rem] flex-col justify-between px-4 py-5 sm:min-h-[45rem] sm:px-6 sm:py-6 xl:min-h-[50rem] xl:px-8 xl:py-8">
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex rounded-full border border-white/24 bg-[rgba(8,14,22,0.34)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
+                  {heroLocationLabel}
+                </span>
+                {heroProperty?.listingRef ? (
+                  <span className="inline-flex rounded-full border border-white/20 bg-white/14 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
+                    {heroProperty.listingRef}
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="max-w-3xl text-white">
+                <p className="inline-flex rounded-full border border-white/14 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#f6dfb9] backdrop-blur">
+                  {copy.heroKicker}
+                </p>
+                <h1 className="mt-4 max-w-3xl text-[1.9rem] leading-[1.02] font-semibold sm:text-[2.7rem] xl:text-[3.2rem]">
+                  {copy.heroTitle}
+                </h1>
+                <p className="mt-4 max-w-2xl text-[0.94rem] leading-7 text-white/86 sm:text-[1rem]">
+                  {copy.heroBody}
+                </p>
+              </div>
+
+              <div className="w-full">
+                <div className="mx-auto max-w-5xl">
+                  <HomeQuickSearch
+                    cities={cities}
+                    types={types}
+                    roomOptions={roomOptions}
+                    variant="overlay"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
-        <section className="frame-wide mt-4 fade-up">
+        <section className="frame-wide mt-8 fade-up">
           <div className="grid gap-5 xl:grid-cols-[minmax(0,0.96fr)_minmax(380px,1.04fr)]">
             <div className="rounded-[2rem] border border-[var(--line-strong)] bg-[rgba(255,253,248,0.98)] p-6 shadow-[0_30px_60px_-46px_rgba(18,24,36,0.2)] sm:p-8 lg:p-10">
               <p className="inline-flex rounded-full bg-[rgba(29,56,92,0.08)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
                 {copy.heroKicker}
               </p>
-              <h1 className="mt-5 max-w-3xl text-[2.1rem] leading-[0.96] font-semibold text-[var(--ink-950)] sm:text-[3rem] xl:text-[3.4rem]">
+              <h2 className="mt-5 max-w-3xl text-[1.58rem] leading-[1.02] font-semibold text-[var(--ink-950)] sm:text-[2.15rem] xl:text-[2.55rem]">
                 {copy.heroTitle}
-              </h1>
+              </h2>
               <p className="mt-5 max-w-2xl text-[0.96rem] leading-7 text-[var(--ink-600)]">
                 {copy.heroBody}
               </p>

@@ -1,24 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useMemo, useState, type FormEvent } from "react";
+import { startTransition, useState, type FormEvent } from "react";
 
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { translatePropertyType } from "@/lib/site-copy";
 import type { SiteLanguage } from "@/lib/site-preferences";
 import type { PropertyType } from "@/lib/types";
 
-type QuickLink = {
-  label: string;
-  href: string;
-};
-
 type HomeQuickSearchProps = {
   cities: string[];
   types: string[];
   roomOptions: string[];
-  quickLinks: QuickLink[];
+  variant?: "default" | "overlay";
 };
 
 type SearchCopy = {
@@ -36,7 +30,6 @@ type SearchCopy = {
   minPricePlaceholder: string;
   maxPriceLabel: string;
   maxPricePlaceholder: string;
-  quickLinksLabel: string;
   moreFilters: string;
   fewerFilters: string;
   submit: string;
@@ -58,7 +51,6 @@ const searchCopy: Record<SiteLanguage, SearchCopy> = {
     minPricePlaceholder: "Alt sınır",
     maxPriceLabel: "Maks. Fiyat",
     maxPricePlaceholder: "Üst sınır",
-    quickLinksLabel: "Hızlı rotalar",
     moreFilters: "Daha Fazla Filtre",
     fewerFilters: "Filtreleri Gizle",
     submit: "Portföyleri Ara",
@@ -78,7 +70,6 @@ const searchCopy: Record<SiteLanguage, SearchCopy> = {
     minPricePlaceholder: "Minimum",
     maxPriceLabel: "Max Price",
     maxPricePlaceholder: "Maximum",
-    quickLinksLabel: "Quick routes",
     moreFilters: "More Filters",
     fewerFilters: "Hide Filters",
     submit: "Search Listings",
@@ -98,7 +89,6 @@ const searchCopy: Record<SiteLanguage, SearchCopy> = {
     minPricePlaceholder: "Нижняя граница",
     maxPriceLabel: "Макс. цена",
     maxPricePlaceholder: "Верхняя граница",
-    quickLinksLabel: "Быстрые маршруты",
     moreFilters: "Еще фильтры",
     fewerFilters: "Скрыть фильтры",
     submit: "Искать объекты",
@@ -118,7 +108,6 @@ const searchCopy: Record<SiteLanguage, SearchCopy> = {
     minPricePlaceholder: "الحد الأدنى",
     maxPriceLabel: "أعلى سعر",
     maxPricePlaceholder: "الحد الأعلى",
-    quickLinksLabel: "مسارات سريعة",
     moreFilters: "فلاتر أكثر",
     fewerFilters: "إخفاء الفلاتر",
     submit: "ابحث عن العقارات",
@@ -160,24 +149,17 @@ function FilterIcon() {
   );
 }
 
-export function HomeQuickSearch({ cities, types, roomOptions, quickLinks }: HomeQuickSearchProps) {
+export function HomeQuickSearch({
+  cities,
+  types,
+  roomOptions,
+  variant = "default",
+}: HomeQuickSearchProps) {
   const router = useRouter();
   const { language } = useSitePreferences();
   const copy = searchCopy[language];
   const [form, setForm] = useState<SearchState>(initialState);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const uniqueQuickLinks = useMemo(() => {
-    const seen = new Set<string>();
-
-    return quickLinks.filter((item) => {
-      const key = `${item.label}::${item.href}`;
-      if (seen.has(key)) {
-        return false;
-      }
-      seen.add(key);
-      return true;
-    });
-  }, [quickLinks]);
 
   function updateField<K extends keyof SearchState>(key: K, value: SearchState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -220,63 +202,62 @@ export function HomeQuickSearch({ cities, types, roomOptions, quickLinks }: Home
     });
   }
 
+  const isOverlay = variant === "overlay";
+  const wrapperClassName = isOverlay
+    ? "relative overflow-hidden rounded-[1.3rem] border border-white/18 bg-[rgba(255,250,244,0.8)] p-2.5 shadow-[0_28px_48px_-34px_rgba(8,14,22,0.48)] backdrop-blur-md sm:p-3 xl:px-4 xl:py-3"
+    : "relative overflow-hidden rounded-[1.55rem] border border-[var(--line-strong)] bg-[rgba(255,253,249,0.98)] p-4 shadow-[0_24px_48px_-38px_rgba(18,24,36,0.24)] backdrop-blur sm:p-5 xl:px-6 xl:py-5";
+  const overlayGlowClassName = isOverlay
+    ? "absolute inset-0 bg-[radial-gradient(circle_at_right_center,rgba(255,255,255,0.22),transparent_34%),radial-gradient(circle_at_left_top,rgba(201,124,78,0.12),transparent_28%)]"
+    : "absolute inset-0 bg-[radial-gradient(circle_at_right_center,rgba(29,56,92,0.08),transparent_32%),radial-gradient(circle_at_left_top,rgba(201,124,78,0.08),transparent_28%)]";
+  const inputClassName = isOverlay ? "input min-h-[2.75rem] px-3 text-[13px]" : "input min-h-14 px-4 text-base";
+  const selectClassName = isOverlay ? "input min-h-[2.75rem] px-3 text-[13px]" : "input min-h-[3.25rem] px-4 text-[15px]";
+  const actionButtonClassName = isOverlay
+    ? "inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-[0.9rem] border border-[var(--line-strong)] bg-white px-3.5 text-[11px] font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(255,245,235,0.82)]"
+    : "inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-[1rem] border border-[var(--line-strong)] bg-white px-4 text-[13px] font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(255,245,235,0.82)]";
+  const submitButtonClassName = isOverlay
+    ? "btn-gold inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-[0.9rem] px-4 text-[13px] font-semibold shadow-[0_20px_34px_-24px_rgba(192,118,68,0.55)] transition hover:-translate-y-0.5"
+    : "btn-gold inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-[1rem] px-6 text-[15px] font-semibold shadow-[0_22px_36px_-24px_rgba(192,118,68,0.55)] transition hover:-translate-y-0.5";
+
   return (
-    <section className="relative overflow-hidden rounded-[1.55rem] border border-[var(--line-strong)] bg-[rgba(255,253,249,0.98)] p-4 shadow-[0_24px_48px_-38px_rgba(18,24,36,0.24)] backdrop-blur sm:p-5 xl:px-6 xl:py-5">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_right_center,rgba(29,56,92,0.08),transparent_32%),radial-gradient(circle_at_left_top,rgba(201,124,78,0.08),transparent_28%)]" />
+    <section className={wrapperClassName}>
+      <div className={overlayGlowClassName} />
 
-      <div className="relative flex flex-col gap-4">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex rounded-full bg-[rgba(29,56,92,0.08)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-primary)]">
-                {copy.eyebrow}
-              </span>
-              <p className="text-[12px] leading-5 text-[var(--ink-600)] sm:text-[13px]">
-                {copy.body}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 xl:items-end">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
-              {copy.quickLinksLabel}
+      <div className={`relative flex flex-col ${isOverlay ? "gap-3" : "gap-4"}`}>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`inline-flex rounded-full px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.22em] ${
+              isOverlay ? "bg-white/72 text-[var(--brand-primary)]" : "bg-[rgba(29,56,92,0.08)] text-[var(--brand-primary)]"
+            }`}>
+              {copy.eyebrow}
+            </span>
+            <p className={`text-[11px] leading-[1.15rem] sm:text-[12px] ${isOverlay ? "text-white/90" : "text-[var(--ink-600)]"}`}>
+              {copy.body}
             </p>
-            <div className="flex flex-wrap gap-2">
-              {uniqueQuickLinks.slice(0, 4).map((item) => (
-                <Link
-                  key={`${item.href}-${item.label}`}
-                  href={item.href}
-                  className="inline-flex min-h-9 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white px-3.5 text-[12px] font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)] hover:bg-[rgba(255,245,235,0.9)]"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="grid gap-3">
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+            <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${isOverlay ? "text-white/72" : "text-[var(--ink-500)]"}`}>
               {copy.keywordLabel}
             </span>
             <input
               value={form.query}
               onChange={(event) => updateField("query", event.target.value)}
               placeholder={copy.keywordPlaceholder}
-              className="input min-h-14 px-4 text-base"
+              className={inputClassName}
             />
           </label>
 
-          <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.9fr)_minmax(0,0.9fr)]">
+          <div className="grid gap-2.5 md:grid-cols-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.9fr)_minmax(0,0.9fr)]">
             <label className="flex flex-col gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+              <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${isOverlay ? "text-white/72" : "text-[var(--ink-500)]"}`}>
                 {copy.cityLabel}
               </span>
               <select
                 value={form.city}
                 onChange={(event) => updateField("city", event.target.value)}
-                className="input min-h-[3.25rem] px-4 text-[15px]"
+                className={selectClassName}
               >
                 <option value="">{copy.cityPlaceholder}</option>
                 {cities.map((city) => (
@@ -288,13 +269,13 @@ export function HomeQuickSearch({ cities, types, roomOptions, quickLinks }: Home
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+              <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${isOverlay ? "text-white/72" : "text-[var(--ink-500)]"}`}>
                 {copy.typeLabel}
               </span>
               <select
                 value={form.type}
                 onChange={(event) => updateField("type", event.target.value)}
-                className="input min-h-[3.25rem] px-4 text-[15px]"
+                className={selectClassName}
               >
                 <option value="">{copy.typePlaceholder}</option>
                 {types.map((type) => (
@@ -306,13 +287,13 @@ export function HomeQuickSearch({ cities, types, roomOptions, quickLinks }: Home
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+              <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${isOverlay ? "text-white/72" : "text-[var(--ink-500)]"}`}>
                 {copy.roomsLabel}
               </span>
               <select
                 value={form.rooms}
                 onChange={(event) => updateField("rooms", event.target.value)}
-                className="input min-h-[3.25rem] px-4 text-[15px]"
+                className={selectClassName}
               >
                 <option value="">{copy.roomsPlaceholder}</option>
                 {roomOptions.map((room) => (
@@ -324,11 +305,11 @@ export function HomeQuickSearch({ cities, types, roomOptions, quickLinks }: Home
             </label>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <div className="grid gap-2.5 sm:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
             <button
               type="button"
               onClick={() => setShowAdvancedFilters((current) => !current)}
-              className="inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-[1rem] border border-[var(--line-strong)] bg-white px-4 text-[13px] font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(255,245,235,0.82)]"
+              className={actionButtonClassName}
               aria-expanded={showAdvancedFilters}
             >
               <FilterIcon />
@@ -337,7 +318,7 @@ export function HomeQuickSearch({ cities, types, roomOptions, quickLinks }: Home
 
             <button
               type="submit"
-              className="btn-gold inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-[1rem] px-6 text-[15px] font-semibold shadow-[0_22px_36px_-24px_rgba(192,118,68,0.55)] transition hover:-translate-y-0.5"
+              className={submitButtonClassName}
             >
               <SearchIcon />
               {copy.submit}
@@ -345,9 +326,11 @@ export function HomeQuickSearch({ cities, types, roomOptions, quickLinks }: Home
           </div>
 
           {showAdvancedFilters ? (
-            <div className="grid gap-3 rounded-[1.15rem] border border-[rgba(220,208,189,0.72)] bg-white/82 p-3 sm:grid-cols-2">
+            <div className={`grid gap-3 rounded-[1.15rem] p-3 sm:grid-cols-2 ${
+              isOverlay ? "border border-white/12 bg-white/12 backdrop-blur-sm" : "border border-[rgba(220,208,189,0.72)] bg-white/82"
+            }`}>
               <label className="flex flex-col gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+                <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${isOverlay ? "text-white/72" : "text-[var(--ink-500)]"}`}>
                   {copy.minPriceLabel}
                 </span>
                 <input
@@ -357,12 +340,12 @@ export function HomeQuickSearch({ cities, types, roomOptions, quickLinks }: Home
                   min={0}
                   inputMode="numeric"
                   placeholder={copy.minPricePlaceholder}
-                  className="input min-h-[3.25rem] px-4 text-[15px]"
+                  className={selectClassName}
                 />
               </label>
 
               <label className="flex flex-col gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+                <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${isOverlay ? "text-white/72" : "text-[var(--ink-500)]"}`}>
                   {copy.maxPriceLabel}
                 </span>
                 <input
@@ -372,7 +355,7 @@ export function HomeQuickSearch({ cities, types, roomOptions, quickLinks }: Home
                   min={0}
                   inputMode="numeric"
                   placeholder={copy.maxPricePlaceholder}
-                  className="input min-h-[3.25rem] px-4 text-[15px]"
+                  className={selectClassName}
                 />
               </label>
             </div>
