@@ -1,7 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
-
-import { initialAdvisors, initialBlogPosts, initialProperties, initialUsers } from "@/lib/mock-data";
+import db from "@/lib/db";
 import { sanitizePropertyTranslations } from "@/lib/property-content";
 import { sanitizePropertyInfoItems } from "@/lib/property-info-items";
 import { pickSampleAdvisorImageForSeed } from "@/lib/sample-advisor-images";
@@ -25,444 +22,11 @@ import type {
   UserRole,
 } from "@/lib/types";
 
+// ─── helpers ────────────────────────────────────────────────────────────────
+
 const cityNormalizer: Record<string, string> = {
-  ç: "c",
-  ğ: "g",
-  ı: "i",
-  ö: "o",
-  ş: "s",
-  ü: "u",
+  ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u",
 };
-
-const store = {
-  advisors: [...initialAdvisors],
-  properties: [...initialProperties],
-  blogPosts: [...initialBlogPosts],
-  users: [...initialUsers],
-  leads: [] as ContactLead[],
-  sellerLeads: [] as SellerLead[],
-};
-
-const demoDataDir = path.join(process.cwd(), ".demo-data");
-const advisorStorePath = path.join(demoDataDir, "advisors.json");
-const propertyStorePath = path.join(demoDataDir, "properties.json");
-const blogStorePath = path.join(demoDataDir, "blog-posts.json");
-const userStorePath = path.join(demoDataDir, "users.json");
-const leadStorePath = path.join(demoDataDir, "leads.json");
-const sellerLeadStorePath = path.join(demoDataDir, "seller-leads.json");
-
-const REQUIRED_DEMO_USERS: User[] = [
-  {
-    id: "usr-admin-demo",
-    name: "Demo Admin",
-    role: "admin",
-    email: "admin@admin",
-    phone: "+90 555 111 11 11",
-    username: "admin@admin",
-    password: "admin",
-  },
-];
-
-type DiskCacheKey = "advisors" | "properties" | "blogPosts" | "users" | "leads" | "sellerLeads";
-
-const diskCacheState: Record<DiskCacheKey, { initialized: boolean; mtimeMs: number | null }> = {
-  advisors: { initialized: false, mtimeMs: null },
-  properties: { initialized: false, mtimeMs: null },
-  blogPosts: { initialized: false, mtimeMs: null },
-  users: { initialized: false, mtimeMs: null },
-  leads: { initialized: false, mtimeMs: null },
-  sellerLeads: { initialized: false, mtimeMs: null },
-};
-
-function fileMtimeMs(filePath: string): number | null {
-  try {
-    return fs.statSync(filePath).mtimeMs;
-  } catch {
-    return null;
-  }
-}
-
-function hasDiskResourceChanged(key: DiskCacheKey, filePath: string): boolean {
-  const nextMtimeMs = fileMtimeMs(filePath);
-  const cache = diskCacheState[key];
-  const changed = !cache.initialized || cache.mtimeMs !== nextMtimeMs;
-  cache.initialized = true;
-  cache.mtimeMs = nextMtimeMs;
-  return changed;
-}
-
-function rememberDiskResourceState(key: DiskCacheKey, filePath: string) {
-  diskCacheState[key].initialized = true;
-  diskCacheState[key].mtimeMs = fileMtimeMs(filePath);
-}
-
-function ensureDemoDataDir() {
-  if (!fs.existsSync(demoDataDir)) {
-    fs.mkdirSync(demoDataDir, { recursive: true });
-  }
-}
-
-function writeBlogPostsToDisk(posts: BlogPost[]) {
-  try {
-    ensureDemoDataDir();
-    fs.writeFileSync(blogStorePath, JSON.stringify(posts, null, 2), "utf-8");
-    rememberDiskResourceState("blogPosts", blogStorePath);
-  } catch (error) {
-    console.error("[demo-blog-store-write-error]", error);
-  }
-}
-
-function writeAdvisorsToDisk(advisors: Advisor[]) {
-  try {
-    ensureDemoDataDir();
-    fs.writeFileSync(advisorStorePath, JSON.stringify(advisors, null, 2), "utf-8");
-    rememberDiskResourceState("advisors", advisorStorePath);
-  } catch (error) {
-    console.error("[demo-advisor-store-write-error]", error);
-  }
-}
-
-function writePropertiesToDisk(properties: Property[]) {
-  try {
-    ensureDemoDataDir();
-    fs.writeFileSync(propertyStorePath, JSON.stringify(properties, null, 2), "utf-8");
-    rememberDiskResourceState("properties", propertyStorePath);
-  } catch (error) {
-    console.error("[demo-property-store-write-error]", error);
-  }
-}
-
-function writeUsersToDisk(users: User[]) {
-  try {
-    ensureDemoDataDir();
-    fs.writeFileSync(userStorePath, JSON.stringify(users, null, 2), "utf-8");
-    rememberDiskResourceState("users", userStorePath);
-  } catch (error) {
-    console.error("[demo-user-store-write-error]", error);
-  }
-}
-
-function writeLeadsToDisk(leads: ContactLead[]) {
-  try {
-    ensureDemoDataDir();
-    fs.writeFileSync(leadStorePath, JSON.stringify(leads, null, 2), "utf-8");
-    rememberDiskResourceState("leads", leadStorePath);
-  } catch (error) {
-    console.error("[demo-lead-store-write-error]", error);
-  }
-}
-
-function writeSellerLeadsToDisk(sellerLeads: SellerLead[]) {
-  try {
-    ensureDemoDataDir();
-    fs.writeFileSync(sellerLeadStorePath, JSON.stringify(sellerLeads, null, 2), "utf-8");
-    rememberDiskResourceState("sellerLeads", sellerLeadStorePath);
-  } catch (error) {
-    console.error("[demo-seller-lead-store-write-error]", error);
-  }
-}
-
-function readPropertiesFromDisk(): Property[] | null {
-  try {
-    if (!fs.existsSync(propertyStorePath)) {
-      return null;
-    }
-
-    const raw = fs.readFileSync(propertyStorePath, "utf-8");
-    const parsed = JSON.parse(raw) as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return null;
-    }
-
-    const valid = parsed.filter((item) => item && typeof item === "object") as Property[];
-    return valid;
-  } catch (error) {
-    console.error("[demo-property-store-read-error]", error);
-    return null;
-  }
-}
-
-function readAdvisorsFromDisk(): Advisor[] | null {
-  try {
-    if (!fs.existsSync(advisorStorePath)) {
-      return null;
-    }
-
-    const raw = fs.readFileSync(advisorStorePath, "utf-8");
-    const parsed = JSON.parse(raw) as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return null;
-    }
-
-    const valid = parsed
-      .filter((item) => item && typeof item === "object")
-      .map((item, index) => {
-        const advisor = item as Advisor & { image?: string };
-        return {
-          ...advisor,
-          image:
-            typeof advisor.image === "string" && advisor.image.trim()
-              ? advisor.image.trim()
-              : pickSampleAdvisorImageForSeed(`${advisor.id ?? advisor.email ?? index}`),
-        } satisfies Advisor;
-      });
-    return valid;
-  } catch (error) {
-    console.error("[demo-advisor-store-read-error]", error);
-    return null;
-  }
-}
-
-function normalizeStoredUserRole(role: unknown): UserRole {
-  if (
-    role === "portal_admin" ||
-    role === "admin" ||
-    role === "portfolio_manager" ||
-    role === "advisor" ||
-    role === "editor"
-  ) {
-    return role;
-  }
-
-  return "editor";
-}
-
-function readUsersFromDisk(): User[] | null {
-  try {
-    if (!fs.existsSync(userStorePath)) {
-      return null;
-    }
-
-    const raw = fs.readFileSync(userStorePath, "utf-8");
-    const parsed = JSON.parse(raw) as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return null;
-    }
-
-    return parsed
-      .filter((item) => item && typeof item === "object")
-      .map((item, index) => {
-        const user = item as Partial<User> & { role?: unknown };
-        const email =
-          typeof user.email === "string" && user.email.trim()
-            ? user.email.trim().toLocaleLowerCase("tr")
-            : `kullanici-${index + 1}@ornek.com`;
-
-        return {
-          id: typeof user.id === "string" && user.id.trim() ? user.id.trim() : `usr-${crypto.randomUUID()}`,
-          name: typeof user.name === "string" && user.name.trim() ? user.name.trim() : `Kullanıcı ${index + 1}`,
-          role: normalizeStoredUserRole(user.role),
-          email,
-          phone: typeof user.phone === "string" ? user.phone.trim() : "",
-          username:
-            typeof user.username === "string" && user.username.trim()
-              ? user.username.trim()
-              : email,
-          password: typeof user.password === "string" ? user.password : "",
-          advisorId:
-            typeof user.advisorId === "string" && user.advisorId.trim()
-              ? user.advisorId.trim()
-              : undefined,
-        } satisfies User;
-      });
-  } catch (error) {
-    console.error("[demo-user-store-read-error]", error);
-    return null;
-  }
-}
-
-function syncAdvisorsFromDisk() {
-  if (!hasDiskResourceChanged("advisors", advisorStorePath)) {
-    return;
-  }
-
-  const diskAdvisors = readAdvisorsFromDisk();
-
-  if (diskAdvisors) {
-    store.advisors = diskAdvisors;
-    return;
-  }
-
-  if (!fs.existsSync(advisorStorePath)) {
-    writeAdvisorsToDisk(store.advisors);
-  }
-}
-
-function syncUsersFromDisk() {
-  if (!hasDiskResourceChanged("users", userStorePath)) {
-    return;
-  }
-
-  const diskUsers = readUsersFromDisk();
-
-  if (diskUsers) {
-    store.users = ensureRequiredDemoUsers(diskUsers);
-    if (store.users.length !== diskUsers.length) {
-      writeUsersToDisk(store.users);
-    }
-    return;
-  }
-
-  if (!fs.existsSync(userStorePath)) {
-    store.users = ensureRequiredDemoUsers(store.users);
-    writeUsersToDisk(store.users);
-  }
-}
-
-function ensureRequiredDemoUsers(users: User[]): User[] {
-  const existingKeys = new Set(
-    users.flatMap((user) => [user.email.toLocaleLowerCase("tr"), user.username.toLocaleLowerCase("tr")]),
-  );
-
-  const missingUsers = REQUIRED_DEMO_USERS.filter(
-    (user) =>
-      !existingKeys.has(user.email.toLocaleLowerCase("tr")) &&
-      !existingKeys.has(user.username.toLocaleLowerCase("tr")),
-  );
-
-  return missingUsers.length > 0 ? [...missingUsers, ...users] : users;
-}
-
-function readLeadsFromDisk(): ContactLead[] | null {
-  try {
-    if (!fs.existsSync(leadStorePath)) {
-      return null;
-    }
-
-    const raw = fs.readFileSync(leadStorePath, "utf-8");
-    const parsed = JSON.parse(raw) as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return null;
-    }
-
-    return parsed.filter((item) => item && typeof item === "object") as ContactLead[];
-  } catch (error) {
-    console.error("[demo-lead-store-read-error]", error);
-    return null;
-  }
-}
-
-function readSellerLeadsFromDisk(): SellerLead[] | null {
-  try {
-    if (!fs.existsSync(sellerLeadStorePath)) {
-      return null;
-    }
-
-    const raw = fs.readFileSync(sellerLeadStorePath, "utf-8");
-    const parsed = JSON.parse(raw) as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return null;
-    }
-
-    return parsed.filter((item) => item && typeof item === "object") as SellerLead[];
-  } catch (error) {
-    console.error("[demo-seller-lead-store-read-error]", error);
-    return null;
-  }
-}
-
-function syncLeadsFromDisk() {
-  if (!hasDiskResourceChanged("leads", leadStorePath)) {
-    return;
-  }
-
-  const diskLeads = readLeadsFromDisk();
-
-  if (diskLeads) {
-    store.leads = diskLeads;
-    return;
-  }
-
-  if (!fs.existsSync(leadStorePath)) {
-    writeLeadsToDisk(store.leads);
-  }
-}
-
-function syncSellerLeadsFromDisk() {
-  if (!hasDiskResourceChanged("sellerLeads", sellerLeadStorePath)) {
-    return;
-  }
-
-  const diskSellerLeads = readSellerLeadsFromDisk();
-
-  if (diskSellerLeads) {
-    store.sellerLeads = diskSellerLeads;
-    return;
-  }
-
-  if (!fs.existsSync(sellerLeadStorePath)) {
-    writeSellerLeadsToDisk(store.sellerLeads);
-  }
-}
-
-function syncPropertiesFromDisk() {
-  if (!hasDiskResourceChanged("properties", propertyStorePath)) {
-    return;
-  }
-
-  const diskProperties = readPropertiesFromDisk();
-
-  if (diskProperties) {
-    store.properties = diskProperties;
-    return;
-  }
-
-  if (!fs.existsSync(propertyStorePath)) {
-    writePropertiesToDisk(store.properties);
-  }
-}
-
-function readBlogPostsFromDisk(): BlogPost[] | null {
-  try {
-    if (!fs.existsSync(blogStorePath)) {
-      return null;
-    }
-
-    const raw = fs.readFileSync(blogStorePath, "utf-8");
-    const parsed = JSON.parse(raw) as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return null;
-    }
-
-    const valid = parsed.filter((item) => item && typeof item === "object") as BlogPost[];
-    return valid;
-  } catch (error) {
-    console.error("[demo-blog-store-read-error]", error);
-    return null;
-  }
-}
-
-function syncBlogPostsFromDisk() {
-  if (!hasDiskResourceChanged("blogPosts", blogStorePath)) {
-    return;
-  }
-
-  const diskPosts = readBlogPostsFromDisk();
-
-  if (diskPosts) {
-    store.blogPosts = diskPosts;
-    return;
-  }
-
-  if (!fs.existsSync(blogStorePath)) {
-    writeBlogPostsToDisk(store.blogPosts);
-  }
-}
-
-const validLeadStages: LeadStage[] = [
-  "new",
-  "called",
-  "appointment_scheduled",
-  "offer_submitted",
-  "won",
-  "lost",
-];
 
 const cityCenterLookup: Record<string, [number, number]> = {
   İstanbul: [41.0082, 28.9784],
@@ -473,17 +37,9 @@ const cityCenterLookup: Record<string, [number, number]> = {
   Bursa: [40.1885, 29.061],
 };
 
-function toSafeUser(user: User): SafeUser {
-  return {
-    id: user.id,
-    name: user.name,
-    role: user.role,
-    email: user.email,
-    phone: user.phone,
-    username: user.username,
-    advisorId: user.advisorId,
-  };
-}
+const validLeadStages: LeadStage[] = [
+  "new", "called", "appointment_scheduled", "offer_submitted", "won", "lost",
+];
 
 function normalizeText(value: string): string {
   return value
@@ -500,84 +56,114 @@ function createSlug(value: string): string {
     .replace(/-+/g, "-");
 }
 
-function nextListingRef(): string {
-  const sequence = store.properties.length + 1;
-  return `PN-${String(sequence).padStart(4, "0")}`;
-}
-
 function uniqueSlug(base: string): string {
-  const existing = new Set(store.properties.map((property) => property.slug));
-  if (!existing.has(base)) {
-    return base;
-  }
-
+  const rows = db.prepare("SELECT slug FROM properties WHERE slug = ? OR slug LIKE ?").all(base, `${base}-%`) as { slug: string }[];
+  const existing = new Set(rows.map((r) => r.slug));
+  if (!existing.has(base)) return base;
   let cursor = 2;
-  while (existing.has(`${base}-${cursor}`)) {
-    cursor += 1;
-  }
-
+  while (existing.has(`${base}-${cursor}`)) cursor += 1;
   return `${base}-${cursor}`;
 }
 
 function uniqueBlogSlug(base: string): string {
-  const existing = new Set(store.blogPosts.map((post) => post.slug));
-  if (!existing.has(base)) {
-    return base;
-  }
-
+  const rows = db.prepare("SELECT slug FROM blog_posts WHERE slug = ? OR slug LIKE ?").all(base, `${base}-%`) as { slug: string }[];
+  const existing = new Set(rows.map((r) => r.slug));
+  if (!existing.has(base)) return base;
   let cursor = 2;
-  while (existing.has(`${base}-${cursor}`)) {
-    cursor += 1;
-  }
-
+  while (existing.has(`${base}-${cursor}`)) cursor += 1;
   return `${base}-${cursor}`;
 }
 
-function inferCoordinates(input: CreatePropertyInput): { latitude: number; longitude: number } {
+function nextListingRef(): string {
+  const row = db.prepare("SELECT COUNT(*) as c FROM properties").get() as { c: number };
+  return `PN-${String(row.c + 1).padStart(4, "0")}`;
+}
+
+function inferCoordinates(input: CreatePropertyInput, propCount: number): { latitude: number; longitude: number } {
   if (
-    typeof input.latitude === "number" &&
-    Number.isFinite(input.latitude) &&
-    typeof input.longitude === "number" &&
-    Number.isFinite(input.longitude)
+    typeof input.latitude === "number" && Number.isFinite(input.latitude) &&
+    typeof input.longitude === "number" && Number.isFinite(input.longitude)
   ) {
     return { latitude: input.latitude, longitude: input.longitude };
   }
-
   const center =
     cityCenterLookup[input.city] ??
     cityCenterLookup[input.city.replace("İ", "I")] ??
     cityCenterLookup.İstanbul;
-
-  const offsetIndex = store.properties.length % 7;
-  const latitudeOffset = (offsetIndex - 3) * 0.0052;
-  const longitudeOffset = (offsetIndex - 3) * 0.0041;
-
+  const offsetIndex = propCount % 7;
   return {
-    latitude: Number((center[0] + latitudeOffset).toFixed(6)),
-    longitude: Number((center[1] + longitudeOffset).toFixed(6)),
+    latitude: Number((center[0] + (offsetIndex - 3) * 0.0052).toFixed(6)),
+    longitude: Number((center[1] + (offsetIndex - 3) * 0.0041).toFixed(6)),
   };
 }
 
+function toSafeUser(user: User): SafeUser {
+  return {
+    id: user.id, name: user.name, role: user.role,
+    email: user.email, phone: user.phone, username: user.username,
+    advisorId: user.advisorId,
+  };
+}
+
+// ─── row mappers ─────────────────────────────────────────────────────────────
+
+function rowToProperty(row: Record<string, unknown>): Property {
+  return {
+    ...(row as unknown as Property),
+    price: Number(row.price),
+    areaM2: Number(row.areaM2),
+    latitude: Number(row.latitude),
+    longitude: Number(row.longitude),
+    highlights: JSON.parse(row.highlights as string),
+    features: JSON.parse(row.features as string),
+    infoItems: JSON.parse(row.infoItems as string),
+    galleryImages: JSON.parse(row.galleryImages as string),
+    imageLabels: JSON.parse(row.imageLabels as string),
+    translations: JSON.parse(row.translations as string),
+  };
+}
+
+function rowToAdvisor(row: Record<string, unknown>): Advisor {
+  return row as unknown as Advisor;
+}
+
+function rowToUser(row: Record<string, unknown>): User {
+  return {
+    ...(row as unknown as User),
+    advisorId: (row.advisorId as string | null) ?? undefined,
+  };
+}
+
+function rowToBlogPost(row: Record<string, unknown>): BlogPost {
+  return {
+    ...(row as unknown as BlogPost),
+    tags: JSON.parse(row.tags as string),
+  };
+}
+
+function rowToLead(row: Record<string, unknown>): ContactLead {
+  return row as unknown as ContactLead;
+}
+
+function rowToSellerLead(row: Record<string, unknown>): SellerLead {
+  return {
+    ...(row as unknown as SellerLead),
+    areaM2: row.areaM2 != null ? Number(row.areaM2) : undefined,
+  };
+}
+
+// ─── advisors ────────────────────────────────────────────────────────────────
+
 export function listAdvisors(): Advisor[] {
-  syncAdvisorsFromDisk();
-  return [...store.advisors];
+  return (db.prepare("SELECT * FROM advisors").all() as Record<string, unknown>[]).map(rowToAdvisor);
 }
 
 export function getAdvisorById(advisorId: string): Advisor | undefined {
-  syncAdvisorsFromDisk();
-  return store.advisors.find((advisor) => advisor.id === advisorId);
-}
-
-function advisorUsage(advisorId: string): { propertyCount: number; linkedUserCount: number } {
-  syncUsersFromDisk();
-  return {
-    propertyCount: store.properties.filter((property) => property.advisorId === advisorId).length,
-    linkedUserCount: store.users.filter((user) => user.advisorId === advisorId).length,
-  };
+  const row = db.prepare("SELECT * FROM advisors WHERE id = ?").get(advisorId) as Record<string, unknown> | undefined;
+  return row ? rowToAdvisor(row) : undefined;
 }
 
 export function createAdvisor(input: CreateAdvisorInput): Advisor {
-  syncAdvisorsFromDisk();
   const name = input.name.trim();
   const title = input.title.trim();
   const phone = input.phone.trim();
@@ -589,35 +175,26 @@ export function createAdvisor(input: CreateAdvisorInput): Advisor {
     throw new Error("Danışman alanları eksik.");
   }
 
-  const hasSameEmail = store.advisors.some(
-    (advisor) => advisor.email.toLocaleLowerCase("tr") === email,
-  );
-  if (hasSameEmail) {
-    throw new Error("Bu e-posta ile kayıtlı bir danışman zaten var.");
-  }
+  const existing = db.prepare("SELECT id FROM advisors WHERE LOWER(email) = ?").get(email);
+  if (existing) throw new Error("Bu e-posta ile kayıtlı bir danışman zaten var.");
 
   const advisor: Advisor = {
     id: `adv-${crypto.randomUUID()}`,
-    name,
-    title,
-    phone,
-    whatsapp,
-    email,
-    focusArea,
+    name, title, phone, whatsapp, email, focusArea,
     image: input.image || pickSampleAdvisorImageForSeed(email),
   };
 
-  store.advisors.unshift(advisor);
-  writeAdvisorsToDisk(store.advisors);
+  db.prepare(`
+    INSERT INTO advisors (id, name, title, phone, whatsapp, email, focusArea, image)
+    VALUES (@id, @name, @title, @phone, @whatsapp, @email, @focusArea, @image)
+  `).run(advisor);
+
   return advisor;
 }
 
 export function updateAdvisorById(advisorId: string, input: CreateAdvisorInput): Advisor {
-  syncAdvisorsFromDisk();
   const advisor = getAdvisorById(advisorId);
-  if (!advisor) {
-    throw new Error("Danışman bulunamadı.");
-  }
+  if (!advisor) throw new Error("Danışman bulunamadı.");
 
   const name = input.name.trim();
   const title = input.title.trim();
@@ -630,122 +207,76 @@ export function updateAdvisorById(advisorId: string, input: CreateAdvisorInput):
     throw new Error("Danışman alanları eksik.");
   }
 
-  const hasSameEmail = store.advisors.some(
-    (item) => item.id !== advisorId && item.email.toLocaleLowerCase("tr") === email,
-  );
-  if (hasSameEmail) {
-    throw new Error("Bu e-posta başka bir danışmana ait.");
-  }
+  const conflict = db.prepare("SELECT id FROM advisors WHERE LOWER(email) = ? AND id != ?").get(email, advisorId);
+  if (conflict) throw new Error("Bu e-posta başka bir danışmana ait.");
 
-  advisor.name = name;
-  advisor.title = title;
-  advisor.phone = phone;
-  advisor.whatsapp = whatsapp;
-  advisor.email = email;
-  advisor.focusArea = focusArea;
-  advisor.image = input.image || advisor.image;
-  writeAdvisorsToDisk(store.advisors);
+  const image = input.image || advisor.image;
+  db.prepare(`
+    UPDATE advisors SET name=@name, title=@title, phone=@phone, whatsapp=@whatsapp,
+      email=@email, focusArea=@focusArea, image=@image WHERE id=@id
+  `).run({ name, title, phone, whatsapp, email, focusArea, image, id: advisorId });
 
-  return advisor;
+  return { ...advisor, name, title, phone, whatsapp, email, focusArea, image };
 }
 
 export function deleteAdvisor(advisorId: string): Advisor {
-  syncAdvisorsFromDisk();
-  const advisorIndex = store.advisors.findIndex((advisor) => advisor.id === advisorId);
-  if (advisorIndex === -1) {
-    throw new Error("Danışman bulunamadı.");
-  }
+  const advisor = getAdvisorById(advisorId);
+  if (!advisor) throw new Error("Danışman bulunamadı.");
 
-  const usage = advisorUsage(advisorId);
-  if (usage.propertyCount > 0) {
-    throw new Error(
-      `Bu danışmana bağlı ${usage.propertyCount} portföy var. Önce portföyleri başka danışmana taşıyın.`,
-    );
-  }
+  const propCount = (db.prepare("SELECT COUNT(*) as c FROM properties WHERE advisorId = ?").get(advisorId) as { c: number }).c;
+  if (propCount > 0) throw new Error(`Bu danışmana bağlı ${propCount} portföy var. Önce portföyleri başka danışmana taşıyın.`);
 
-  if (usage.linkedUserCount > 0) {
-    throw new Error(
-      `Bu danışmana bağlı ${usage.linkedUserCount} kullanıcı hesabı var. Önce kullanıcı bağlantısını kaldırın.`,
-    );
-  }
+  const userCount = (db.prepare("SELECT COUNT(*) as c FROM users WHERE advisorId = ?").get(advisorId) as { c: number }).c;
+  if (userCount > 0) throw new Error(`Bu danışmana bağlı ${userCount} kullanıcı hesabı var. Önce kullanıcı bağlantısını kaldırın.`);
 
-  const [removed] = store.advisors.splice(advisorIndex, 1);
-  writeAdvisorsToDisk(store.advisors);
-  return removed;
+  db.prepare("DELETE FROM advisors WHERE id = ?").run(advisorId);
+  return advisor;
 }
 
+// ─── properties ──────────────────────────────────────────────────────────────
+
 export function listProperties(filter: PropertyFilter = {}): Property[] {
-  syncPropertiesFromDisk();
+  const rows = (db.prepare("SELECT * FROM properties ORDER BY publishedAt DESC").all() as Record<string, unknown>[]).map(rowToProperty);
   const query = filter.query ? normalizeText(filter.query) : "";
 
-  return store.properties
-    .filter((property) => {
-      if (filter.city && property.city !== filter.city) {
-        return false;
-      }
+  return rows.filter((p) => {
+    if (filter.city && p.city !== filter.city) return false;
+    if (filter.type && p.type !== filter.type) return false;
+    if (typeof filter.minPrice === "number" && p.price < filter.minPrice) return false;
+    if (typeof filter.maxPrice === "number" && p.price > filter.maxPrice) return false;
+    if (filter.rooms && p.rooms !== filter.rooms) return false;
+    if (filter.advisorId && p.advisorId !== filter.advisorId) return false;
+    if (!query) return true;
 
-      if (filter.type && property.type !== filter.type) {
-        return false;
-      }
+    const haystack = normalizeText([
+      p.title, p.city, p.district, p.neighborhood, p.listingRef,
+      ...(p.infoItems?.map((i) => i.value) ?? []),
+      ...(p.translations ? Object.values(p.translations).flatMap((t) => [
+        t?.title ?? "", t?.description ?? "",
+        ...(t?.highlights ?? []), ...(t?.features ?? []),
+      ]) : []),
+    ].join(" "));
 
-      if (typeof filter.minPrice === "number" && property.price < filter.minPrice) {
-        return false;
-      }
-
-      if (typeof filter.maxPrice === "number" && property.price > filter.maxPrice) {
-        return false;
-      }
-
-      if (filter.rooms && property.rooms !== filter.rooms) {
-        return false;
-      }
-
-      if (filter.advisorId && property.advisorId !== filter.advisorId) {
-        return false;
-      }
-
-      if (!query) {
-        return true;
-      }
-
-      const haystack = normalizeText(
-        [
-          property.title,
-          property.city,
-          property.district,
-          property.neighborhood,
-          property.listingRef,
-          ...(property.infoItems?.map((item) => item.value) ?? []),
-          ...(property.translations
-            ? Object.values(property.translations).flatMap((translation) => [
-                translation?.title ?? "",
-                translation?.description ?? "",
-                ...(translation?.highlights ?? []),
-                ...(translation?.features ?? []),
-              ])
-            : []),
-        ].join(" "),
-      );
-
-      return haystack.includes(query);
-    })
-    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+    return haystack.includes(query);
+  });
 }
 
 export function getPropertyBySlug(slug: string): Property | undefined {
-  syncPropertiesFromDisk();
-  return store.properties.find((property) => property.slug === slug);
+  const row = db.prepare("SELECT * FROM properties WHERE slug = ?").get(slug) as Record<string, unknown> | undefined;
+  return row ? rowToProperty(row) : undefined;
 }
 
 export function createProperty(input: CreatePropertyInput, actorId: string): Property {
-  syncPropertiesFromDisk();
+  void actorId;
   if (input.advisorId && !getAdvisorById(input.advisorId)) {
     throw new Error("Seçilen danışman bulunamadı.");
   }
 
-  const sampleSet = pickSampleImageSet(store.properties.length + 1);
+  const propCount = (db.prepare("SELECT COUNT(*) as c FROM properties").get() as { c: number }).c;
+  const sampleSet = pickSampleImageSet(propCount + 1);
   const baseSlug = createSlug(input.title);
-  const location = inferCoordinates(input);
+  const location = inferCoordinates(input, propCount);
+
   const property: Property = {
     ...input,
     advisorId: input.advisorId?.trim() ?? "",
@@ -754,148 +285,150 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
     latitude: location.latitude,
     longitude: location.longitude,
     coverImage: input.coverImage || sampleSet.cover,
-    galleryImages:
-      input.galleryImages && input.galleryImages.length > 0
-        ? input.galleryImages
-        : sampleSet.gallery,
+    galleryImages: input.galleryImages && input.galleryImages.length > 0 ? input.galleryImages : sampleSet.gallery,
+    imageLabels: input.imageLabels ?? [],
     id: `prp-${crypto.randomUUID()}`,
     slug: uniqueSlug(baseSlug),
     listingRef: nextListingRef(),
     publishedAt: new Date().toISOString(),
   };
 
-  store.properties.unshift(property);
-  writePropertiesToDisk(store.properties);
-
-  // Demo store keeps local state only while server process is alive.
-  void actorId;
+  db.prepare(`
+    INSERT INTO properties
+      (id, slug, title, city, district, neighborhood, type, price, rooms, areaM2,
+       floor, heating, listingRef, description, highlights, features, infoItems,
+       advisorId, latitude, longitude, coverColor, coverImage, galleryImages,
+       imageLabels, translations, publishedAt)
+    VALUES
+      (@id, @slug, @title, @city, @district, @neighborhood, @type, @price, @rooms, @areaM2,
+       @floor, @heating, @listingRef, @description, @highlights, @features, @infoItems,
+       @advisorId, @latitude, @longitude, @coverColor, @coverImage, @galleryImages,
+       @imageLabels, @translations, @publishedAt)
+  `).run({
+    ...property,
+    highlights: JSON.stringify(property.highlights),
+    features: JSON.stringify(property.features),
+    infoItems: JSON.stringify(property.infoItems),
+    galleryImages: JSON.stringify(property.galleryImages),
+    imageLabels: JSON.stringify(property.imageLabels),
+    translations: JSON.stringify(property.translations),
+  });
 
   return property;
 }
 
 export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): Property {
-  syncPropertiesFromDisk();
   const property = getPropertyBySlug(slug);
-  if (!property) {
-    throw new Error("Portföy bulunamadı.");
-  }
+  if (!property) throw new Error("Portföy bulunamadı.");
 
   if (input.advisorId && !getAdvisorById(input.advisorId)) {
     throw new Error("Seçilen danışman bulunamadı.");
   }
 
+  const propCount = (db.prepare("SELECT COUNT(*) as c FROM properties").get() as { c: number }).c;
   const location = inferCoordinates({
     ...input,
     latitude: input.latitude ?? property.latitude,
     longitude: input.longitude ?? property.longitude,
+  }, propCount);
+
+  const updated: Property = {
+    ...property,
+    title: input.title.trim(),
+    city: input.city.trim(),
+    district: input.district.trim(),
+    neighborhood: input.neighborhood.trim(),
+    type: input.type,
+    price: input.price,
+    rooms: input.rooms.trim(),
+    areaM2: input.areaM2,
+    floor: input.floor.trim(),
+    heating: input.heating.trim(),
+    description: input.description.trim(),
+    highlights: input.highlights,
+    features: input.features,
+    infoItems: sanitizePropertyInfoItems(input.infoItems),
+    advisorId: input.advisorId?.trim() ?? "",
+    latitude: location.latitude,
+    longitude: location.longitude,
+    coverColor: input.coverColor,
+    coverImage: input.coverImage || property.coverImage,
+    galleryImages: input.galleryImages.length > 0 ? input.galleryImages : property.galleryImages,
+    imageLabels: input.imageLabels.length > 0 ? input.imageLabels : property.imageLabels,
+    translations: sanitizePropertyTranslations(input.translations),
+  };
+
+  db.prepare(`
+    UPDATE properties SET
+      title=@title, city=@city, district=@district, neighborhood=@neighborhood,
+      type=@type, price=@price, rooms=@rooms, areaM2=@areaM2, floor=@floor,
+      heating=@heating, description=@description, highlights=@highlights,
+      features=@features, infoItems=@infoItems, advisorId=@advisorId,
+      latitude=@latitude, longitude=@longitude, coverColor=@coverColor,
+      coverImage=@coverImage, galleryImages=@galleryImages, imageLabels=@imageLabels,
+      translations=@translations
+    WHERE slug=@slug
+  `).run({
+    ...updated,
+    highlights: JSON.stringify(updated.highlights),
+    features: JSON.stringify(updated.features),
+    infoItems: JSON.stringify(updated.infoItems),
+    galleryImages: JSON.stringify(updated.galleryImages),
+    imageLabels: JSON.stringify(updated.imageLabels),
+    translations: JSON.stringify(updated.translations),
   });
 
-  property.title = input.title.trim();
-  property.city = input.city.trim();
-  property.district = input.district.trim();
-  property.neighborhood = input.neighborhood.trim();
-  property.type = input.type;
-  property.price = input.price;
-  property.rooms = input.rooms.trim();
-  property.areaM2 = input.areaM2;
-  property.floor = input.floor.trim();
-  property.heating = input.heating.trim();
-  property.description = input.description.trim();
-  property.highlights = input.highlights;
-  property.features = input.features;
-  property.infoItems = sanitizePropertyInfoItems(input.infoItems);
-  property.advisorId = input.advisorId?.trim() ?? "";
-  property.latitude = location.latitude;
-  property.longitude = location.longitude;
-  property.coverColor = input.coverColor;
-  property.coverImage = input.coverImage || property.coverImage;
-  property.galleryImages = input.galleryImages.length > 0 ? input.galleryImages : property.galleryImages;
-  property.imageLabels = input.imageLabels.length > 0 ? input.imageLabels : property.imageLabels;
-  property.translations = sanitizePropertyTranslations(input.translations);
-  writePropertiesToDisk(store.properties);
-
-  return property;
+  return updated;
 }
 
 export function deletePropertyBySlug(slug: string): Property {
-  syncPropertiesFromDisk();
-  const propertyIndex = store.properties.findIndex((property) => property.slug === slug);
-
-  if (propertyIndex === -1) {
-    throw new Error("Portföy bulunamadı.");
-  }
-
-  const [removed] = store.properties.splice(propertyIndex, 1);
-  writePropertiesToDisk(store.properties);
-
-  return removed;
+  const property = getPropertyBySlug(slug);
+  if (!property) throw new Error("Portföy bulunamadı.");
+  db.prepare("DELETE FROM properties WHERE slug = ?").run(slug);
+  return property;
 }
 
 export function listCities(): string[] {
-  syncPropertiesFromDisk();
-  return Array.from(new Set(store.properties.map((property) => property.city))).sort((a, b) =>
-    a.localeCompare(b, "tr"),
-  );
+  return (db.prepare("SELECT DISTINCT city FROM properties ORDER BY city").all() as { city: string }[]).map((r) => r.city);
 }
 
 export function listTypes(): string[] {
-  syncPropertiesFromDisk();
-  return Array.from(new Set(store.properties.map((property) => property.type))).sort((a, b) =>
-    a.localeCompare(b, "tr"),
-  );
+  return (db.prepare("SELECT DISTINCT type FROM properties ORDER BY type").all() as { type: string }[]).map((r) => r.type);
 }
 
 export function listRoomOptions(): string[] {
-  syncPropertiesFromDisk();
-  return Array.from(new Set(store.properties.map((property) => property.rooms))).sort((a, b) =>
-    a.localeCompare(b, "tr"),
-  );
+  return (db.prepare("SELECT DISTINCT rooms FROM properties ORDER BY rooms").all() as { rooms: string }[]).map((r) => r.rooms);
 }
 
-export function authenticateUser(identifier: string, password: string): SafeUser | null {
-  syncUsersFromDisk();
-  const normalizedIdentifier = identifier.toLocaleLowerCase("tr");
-  const user = store.users.find(
-    (candidate) =>
-      (candidate.username.toLocaleLowerCase("tr") === normalizedIdentifier ||
-        candidate.email.toLocaleLowerCase("tr") === normalizedIdentifier) &&
-      candidate.password === password,
-  );
+// ─── users ───────────────────────────────────────────────────────────────────
 
-  return user ? toSafeUser(user) : null;
+export function authenticateUser(identifier: string, password: string): SafeUser | null {
+  const normalized = identifier.toLocaleLowerCase("tr");
+  const row = db.prepare(`
+    SELECT * FROM users WHERE (LOWER(username) = ? OR LOWER(email) = ?) AND password = ?
+  `).get(normalized, normalized, password) as Record<string, unknown> | undefined;
+  return row ? toSafeUser(rowToUser(row)) : null;
 }
 
 export function getUserById(userId: string): SafeUser | null {
-  syncUsersFromDisk();
-  const user = store.users.find((candidate) => candidate.id === userId);
-  return user ? toSafeUser(user) : null;
+  const row = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as Record<string, unknown> | undefined;
+  return row ? toSafeUser(rowToUser(row)) : null;
 }
 
 export function listUsers(): SafeUser[] {
-  syncUsersFromDisk();
   const roleOrder: Record<string, number> = {
-    portal_admin: 0,
-    admin: 1,
-    portfolio_manager: 2,
-    advisor: 2,
-    editor: 3,
+    portal_admin: 0, admin: 1, portfolio_manager: 2, advisor: 2, editor: 3,
   };
-
-  return [...store.users]
-    .sort((left, right) => {
-      const roleDiff = (roleOrder[left.role] ?? 99) - (roleOrder[right.role] ?? 99);
-      if (roleDiff !== 0) {
-        return roleDiff;
-      }
-
-      return left.name.localeCompare(right.name, "tr");
+  return (db.prepare("SELECT * FROM users").all() as Record<string, unknown>[])
+    .map(rowToUser)
+    .sort((a, b) => {
+      const diff = (roleOrder[a.role] ?? 99) - (roleOrder[b.role] ?? 99);
+      return diff !== 0 ? diff : a.name.localeCompare(b.name, "tr");
     })
     .map(toSafeUser);
 }
 
 export function createUser(input: CreateUserInput): SafeUser {
-  syncUsersFromDisk();
-  syncAdvisorsFromDisk();
   const name = input.name.trim();
   const email = input.email.trim().toLocaleLowerCase("tr");
   const phone = input.phone.trim();
@@ -903,93 +436,58 @@ export function createUser(input: CreateUserInput): SafeUser {
   const role = input.role;
   const advisorId = input.advisorId?.trim() || undefined;
 
-  if (!name || !email || !phone || !password || !role) {
-    throw new Error("Kullanıcı alanları eksik.");
-  }
+  if (!name || !email || !phone || !password || !role) throw new Error("Kullanıcı alanları eksik.");
+  if (!["portal_admin", "admin", "portfolio_manager", "advisor", "editor"].includes(role)) throw new Error("Geçersiz kullanıcı rolü.");
+  if (password.length < 6) throw new Error("Şifre en az 6 karakter olmalıdır.");
 
-  if (!["portal_admin", "admin", "portfolio_manager", "advisor", "editor"].includes(role)) {
-    throw new Error("Geçersiz kullanıcı rolü.");
-  }
-
-  if (password.length < 6) {
-    throw new Error("Şifre en az 6 karakter olmalıdır.");
-  }
-
-  const duplicateEmail = store.users.some(
-    (user) =>
-      user.email.toLocaleLowerCase("tr") === email ||
-      user.username.toLocaleLowerCase("tr") === email,
-  );
-
-  if (duplicateEmail) {
-    throw new Error("Bu e-posta ile kayıtlı bir kullanıcı zaten var.");
-  }
+  const dup = db.prepare("SELECT id FROM users WHERE LOWER(email) = ? OR LOWER(username) = ?").get(email, email);
+  if (dup) throw new Error("Bu e-posta ile kayıtlı bir kullanıcı zaten var.");
 
   if (advisorId) {
-    const advisor = getAdvisorById(advisorId);
-
-    if (!advisor) {
-      throw new Error("Seçilen danışman bulunamadı.");
-    }
+    if (!getAdvisorById(advisorId)) throw new Error("Seçilen danışman bulunamadı.");
   }
 
   if (role === "advisor") {
-    if (!advisorId) {
-      throw new Error("Danışman hesabı için bağlı danışman seçmelisiniz.");
-    }
-
-    const linkedAdvisorExists = store.users.some(
-      (user) => user.role === "advisor" && user.advisorId === advisorId,
-    );
-
-    if (linkedAdvisorExists) {
-      throw new Error("Bu danışman için zaten bir panel hesabı bulunuyor.");
-    }
+    if (!advisorId) throw new Error("Danışman hesabı için bağlı danışman seçmelisiniz.");
+    const linked = db.prepare("SELECT id FROM users WHERE role = 'advisor' AND advisorId = ?").get(advisorId);
+    if (linked) throw new Error("Bu danışman için zaten bir panel hesabı bulunuyor.");
   }
 
   const user: User = {
     id: `usr-${crypto.randomUUID()}`,
-    name,
-    role,
-    email,
-    phone,
-    username: email,
-    password,
-    advisorId,
+    name, role: role as UserRole, email, phone,
+    username: email, password, advisorId,
   };
 
-  store.users.unshift(user);
-  writeUsersToDisk(store.users);
+  db.prepare(`
+    INSERT INTO users (id, name, role, email, phone, username, password, advisorId)
+    VALUES (@id, @name, @role, @email, @phone, @username, @password, @advisorId)
+  `).run({ ...user, advisorId: user.advisorId ?? null });
+
   return toSafeUser(user);
 }
 
 export function deleteUserById(userId: string): SafeUser {
-  syncUsersFromDisk();
-  const userIndex = store.users.findIndex((candidate) => candidate.id === userId);
+  const row = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as Record<string, unknown> | undefined;
+  if (!row) throw new Error("Kullanıcı bulunamadı.");
+  const user = rowToUser(row);
 
-  if (userIndex === -1) {
-    throw new Error("Kullanıcı bulunamadı.");
+  if (user.role === "portal_admin") {
+    const adminCount = (db.prepare("SELECT COUNT(*) as c FROM users WHERE role = 'portal_admin'").get() as { c: number }).c;
+    if (adminCount <= 1) throw new Error("Sistemde en az bir portal admin hesabı kalmalıdır.");
   }
 
-  const [removed] = store.users.splice(userIndex, 1);
-
-  if (removed.role === "portal_admin" && !store.users.some((user) => user.role === "portal_admin")) {
-    store.users.splice(userIndex, 0, removed);
-    throw new Error("Sistemde en az bir portal admin hesabı kalmalıdır.");
-  }
-
-  writeUsersToDisk(store.users);
-  return toSafeUser(removed);
+  db.prepare("DELETE FROM users WHERE id = ?").run(userId);
+  return toSafeUser(user);
 }
 
-export function createLead(input: CreateLeadInput): ContactLead {
-  syncLeadsFromDisk();
-  const stage = input.stage ?? "new";
-  if (!validLeadStages.includes(stage)) {
-    throw new Error("Geçersiz lead aşaması.");
-  }
+// ─── leads ───────────────────────────────────────────────────────────────────
 
+export function createLead(input: CreateLeadInput): ContactLead {
+  const stage = input.stage ?? "new";
+  if (!validLeadStages.includes(stage)) throw new Error("Geçersiz lead aşaması.");
   const now = new Date().toISOString();
+
   const lead: ContactLead = {
     ...input,
     source: input.source ?? "contact_form",
@@ -999,15 +497,68 @@ export function createLead(input: CreateLeadInput): ContactLead {
     updatedAt: now,
   };
 
-  store.leads.unshift(lead);
-  writeLeadsToDisk(store.leads);
+  db.prepare(`
+    INSERT INTO leads
+      (id, propertySlug, name, email, phone, message, stage, source,
+       preferredDate, preferredTime, appointmentNote, assignedAdvisorId, pipelineNote, createdAt, updatedAt)
+    VALUES
+      (@id, @propertySlug, @name, @email, @phone, @message, @stage, @source,
+       @preferredDate, @preferredTime, @appointmentNote, @assignedAdvisorId, @pipelineNote, @createdAt, @updatedAt)
+  `).run({
+    ...lead,
+    preferredDate: lead.preferredDate ?? null,
+    preferredTime: lead.preferredTime ?? null,
+    appointmentNote: lead.appointmentNote ?? null,
+    assignedAdvisorId: lead.assignedAdvisorId ?? null,
+    pipelineNote: lead.pipelineNote ?? null,
+  });
+
   return lead;
 }
 
-export function createSellerLead(input: CreateSellerLeadInput): SellerLead {
-  syncSellerLeadsFromDisk();
-  const now = new Date().toISOString();
+export function listLeads(): ContactLead[] {
+  return (db.prepare("SELECT * FROM leads ORDER BY updatedAt DESC").all() as Record<string, unknown>[]).map(rowToLead);
+}
 
+export function getLeadById(leadId: string): ContactLead | undefined {
+  const row = db.prepare("SELECT * FROM leads WHERE id = ?").get(leadId) as Record<string, unknown> | undefined;
+  return row ? rowToLead(row) : undefined;
+}
+
+export function updateLeadStage(input: { leadId: string; stage: LeadStage; pipelineNote?: string }): ContactLead {
+  if (!validLeadStages.includes(input.stage)) throw new Error("Geçersiz lead aşaması.");
+  const lead = getLeadById(input.leadId);
+  if (!lead) throw new Error("Lead bulunamadı.");
+
+  const updatedAt = new Date().toISOString();
+  const pipelineNote = typeof input.pipelineNote === "string"
+    ? (input.pipelineNote.trim() || null)
+    : (lead.pipelineNote ?? null);
+
+  db.prepare(`
+    UPDATE leads SET stage = @stage, pipelineNote = @pipelineNote, updatedAt = @updatedAt WHERE id = @id
+  `).run({ stage: input.stage, pipelineNote, updatedAt, id: input.leadId });
+
+  return { ...lead, stage: input.stage, pipelineNote: pipelineNote ?? undefined, updatedAt };
+}
+
+export function leadStageSummary() {
+  const summary: Record<LeadStage, number> = {
+    new: 0, called: 0, appointment_scheduled: 0, offer_submitted: 0, won: 0, lost: 0,
+  };
+  const rows = db.prepare("SELECT stage, COUNT(*) as c FROM leads GROUP BY stage").all() as { stage: string; c: number }[];
+  for (const row of rows) {
+    if (validLeadStages.includes(row.stage as LeadStage)) {
+      summary[row.stage as LeadStage] = row.c;
+    }
+  }
+  return summary;
+}
+
+// ─── seller leads ────────────────────────────────────────────────────────────
+
+export function createSellerLead(input: CreateSellerLeadInput): SellerLead {
+  const now = new Date().toISOString();
   const sellerLead: SellerLead = {
     ...input,
     neighborhood: input.neighborhood?.trim() || undefined,
@@ -1021,23 +572,44 @@ export function createSellerLead(input: CreateSellerLeadInput): SellerLead {
     createdAt: now,
   };
 
-  store.sellerLeads.unshift(sellerLead);
-  writeSellerLeadsToDisk(store.sellerLeads);
+  db.prepare(`
+    INSERT INTO seller_leads
+      (id, name, email, phone, city, district, neighborhood, propertyType, subType,
+       areaM2, rooms, buildingAge, floor, inCompound, preferredDateTime, message, createdAt)
+    VALUES
+      (@id, @name, @email, @phone, @city, @district, @neighborhood, @propertyType, @subType,
+       @areaM2, @rooms, @buildingAge, @floor, @inCompound, @preferredDateTime, @message, @createdAt)
+  `).run({
+    ...sellerLead,
+    neighborhood: sellerLead.neighborhood ?? null,
+    subType: sellerLead.subType ?? null,
+    areaM2: sellerLead.areaM2 ?? null,
+    rooms: sellerLead.rooms ?? null,
+    buildingAge: sellerLead.buildingAge ?? null,
+    floor: sellerLead.floor ?? null,
+    inCompound: sellerLead.inCompound ?? null,
+    preferredDateTime: sellerLead.preferredDateTime ?? null,
+  });
+
   return sellerLead;
 }
 
+export function listSellerLeads(): SellerLead[] {
+  return (db.prepare("SELECT * FROM seller_leads ORDER BY createdAt DESC").all() as Record<string, unknown>[]).map(rowToSellerLead);
+}
+
+// ─── blog posts ──────────────────────────────────────────────────────────────
+
 export function listBlogPosts(): BlogPost[] {
-  syncBlogPostsFromDisk();
-  return [...store.blogPosts].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  return (db.prepare("SELECT * FROM blog_posts ORDER BY publishedAt DESC").all() as Record<string, unknown>[]).map(rowToBlogPost);
 }
 
 export function getBlogPostBySlug(slug: string): BlogPost | undefined {
-  syncBlogPostsFromDisk();
-  return store.blogPosts.find((post) => post.slug === slug);
+  const row = db.prepare("SELECT * FROM blog_posts WHERE slug = ?").get(slug) as Record<string, unknown> | undefined;
+  return row ? rowToBlogPost(row) : undefined;
 }
 
 export function createBlogPost(input: CreateBlogPostInput): BlogPost {
-  syncBlogPostsFromDisk();
   const title = input.title.trim();
   const excerpt = input.excerpt.trim();
   const content = input.content.trim();
@@ -1045,41 +617,34 @@ export function createBlogPost(input: CreateBlogPostInput): BlogPost {
   const authorName = input.authorName.trim();
   const metaTitle = input.metaTitle.trim();
   const metaDescription = input.metaDescription.trim();
-  const tags = input.tags.map((tag) => tag.trim()).filter(Boolean);
+  const tags = input.tags.map((t) => t.trim()).filter(Boolean);
 
   if (!title || !excerpt || !content || !coverImage || !authorName || !metaTitle || !metaDescription) {
     throw new Error("Blog alanları eksik.");
   }
-
-  if (tags.length === 0) {
-    throw new Error("En az bir etiket girilmelidir.");
-  }
+  if (tags.length === 0) throw new Error("En az bir etiket girilmelidir.");
 
   const post: BlogPost = {
     id: `blog-${crypto.randomUUID()}`,
     slug: uniqueBlogSlug(createSlug(title)),
-    title,
-    excerpt,
-    content,
-    coverImage,
-    authorName,
-    tags,
-    metaTitle,
-    metaDescription,
+    title, excerpt, content, coverImage, authorName, tags,
+    metaTitle, metaDescription,
     publishedAt: new Date().toISOString(),
   };
 
-  store.blogPosts.unshift(post);
-  writeBlogPostsToDisk(store.blogPosts);
+  db.prepare(`
+    INSERT INTO blog_posts
+      (id, slug, title, excerpt, content, coverImage, authorName, tags, metaTitle, metaDescription, publishedAt)
+    VALUES
+      (@id, @slug, @title, @excerpt, @content, @coverImage, @authorName, @tags, @metaTitle, @metaDescription, @publishedAt)
+  `).run({ ...post, tags: JSON.stringify(post.tags) });
+
   return post;
 }
 
 export function updateBlogPostBySlug(slug: string, input: CreateBlogPostInput): BlogPost {
-  syncBlogPostsFromDisk();
   const post = getBlogPostBySlug(slug);
-  if (!post) {
-    throw new Error("Blog yazısı bulunamadı.");
-  }
+  if (!post) throw new Error("Blog yazısı bulunamadı.");
 
   const title = input.title.trim();
   const excerpt = input.excerpt.trim();
@@ -1088,111 +653,37 @@ export function updateBlogPostBySlug(slug: string, input: CreateBlogPostInput): 
   const authorName = input.authorName.trim();
   const metaTitle = input.metaTitle.trim();
   const metaDescription = input.metaDescription.trim();
-  const tags = input.tags.map((tag) => tag.trim()).filter(Boolean);
+  const tags = input.tags.map((t) => t.trim()).filter(Boolean);
 
   if (!title || !excerpt || !content || !coverImage || !authorName || !metaTitle || !metaDescription) {
     throw new Error("Blog alanları eksik.");
   }
+  if (tags.length === 0) throw new Error("En az bir etiket girilmelidir.");
 
-  if (tags.length === 0) {
-    throw new Error("En az bir etiket girilmelidir.");
-  }
+  db.prepare(`
+    UPDATE blog_posts SET title=@title, excerpt=@excerpt, content=@content,
+      coverImage=@coverImage, authorName=@authorName, tags=@tags,
+      metaTitle=@metaTitle, metaDescription=@metaDescription
+    WHERE slug=@slug
+  `).run({ title, excerpt, content, coverImage, authorName, tags: JSON.stringify(tags), metaTitle, metaDescription, slug });
 
-  post.title = title;
-  post.excerpt = excerpt;
-  post.content = content;
-  post.coverImage = coverImage;
-  post.authorName = authorName;
-  post.tags = tags;
-  post.metaTitle = metaTitle;
-  post.metaDescription = metaDescription;
-  writeBlogPostsToDisk(store.blogPosts);
-
-  return post;
+  return { ...post, title, excerpt, content, coverImage, authorName, tags, metaTitle, metaDescription };
 }
 
 export function deleteBlogPostBySlug(slug: string): BlogPost {
-  syncBlogPostsFromDisk();
-  const postIndex = store.blogPosts.findIndex((post) => post.slug === slug);
-
-  if (postIndex === -1) {
-    throw new Error("Blog yazısı bulunamadı.");
-  }
-
-  const [removed] = store.blogPosts.splice(postIndex, 1);
-  writeBlogPostsToDisk(store.blogPosts);
-
-  return removed;
+  const post = getBlogPostBySlug(slug);
+  if (!post) throw new Error("Blog yazısı bulunamadı.");
+  db.prepare("DELETE FROM blog_posts WHERE slug = ?").run(slug);
+  return post;
 }
 
-export function listLeads(): ContactLead[] {
-  syncLeadsFromDisk();
-  return [...store.leads].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
-}
-
-export function listSellerLeads(): SellerLead[] {
-  syncSellerLeadsFromDisk();
-  return [...store.sellerLeads].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-}
-
-export function getLeadById(leadId: string): ContactLead | undefined {
-  syncLeadsFromDisk();
-  return store.leads.find((lead) => lead.id === leadId);
-}
-
-export function updateLeadStage(input: {
-  leadId: string;
-  stage: LeadStage;
-  pipelineNote?: string;
-}): ContactLead {
-  syncLeadsFromDisk();
-  if (!validLeadStages.includes(input.stage)) {
-    throw new Error("Geçersiz lead aşaması.");
-  }
-
-  const lead = getLeadById(input.leadId);
-  if (!lead) {
-    throw new Error("Lead bulunamadı.");
-  }
-
-  lead.stage = input.stage;
-  if (typeof input.pipelineNote === "string") {
-    lead.pipelineNote = input.pipelineNote.trim() || undefined;
-  }
-  lead.updatedAt = new Date().toISOString();
-  writeLeadsToDisk(store.leads);
-
-  return lead;
-}
-
-export function leadStageSummary() {
-  syncLeadsFromDisk();
-  const summary: Record<LeadStage, number> = {
-    new: 0,
-    called: 0,
-    appointment_scheduled: 0,
-    offer_submitted: 0,
-    won: 0,
-    lost: 0,
-  };
-
-  for (const lead of store.leads) {
-    summary[lead.stage] += 1;
-  }
-
-  return summary;
-}
+// ─── dashboard ───────────────────────────────────────────────────────────────
 
 export function dashboardSummary() {
-  syncAdvisorsFromDisk();
-  syncPropertiesFromDisk();
-  syncBlogPostsFromDisk();
-  syncLeadsFromDisk();
-  return {
-    propertyCount: store.properties.length,
-    blogCount: store.blogPosts.length,
-    advisorCount: store.advisors.length,
-    leadCount: store.leads.length,
-    cityCount: new Set(store.properties.map((property) => property.city)).size,
-  };
+  const propCount = (db.prepare("SELECT COUNT(*) as c FROM properties").get() as { c: number }).c;
+  const blogCount = (db.prepare("SELECT COUNT(*) as c FROM blog_posts").get() as { c: number }).c;
+  const advisorCount = (db.prepare("SELECT COUNT(*) as c FROM advisors").get() as { c: number }).c;
+  const leadCount = (db.prepare("SELECT COUNT(*) as c FROM leads").get() as { c: number }).c;
+  const cityCount = (db.prepare("SELECT COUNT(DISTINCT city) as c FROM properties").get() as { c: number }).c;
+  return { propertyCount: propCount, blogCount, advisorCount, leadCount, cityCount };
 }
