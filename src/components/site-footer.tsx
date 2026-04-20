@@ -81,6 +81,9 @@ export function SiteFooter() {
         <div>
           <div className="flex items-center gap-3">
             <BrandLogoMark className="h-12 w-12 rounded-[1rem]" />
+            <p className="text-[1.25rem] font-semibold tracking-[0.02em] text-[var(--brand-primary)]">
+              Signature Estates
+            </p>
           </div>
 
           <p className="mt-4 max-w-xl text-[1rem] leading-8 text-[var(--ink-600)]">{copy.tagline}</p>

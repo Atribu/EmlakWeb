@@ -94,10 +94,13 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
 
             <Link
               href="/"
-              className="mx-auto flex items-center leading-none text-[var(--brand-primary)] transition hover:opacity-90 xl:mx-0"
+              className="mx-auto flex items-center gap-2.5 leading-none text-[var(--brand-primary)] transition hover:opacity-90 xl:mx-0"
               aria-label="PortföySatış ana sayfa"
             >
               <BrandLogoMark className="h-11 w-11" />
+              <span className="whitespace-nowrap text-[0.92rem] font-semibold tracking-[0.02em] sm:text-[1rem]">
+                Signature Estates
+              </span>
             </Link>
 
             <div className="hidden xl:flex xl:items-center xl:gap-4">
