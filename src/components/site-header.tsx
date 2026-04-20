@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { BrandLogoMark } from "@/components/brand-logo-mark";
 import { HeaderMarketControlsInner } from "@/components/header-market-controls";
 import { SiteHeaderAuth } from "@/components/site-header-auth";
 import { useSitePreferences } from "@/components/use-site-preferences";
@@ -93,20 +94,10 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
 
             <Link
               href="/"
-              className="mx-auto flex items-center gap-3 leading-none text-[var(--brand-primary)] transition hover:opacity-90 xl:mx-0"
+              className="mx-auto flex items-center leading-none text-[var(--brand-primary)] transition hover:opacity-90 xl:mx-0"
               aria-label="PortföySatış ana sayfa"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-[0.95rem] bg-[linear-gradient(135deg,var(--brand-primary)_0%,#315682_100%)] text-base font-semibold text-white shadow-[0_18px_34px_-26px_rgba(29,56,92,0.62)]">
-                PS
-              </span>
-              <span className="block">
-                <span className="block text-[9px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-accent-strong)]">
-                  PortföySatış
-                </span>
-                <span className="text-[1rem] font-semibold tracking-[0.02em] sm:text-[1.12rem]">
-                  Signature Estates
-                </span>
-              </span>
+              <BrandLogoMark className="h-11 w-11" />
             </Link>
 
             <div className="hidden xl:flex xl:items-center xl:gap-4">

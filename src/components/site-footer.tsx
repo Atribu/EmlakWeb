@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { BrandLogoMark } from "@/components/brand-logo-mark";
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { footerCopy } from "@/lib/site-copy";
 
@@ -79,13 +80,7 @@ export function SiteFooter() {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <div>
           <div className="flex items-center gap-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-[linear-gradient(135deg,var(--brand-primary)_0%,#315682_100%)] text-lg font-semibold text-white shadow-[0_18px_34px_-26px_rgba(29,56,92,0.62)]">
-              PS
-            </span>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-accent-strong)]">PortföySatış</p>
-              <p className="mt-1 text-[1.3rem] font-semibold text-[var(--brand-primary)]">Signature Estates</p>
-            </div>
+            <BrandLogoMark className="h-12 w-12 rounded-[1rem]" />
           </div>
 
           <p className="mt-4 max-w-xl text-[1rem] leading-8 text-[var(--ink-600)]">{copy.tagline}</p>
