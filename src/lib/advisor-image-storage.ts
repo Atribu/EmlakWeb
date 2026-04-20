@@ -2,9 +2,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { validateWebpFile } from "@/lib/portfolio-images";
+import { UPLOAD_DISK_ROOT, UPLOAD_PUBLIC_PREFIX } from "@/lib/upload-config";
 
-const uploadPublicRoot = "/uploads/advisors";
-const uploadDiskRoot = path.join(process.cwd(), "public", "uploads", "advisors");
+const uploadPublicRoot = `${UPLOAD_PUBLIC_PREFIX}/advisors`;
+const uploadDiskRoot = path.join(UPLOAD_DISK_ROOT, "advisors");
 
 const charMap: Record<string, string> = {
   ç: "c",
@@ -42,7 +43,7 @@ function publicPathToDiskPath(publicPath: string): string | null {
     return null;
   }
 
-  return path.join(process.cwd(), "public", publicPath.replace(/^\/+/, ""));
+  return path.join(UPLOAD_DISK_ROOT, publicPath.slice(`${UPLOAD_PUBLIC_PREFIX}/`.length));
 }
 
 export function createAdvisorImageStorageKey(seed: string): string {
