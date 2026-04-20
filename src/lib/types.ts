@@ -1,3 +1,5 @@
+import type { SiteLanguage } from "@/lib/site-preferences";
+
 export type UserRole = "portal_admin" | "admin" | "portfolio_manager" | "advisor" | "editor";
 
 export type PropertyType =
@@ -50,6 +52,32 @@ export type CreateAdvisorInput = {
   image: string;
 };
 
+export type PropertyTranslationFields = {
+  title?: string;
+  description?: string;
+  highlights?: string[];
+  features?: string[];
+};
+
+export type PropertyTranslations = Partial<Record<Exclude<SiteLanguage, "TR">, PropertyTranslationFields>>;
+
+export type PropertyInfoIconKey =
+  | "commission"
+  | "location"
+  | "building"
+  | "rooms"
+  | "bath"
+  | "pool"
+  | "calendar"
+  | "plane"
+  | "beach"
+  | "area";
+
+export type PropertyInfoItem = {
+  icon: PropertyInfoIconKey;
+  value: string;
+};
+
 export type Property = {
   id: string;
   slug: string;
@@ -67,6 +95,7 @@ export type Property = {
   description: string;
   highlights: string[];
   features: string[];
+  infoItems?: PropertyInfoItem[];
   advisorId: string;
   latitude: number;
   longitude: number;
@@ -74,6 +103,7 @@ export type Property = {
   coverImage: string;
   galleryImages: string[];
   imageLabels: string[];
+  translations?: PropertyTranslations;
   publishedAt: string;
 };
 
@@ -101,13 +131,15 @@ export type CreatePropertyInput = {
   description: string;
   highlights: string[];
   features: string[];
-  advisorId: string;
+  infoItems?: PropertyInfoItem[];
+  advisorId?: string;
   latitude?: number;
   longitude?: number;
   coverColor: string;
   coverImage: string;
   galleryImages: string[];
   imageLabels: string[];
+  translations?: PropertyTranslations;
 };
 
 export type ContactLead = {

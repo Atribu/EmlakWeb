@@ -65,6 +65,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: copy.notFound }, { status: 404 });
     }
 
+    const assignedAdvisorId = property.advisorId || undefined;
+
     const lead = createLead({
       propertySlug,
       name: requireString(payload.name, copy.labels.name, copy.required),
@@ -72,10 +74,10 @@ export async function POST(request: Request) {
       phone: requireString(payload.phone, copy.labels.phone, copy.required),
       message: sanitizeMessage(requireString(payload.message, copy.labels.message, copy.required)),
       source: "contact_form",
-      assignedAdvisorId: property.advisorId,
+      assignedAdvisorId,
     });
 
-    const advisor = getAdvisorById(property.advisorId);
+    const advisor = assignedAdvisorId ? getAdvisorById(assignedAdvisorId) : undefined;
     const emailResult = await sendLeadNotification({ lead, property, advisor });
 
     if (!emailResult.delivered) {

@@ -7,9 +7,11 @@ import { useRouter } from "next/navigation";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 import { PriceText } from "@/components/price-text";
+import { PropertyInfoIcon } from "@/components/property-info-icon";
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { formatPhoneForHref } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
+import { propertyDescriptionForLanguage, propertyTitleForLanguage } from "@/lib/property-content";
 import {
   propertyCardCopy,
   propertyWhatsAppInquiry,
@@ -18,7 +20,6 @@ import {
   translatePropertyType,
   translateRoomLabel,
 } from "@/lib/site-copy";
-import { localeForLanguage } from "@/lib/site-preferences";
 import type { Advisor, Property } from "@/lib/types";
 
 type PropertyCardProps = {
@@ -43,12 +44,12 @@ function truncateText(value: string, limit: number) {
 function Metric({ icon, label, value }: MetricProps) {
   return (
     <div className="flex items-center gap-2 border-r border-dashed border-[#d9d1c5] pr-4 last:border-r-0 last:pr-0">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ddd0c0] bg-[#f7f2ea] text-[#5b4a36]">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd0c0] bg-[#f7f2ea] text-[#5b4a36]">
         {icon}
       </span>
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8f8374]">{label}</p>
-        <p className="text-sm font-semibold text-[#2a241d]">{value}</p>
+        <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#8f8374]">{label}</p>
+        <p className="text-[13px] font-semibold text-[#2a241d]">{value}</p>
       </div>
     </div>
   );
@@ -118,6 +119,8 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
   const router = useRouter();
   const { language } = useSitePreferences();
   const copy = propertyCardCopy(language);
+  const propertyTitle = propertyTitleForLanguage(property, language);
+  const propertyDescription = propertyDescriptionForLanguage(property, language);
   const gallery = useMemo(() => {
     const images = [property.coverImage, ...property.galleryImages].filter((image) => Boolean(image?.trim()));
     return Array.from(new Set(images));
@@ -126,16 +129,14 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const activeImage = gallery[activeImageIndex] ?? property.coverImage;
-  const locationLabel = `${property.neighborhood} - ${property.district} - ${property.city}`.toLocaleUpperCase(
-    localeForLanguage(language),
-  );
   const quickHref =
     advisor
       ? `https://wa.me/${formatPhoneForHref(advisor.whatsapp)}?text=${encodeURIComponent(
-          propertyWhatsAppInquiry(language, property.title),
+          propertyWhatsAppInquiry(language, propertyTitle),
         )}`
       : undefined;
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : undefined;
+  const propertyInfoItems = property.infoItems?.filter((item) => item.value.trim().length > 0).slice(0, 3) ?? [];
 
   function stepGallery(direction: -1 | 1) {
     if (gallery.length <= 1) {
@@ -184,12 +185,12 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
   }
 
   return (
-    <article className="overflow-hidden rounded-[1.35rem] border border-[#dbcfbf] bg-[linear-gradient(180deg,#fffdfa_0%,#fbf7f0_100%)] shadow-[0_26px_52px_-36px_rgba(33,27,19,0.32)]">
+    <article className="overflow-hidden rounded-[1.5rem] border border-[#dbcfbf] bg-[linear-gradient(180deg,#fffdfa_0%,#fbf7f0_100%)] shadow-[0_30px_60px_-40px_rgba(33,27,19,0.28)]">
       <div className="grid min-w-0 lg:grid-cols-[minmax(320px,44%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(380px,48%)_minmax(0,1fr)]">
         <div className="relative min-h-[320px] overflow-hidden bg-[#d8cab5] sm:min-h-[360px] lg:min-h-full">
           <Image
             src={activeImage}
-            alt={property.title}
+            alt={propertyTitle}
             fetchPriority="low"
             unoptimized={isUnoptimizedImageSrc(activeImage)}
             fill
@@ -242,23 +243,23 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
         <div
           tabIndex={0}
           role="link"
-          aria-label={`${property.title} ${copy.openDetail}`}
+          aria-label={`${propertyTitle} ${copy.openDetail}`}
           onClick={handleCardClick}
           onKeyDown={handleCardKeyDown}
           className="flex min-w-0 cursor-pointer flex-col p-5 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d2232d]/45 focus-visible:ring-inset sm:p-6"
         >
-          <div className="flex flex-col gap-4 border-b border-dashed border-[#d7cebf] pb-4">
+          <div className="flex flex-col gap-3 border-b border-dashed border-[#d7cebf] pb-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="text-[1.55rem] leading-[1.1] font-semibold text-[#1e293b] sm:text-[1.75rem]">
-                  {property.title}
+                <h3 className="text-[1.2rem] leading-[1.15] font-semibold text-[#1e293b] sm:text-[1.35rem]">
+                  {propertyTitle}
                 </h3>
-                <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5d6168]">
-                  {locationLabel}
+                <p className="mt-1.5 text-[11px] font-medium tracking-[0.08em] text-[#6d655b]">
+                  {property.neighborhood} / {property.district}
                 </p>
               </div>
 
-              <div className="rounded-full border border-[#e3d7c8] bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8a7452]">
+              <div className="rounded-full border border-[#e3d7c8] bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a7452]">
                 {copy.saleBadge}
               </div>
             </div>
@@ -271,39 +272,46 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
           </div>
 
           <div className="border-b border-dashed border-[#d7cebf] py-4">
-            <p className="text-[15px] leading-7 text-[#5f5548]">{truncateText(property.description, 185)}</p>
+            <p className="text-[13px] leading-6 text-[#5f5548]">{truncateText(propertyDescription, 118)}</p>
           </div>
 
-          <div className="grid gap-4 border-b border-dashed border-[#d7cebf] py-4 xl:grid-cols-[minmax(0,1fr)_minmax(180px,auto)] xl:items-end">
-            <div className="flex flex-wrap items-center gap-3">
-              {advisor ? (
-                <div className="flex items-center gap-3 rounded-full border border-[#eadfce] bg-white px-3 py-2 shadow-[0_16px_28px_-24px_rgba(38,28,18,0.45)]">
-                  <Image
-                    src={advisor.image}
-                    alt={advisor.name}
-                    fetchPriority="low"
-                    unoptimized={isUnoptimizedImageSrc(advisor.image)}
-                    width={44}
-                    height={44}
-                    sizes="44px"
-                    className="h-11 w-11 rounded-full border border-[#ddceb8] object-cover"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#90816e]">{copy.advisor}</p>
-                    <p className="truncate text-sm font-semibold text-[#2f281f]">{advisor.name}</p>
+          {propertyInfoItems.length > 0 ? (
+            <div className="border-b border-dashed border-[#d7cebf] py-4">
+              <div className="grid gap-2 sm:grid-cols-3">
+                {propertyInfoItems.map((item, index) => (
+                  <div
+                    key={`${item.icon}-${item.value}-${index}`}
+                    className="flex min-w-0 items-center gap-3 rounded-[1rem] border border-[#e4d8c8] bg-white px-3 py-3"
+                    title={item.value}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#ddd0c0] bg-[#f7f2ea] text-[#5b4a36]">
+                      <PropertyInfoIcon icon={item.icon} />
+                    </span>
+                    <p className="truncate text-sm font-semibold text-[#2f281f]">{item.value}</p>
                   </div>
-                </div>
-              ) : null}
-
-              <div className="rounded-2xl border border-[#f1d3d5] bg-[#fff5f6] px-4 py-3 text-center">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b34a51]">{copy.portfolioType}</p>
-                <p className="mt-1 text-sm font-semibold text-[#8f262d]">{translateHeatingLabel(property.heating, language)}</p>
+                ))}
               </div>
             </div>
+          ) : null}
 
-            <div className="min-w-0 xl:text-right">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7f6d5d]">{copy.startingPrice}</p>
-              <p className="mt-1 break-words text-[clamp(1.55rem,4vw,2.35rem)] leading-[0.96] font-semibold text-[#d2232d]">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-dashed border-[#d7cebf] py-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-[#eadfce] bg-white px-3 py-2 text-[11px] font-semibold text-[#5f5548]">
+                {translatePropertyType(property.type, language)}
+              </span>
+              {advisor ? (
+                <span className="rounded-full border border-[#eadfce] bg-white px-3 py-2 text-[11px] font-semibold text-[#5f5548]">
+                  {advisor.name}
+                </span>
+              ) : null}
+              <span className="rounded-full border border-[#f1d3d5] bg-[#fff5f6] px-3 py-2 text-[11px] font-semibold text-[#8f262d]">
+                {translateHeatingLabel(property.heating, language)}
+              </span>
+            </div>
+
+            <div className="rounded-[1.1rem] border border-[#eadfce] bg-white px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7f6d5d]">{copy.startingPrice}</p>
+              <p className="mt-1 break-words text-[1.45rem] leading-none font-semibold text-[#d2232d]">
                 <PriceText amount={property.price} />
               </p>
             </div>

@@ -37,10 +37,10 @@ function FloatingButton({
       rel="noreferrer"
       aria-label={label}
       title={label}
-      className={`group flex h-12 w-12 items-center justify-center rounded-full border border-white/15 ${accent} text-white shadow-[0_18px_38px_-22px_rgba(0,0,0,0.65)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02]`}
+      className={`group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/18 ${accent} text-white shadow-[0_20px_36px_-22px_rgba(0,0,0,0.42)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02] sm:h-12 sm:w-12`}
     >
       {children}
-      <span className="pointer-events-none absolute right-[calc(100%+0.8rem)] rounded-full border border-[#dac39d] bg-[#fffaf1] px-3 py-1 text-[11px] font-semibold whitespace-nowrap text-[#35291d] opacity-0 shadow-[0_16px_30px_-26px_rgba(30,24,17,0.8)] transition duration-200 group-hover:opacity-100">
+      <span className="pointer-events-none absolute right-[calc(100%+0.8rem)] hidden rounded-full border border-[#dac39d] bg-[#fffaf1] px-3 py-1 text-[11px] font-semibold whitespace-nowrap text-[#35291d] opacity-0 shadow-[0_16px_30px_-26px_rgba(30,24,17,0.8)] transition duration-200 group-hover:opacity-100 sm:block">
         {label}
       </span>
     </a>
@@ -122,9 +122,9 @@ export function FloatingContactDock() {
   const whatsappHref = `https://wa.me/${formatPhoneForHref(CHANNELS.whatsappPhone)}?text=${whatsappText}`;
 
   return (
-    <div className="pointer-events-none fixed right-4 bottom-4 z-[80] flex flex-col items-end gap-3 sm:right-6 sm:bottom-6">
+    <div className="pointer-events-none fixed right-3 bottom-3 z-[80] flex flex-col items-end gap-2 sm:right-5 sm:bottom-5">
       {isAssistantOpen ? (
-        <div className="pointer-events-auto w-[min(92vw,21rem)] overflow-hidden rounded-[1.35rem] border border-[#dbc7a3] bg-[#fffaf2] shadow-[0_28px_66px_-30px_rgba(16,12,8,0.55)]">
+        <div className="pointer-events-auto w-[min(84vw,19rem)] overflow-hidden rounded-[1.35rem] border border-[#dbc7a3] bg-[#fffaf2] shadow-[0_28px_66px_-30px_rgba(16,12,8,0.55)] sm:w-[min(92vw,21rem)]">
           <div className="bg-[linear-gradient(135deg,#101b27_0%,#172738_58%,#1f3245_100%)] px-5 py-4 text-[#f7ecda]">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -194,10 +194,10 @@ export function FloatingContactDock() {
           aria-label={copy.quickMessage}
           title={copy.quickMessage}
           onClick={() => setIsAssistantOpen((current) => !current)}
-          className="group relative flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-[linear-gradient(135deg,#14202d_0%,#24384c_100%)] text-white shadow-[0_18px_38px_-22px_rgba(0,0,0,0.65)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02]"
+          className="group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/18 bg-[linear-gradient(135deg,#14202d_0%,#24384c_100%)] text-white shadow-[0_20px_36px_-22px_rgba(0,0,0,0.42)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02] sm:h-12 sm:w-12"
         >
           <SparkIcon />
-          <span className="pointer-events-none absolute right-[calc(100%+0.8rem)] rounded-full border border-[#dac39d] bg-[#fffaf1] px-3 py-1 text-[11px] font-semibold whitespace-nowrap text-[#35291d] opacity-0 shadow-[0_16px_30px_-26px_rgba(30,24,17,0.8)] transition duration-200 group-hover:opacity-100">
+          <span className="pointer-events-none absolute right-[calc(100%+0.8rem)] hidden rounded-full border border-[#dac39d] bg-[#fffaf1] px-3 py-1 text-[11px] font-semibold whitespace-nowrap text-[#35291d] opacity-0 shadow-[0_16px_30px_-26px_rgba(30,24,17,0.8)] transition duration-200 group-hover:opacity-100 sm:block">
             {copy.quickMessage}
           </span>
         </button>

@@ -95,6 +95,8 @@ export async function POST(request: Request) {
       copy.invalidTime,
     );
 
+    const assignedAdvisorId = property.advisorId || undefined;
+
     const lead = createLead({
       propertySlug,
       name: requireString(payload.name, copy.labels.name, copy.required),
@@ -102,13 +104,13 @@ export async function POST(request: Request) {
       phone: requireString(payload.phone, copy.labels.phone, copy.required),
       message: requireString(payload.message, copy.labels.message, copy.required),
       source: "appointment_form",
-      assignedAdvisorId: property.advisorId,
+      assignedAdvisorId,
       preferredDate,
       preferredTime,
       appointmentNote: requireString(payload.visitType, copy.labels.visitType, copy.required),
     });
 
-    const advisor = getAdvisorById(property.advisorId);
+    const advisor = assignedAdvisorId ? getAdvisorById(assignedAdvisorId) : undefined;
     const emailResult = await sendLeadNotification({ lead, property, advisor });
 
     if (!emailResult.delivered) {

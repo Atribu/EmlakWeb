@@ -5,6 +5,7 @@ import { GeneralContactForm } from "@/components/general-contact-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listProperties } from "@/lib/data-store";
+import { propertyTitleForLanguage } from "@/lib/property-content";
 import { contactPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
@@ -20,7 +21,7 @@ export default async function IletisimPage() {
 
   const propertyOptions = properties.slice(0, 16).map((property) => ({
     slug: property.slug,
-    title: `${property.title} • ${property.city}/${property.district}`,
+    title: `${propertyTitleForLanguage(property, language)} • ${property.city}/${property.district}`,
   }));
 
   return (

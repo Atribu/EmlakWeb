@@ -1,23 +1,31 @@
 export const MAX_WEBP_UPLOAD_MB = 8;
-export const MAX_IMAGES_PER_ROOM = 8;
+export const MAX_GALLERY_IMAGE_COUNT = 24;
 export const MAX_PORTFOLIO_REQUEST_MB = 60;
 
 const maxUploadBytes = MAX_WEBP_UPLOAD_MB * 1024 * 1024;
 const maxPortfolioRequestBytes = MAX_PORTFOLIO_REQUEST_MB * 1024 * 1024;
 
-export const PORTFOLIO_ROOM_FIELDS = [
-  { name: "livingRoomImage", label: "Salon", requiredOnCreate: true },
-  { name: "kitchenImage", label: "Mutfak", requiredOnCreate: true },
-  { name: "bedroomImage", label: "Yatak Odası", requiredOnCreate: true },
-  { name: "bathroomImage", label: "Banyo", requiredOnCreate: false },
-  { name: "balconyImage", label: "Balkon / Teras", requiredOnCreate: false },
-] as const;
-
-type RoomField = (typeof PORTFOLIO_ROOM_FIELDS)[number];
+const acceptedPortfolioImageMimeTypes = new Set([
+  "image/webp",
+  "image/jpeg",
+  "image/png",
+  "image/jpg",
+]);
 
 function isWebpFile(file: File): boolean {
   const lowerName = file.name.toLocaleLowerCase("tr");
   return file.type === "image/webp" || lowerName.endsWith(".webp");
+}
+
+function isAcceptedPortfolioImage(file: File): boolean {
+  const lowerName = file.name.toLocaleLowerCase("tr");
+  return (
+    acceptedPortfolioImageMimeTypes.has(file.type) ||
+    lowerName.endsWith(".webp") ||
+    lowerName.endsWith(".jpg") ||
+    lowerName.endsWith(".jpeg") ||
+    lowerName.endsWith(".png")
+  );
 }
 
 export function validateWebpFile(file: File, fieldLabel: string) {
@@ -27,6 +35,20 @@ export function validateWebpFile(file: File, fieldLabel: string) {
 
   if (!isWebpFile(file)) {
     throw new Error(`${fieldLabel} yalnızca .webp formatında olmalıdır.`);
+  }
+
+  if (file.size > maxUploadBytes) {
+    throw new Error(`${fieldLabel} en fazla ${MAX_WEBP_UPLOAD_MB} MB olabilir.`);
+  }
+}
+
+export function validatePortfolioImageFile(file: File, fieldLabel: string) {
+  if (file.size <= 0) {
+    throw new Error(`${fieldLabel} dosyası boş olamaz.`);
+  }
+
+  if (!isAcceptedPortfolioImage(file)) {
+    throw new Error(`${fieldLabel} jpg, jpeg, png veya webp formatında olmalıdır.`);
   }
 
   if (file.size > maxUploadBytes) {
@@ -45,19 +67,11 @@ export function validateTotalUploadSize(files: File[]) {
 
   if (totalBytes > maxPortfolioRequestBytes) {
     throw new Error(
-      `Toplam görsel yükleme boyutu en fazla ${MAX_PORTFOLIO_REQUEST_MB} MB olabilir. Daha küçük .webp dosyaları deneyin.`,
+      `Toplam görsel yükleme boyutu en fazla ${MAX_PORTFOLIO_REQUEST_MB} MB olabilir. Daha küçük görseller deneyin.`,
     );
   }
 }
 
-export function makeRoomImageLabel(field: RoomField, index: number, total: number): string {
-  if (total <= 1) {
-    return field.label;
-  }
-
-  return `${field.label} ${index + 1}`;
-}
-
-export function isLabelForRoom(label: string, roomLabel: string): boolean {
-  return label === roomLabel || label.startsWith(`${roomLabel} `);
+export function createGalleryImageLabel(index: number): string {
+  return `Galeri ${index + 1}`;
 }

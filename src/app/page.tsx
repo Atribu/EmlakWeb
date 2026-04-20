@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
+import { HomeFeaturedCard } from "@/components/home-featured-card";
+import { HomeQuickSearch } from "@/components/home-quick-search";
 import { PriceText } from "@/components/price-text";
-import { PropertyCard } from "@/components/property-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { listAdvisors, listProperties } from "@/lib/data-store";
+import { listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
+import { propertyTitleForLanguage } from "@/lib/property-content";
 import { homePageCopy, summarizeLocationStockLabel } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 import { homeListingSchema } from "@/lib/seo";
@@ -32,6 +34,36 @@ type PopularLocationCard = {
   className: string;
 };
 
+function TrustIcon({ type }: { type: "shield" | "support" | "globe" }) {
+  if (type === "support") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden>
+        <path d="M6.5 15.5v-2a5.5 5.5 0 0 1 11 0v2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        <rect x="4" y="14" width="3.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
+        <rect x="16.5" y="14" width="3.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M12 6.5a3.5 3.5 0 0 1 3.5 3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (type === "globe") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden>
+        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M4.5 12h15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        <path d="M12 4c2.2 2.3 3.4 5 3.4 8s-1.2 5.7-3.4 8c-2.2-2.3-3.4-5-3.4-8S9.8 6.3 12 4Z" stroke="currentColor" strokeWidth="1.7" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden>
+      <path d="M12 3.75 18.5 6v5.4c0 4.1-2.74 7.86-6.5 8.85-3.76-.99-6.5-4.75-6.5-8.85V6L12 3.75Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="m9.2 12.15 1.8 1.8 3.8-4.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function isPlaceholderProperty(property: Property) {
   return [property.slug, property.title, property.city, property.district, property.neighborhood]
     .map((value) => value.trim().toLocaleLowerCase("tr"))
@@ -54,9 +86,11 @@ export default async function HomePage() {
   const language = await getServerSiteLanguage();
   const copy = homePageCopy(language);
   const properties = listProperties();
-  const advisors = listAdvisors();
-  const advisorMap = new Map(advisors.map((advisor) => [advisor.id, advisor]));
+  const cities = listCities();
+  const types = listTypes();
+  const roomOptions = listRoomOptions();
   const featured = properties.slice(0, 4);
+  const featuredPreview = featured.slice(0, 3);
   const heroProperty = featured[0];
   const heroImage = heroProperty?.coverImage ?? "/next.svg";
   const listingSchema = homeListingSchema(properties);
@@ -173,94 +207,161 @@ export default async function HomePage() {
     subtitle: copy.locationCards["signature-selection"].subtitle,
   };
 
+  const heroLocationLabel = heroProperty
+    ? `${heroProperty.city}${heroProperty.district ? ` • ${heroProperty.district}` : ""}`
+    : copy.featuredKicker;
+  const heroPropertyTitle = heroProperty ? propertyTitleForLanguage(heroProperty, language) : copy.featuredTitle;
+  const heroGuideLabel =
+    language === "TR"
+      ? "Satın Alma Rehberi"
+      : language === "EN"
+        ? "Buying Guide"
+        : language === "RU"
+          ? "Гид покупателя"
+          : "دليل الشراء";
+  const trustItems =
+    language === "TR"
+      ? [
+          { key: "secure", title: "Güvenli Yatırım", text: "Resmi sözleşme ve yasal güvence", icon: "shield" as const },
+          { key: "support", title: "Uzman Danışmanlık", text: "Size özel profesyonel destek", icon: "support" as const },
+          { key: "global", title: "Uluslararası Hizmet", text: "Birçok dilde müşteri desteği", icon: "globe" as const },
+        ]
+      : language === "EN"
+        ? [
+            { key: "secure", title: "Secure Investment", text: "Official contracts and legal assurance", icon: "shield" as const },
+            { key: "support", title: "Expert Guidance", text: "Dedicated professional support", icon: "support" as const },
+            { key: "global", title: "International Service", text: "Support in multiple languages", icon: "globe" as const },
+          ]
+        : language === "RU"
+          ? [
+              { key: "secure", title: "Безопасная инвестиция", text: "Официальный договор и правовая защита", icon: "shield" as const },
+              { key: "support", title: "Экспертное сопровождение", text: "Персональная профессиональная помощь", icon: "support" as const },
+              { key: "global", title: "Международный сервис", text: "Поддержка на нескольких языках", icon: "globe" as const },
+            ]
+          : [
+              { key: "secure", title: "استثمار آمن", text: "عقود رسمية وضمان قانوني", icon: "shield" as const },
+              { key: "support", title: "استشارة متخصصة", text: "دعم مهني مخصص لكم", icon: "support" as const },
+              { key: "global", title: "خدمة دولية", text: "دعم عملاء بعدة لغات", icon: "globe" as const },
+            ];
+
   return (
     <div className="min-h-screen">
       <SiteHeader />
 
       <main className="w-full pb-24">
-        <section className="frame-wide fade-up relative min-h-[88vh] overflow-hidden rounded-[1.6rem] border border-[#3f3022] bg-[#0d151f] shadow-[0_58px_102px_-68px_rgba(0,0,0,0.95)]">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="none"
-            poster={heroImage}
-            className="absolute inset-0 h-full w-full object-cover"
-          >
-            <source src="/videos/hero-loop.mp4" type="video/mp4" />
-          </video>
+        <section className="frame-wide mt-4 fade-up">
+          <div className="rounded-[2.15rem] border border-[#e3d6c3] bg-[linear-gradient(180deg,#fffdfa_0%,#f9f3e9_100%)] px-5 py-6 shadow-[0_32px_64px_-46px_rgba(22,30,42,0.22)] sm:px-7 sm:py-8 xl:px-10 xl:pt-10 xl:pb-14">
+            <div className="grid gap-7 xl:grid-cols-[minmax(0,0.82fr)_minmax(460px,1.18fr)] xl:items-center">
+              <div className="max-w-xl">
+                <div className="flex gap-4">
+                  <span className="hidden w-[4px] rounded-full bg-[linear-gradient(180deg,var(--brand-accent)_0%,#d3ab76_100%)] sm:block" />
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-accent-strong)]">
+                      {copy.heroKicker}
+                    </p>
+                    <h1 className="mt-4 max-w-lg text-[2.05rem] leading-[0.94] font-semibold text-[var(--ink-950)] sm:text-[3rem] xl:text-[3.55rem]">
+                      {copy.heroTitle}
+                    </h1>
+                    <p className="mt-5 max-w-md text-[0.96rem] leading-7 text-[var(--ink-600)]">
+                      {copy.heroBody}
+                    </p>
 
-          <div className="hero-overlay absolute inset-0" />
-
-          <div className="relative z-10 flex min-h-[88vh] items-end">
-            <div className="w-full p-6 text-[#f5ebdb] sm:p-10 lg:p-14">
-              <div className="max-w-4xl">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#d8bc8d]">
-                  {copy.heroKicker}
-                </p>
-                <h1 className="mt-5 text-[2.45rem] leading-[0.95] font-semibold sm:text-[4.45rem] xl:text-[5.35rem]">
-                  {copy.heroTitle}
-                </h1>
-                <p className="mt-5 max-w-2xl text-sm leading-7 text-[#dfd0b6] sm:text-base">
-                  {copy.heroBody}
-                </p>
-
-                <div className="mt-7 flex flex-wrap gap-2 text-sm">
-                  <Link href="/portfoyler" className="btn-gold rounded-full px-5 py-2.5 font-semibold transition">
-                    {copy.ctaListings}
-                  </Link>
-                  <Link href="/harita" className="btn-ghost-light rounded-full px-5 py-2.5 font-semibold transition">
-                    {copy.ctaMap}
-                  </Link>
-                  <Link href="/iletisim" className="btn-ghost-light rounded-full px-5 py-2.5 font-semibold transition">
-                    {copy.ctaContact}
-                  </Link>
+                    <div className="mt-7 flex flex-wrap gap-3">
+                      <Link
+                        href="/portfoyler"
+                        className="inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--brand-primary)] px-6 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+                      >
+                        {copy.ctaListings}
+                      </Link>
+                      <Link
+                        href="/blog"
+                        className="inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white px-6 text-sm font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)]"
+                      >
+                        {heroGuideLabel}
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-9 grid gap-2 sm:grid-cols-3">
-                {[
-                  { label: copy.stats.activeListings, value: String(properties.length) },
-                  { label: copy.stats.premiumAdvisors, value: String(advisors.length) },
-                  { label: copy.stats.averageClose, value: copy.averageCloseValue },
-                ].map((item) => (
-                  <article key={item.label} className="metric-chip rounded-xl px-3 py-2 backdrop-blur">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-[#bda681]">{item.label}</p>
-                    <p className="mt-1 text-lg font-semibold text-[#f2e3ca]">{item.value}</p>
-                  </article>
-                ))}
+              <div className="relative min-h-[18rem] overflow-hidden rounded-[1.8rem] border border-[#dfd0bd] bg-[#d8cab5] shadow-[0_30px_58px_-42px_rgba(20,24,32,0.3)] sm:min-h-[23rem] xl:min-h-[26.5rem]">
+                <Image
+                  src={heroImage}
+                  alt={heroPropertyTitle}
+                  fill
+                  priority
+                  sizes="(max-width: 1279px) 100vw, 52vw"
+                  unoptimized={isUnoptimizedImageSrc(heroImage)}
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,14,22,0.08)_0%,rgba(8,14,22,0.08)_34%,rgba(8,14,22,0.22)_100%)]" />
+
+                <div className="absolute left-4 top-4 flex flex-wrap gap-2 sm:left-5 sm:top-5">
+                  <span className="inline-flex rounded-full border border-white/26 bg-[rgba(8,14,22,0.42)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
+                    {heroLocationLabel}
+                  </span>
+                  {heroProperty?.listingRef ? (
+                    <span className="inline-flex rounded-full border border-white/20 bg-white/14 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
+                      {heroProperty.listingRef}
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
+
+          <div className="relative z-10 mx-auto -mt-8 max-w-6xl px-2 sm:-mt-11">
+            <HomeQuickSearch
+              cities={cities}
+              types={types}
+              roomOptions={roomOptions}
+              variant="hero-bar"
+            />
+          </div>
         </section>
 
-        <section className="frame mt-14">
+        <section className="frame-wide mt-12 fade-up sm:mt-16">
           <div className="mb-5 flex items-end justify-between gap-3">
             <div>
               <span className="section-kicker">{copy.featuredKicker}</span>
-              <h2 className="mt-2 text-[2.2rem] leading-none font-semibold text-[#1d1812]">{copy.featuredTitle}</h2>
+              <h2 className="mt-3 text-[1.9rem] leading-none font-semibold text-[#1d1812] sm:text-[2.2rem]">
+                {copy.featuredTitle}
+              </h2>
             </div>
             <Link href="/portfoyler" className="text-sm font-semibold text-[#6a4f22] underline">
               {copy.viewAll}
             </Link>
           </div>
 
-          <div className="grid gap-5 xl:grid-cols-2">
-            {featured.map((property) => (
-              <PropertyCard key={property.id} property={property} advisor={advisorMap.get(property.advisorId)} />
+          <div className="grid gap-4 lg:grid-cols-3">
+            {featuredPreview.map((property) => (
+              <HomeFeaturedCard key={property.id} property={property} language={language} />
+            ))}
+          </div>
+
+          <div className="mt-7 grid gap-4 rounded-[1.6rem] border border-[#e2d7c8] bg-[rgba(255,252,247,0.92)] p-5 shadow-[0_22px_42px_-36px_rgba(18,24,36,0.18)] sm:grid-cols-3 sm:p-6">
+            {trustItems.map((item) => (
+              <div key={item.key} className="flex items-start gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(201,124,78,0.1)] text-[var(--brand-accent-strong)]">
+                  <TrustIcon type={item.icon} />
+                </span>
+                <div>
+                  <p className="text-[0.95rem] font-semibold text-[var(--ink-950)]">{item.title}</p>
+                  <p className="mt-1 text-[13px] leading-6 text-[var(--ink-600)]">{item.text}</p>
+                </div>
+              </div>
             ))}
           </div>
         </section>
 
-        <section className="frame mt-14">
+        <section className="frame mt-16">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <span className="section-kicker">{copy.locationsKicker}</span>
-              <h2 className="mt-3 text-[2.2rem] leading-[0.95] font-semibold text-[#1d1812] sm:text-[3rem]">
+              <h2 className="mt-3 text-[1.9rem] leading-[0.98] font-semibold text-[#1d1812] sm:text-[2.2rem]">
                 {copy.locationsTitle}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-[#62584c] sm:text-base">
+              <p className="mt-3 text-[0.95rem] leading-7 text-[#62584c]">
                 {copy.locationsBody}
               </p>
             </div>
@@ -302,10 +403,10 @@ export default async function HomePage() {
                     <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#dfc79d]">
                       {location.subtitle}
                     </p>
-                    <h3 className="mt-3 text-[1.8rem] leading-[0.95] font-semibold sm:text-[2.4rem]">
+                    <h3 className="mt-3 text-[1.5rem] leading-[1] font-semibold sm:text-[1.9rem]">
                       {location.title}
                     </h3>
-                    <p className="mt-3 max-w-xl text-sm leading-6 text-[#ebe0cc]">{location.blurb}</p>
+                    <p className="mt-3 max-w-xl text-[13px] leading-6 text-[#ebe0cc]">{location.blurb}</p>
 
                     <div className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-white/14 pt-4">
                       <div>

@@ -51,21 +51,16 @@ export function SiteHeaderAuth({ initialUser = null }: SiteHeaderAuthProps) {
   }, []);
 
   if (!hydrated && !user) {
-    return (
-      <div
-        aria-hidden
-        className="h-[42px] w-[152px] rounded-full border border-[#564028] bg-[#121c28]/88"
-      />
-    );
+    return null;
   }
 
   if (user) {
     return (
-      <div className="flex items-center gap-2 rounded-full border border-[#4d3b24] bg-[#121c28]/90 px-2 py-1 text-xs">
-        <span className="hidden px-2 text-[#cfbd9c] sm:inline">{roleLabel(user.role, language)}</span>
+      <div className="flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-white px-2 py-1 text-xs shadow-[0_18px_36px_-30px_rgba(22,32,48,0.34)]">
+        <span className="hidden px-2 text-[var(--ink-500)] sm:inline">{roleLabel(user.role, language)}</span>
         <Link
           href="/yonetim-ofisi"
-          className="rounded-full btn-gold px-3 py-1.5 font-semibold transition"
+          className="rounded-full bg-[var(--brand-primary)] px-3 py-2 font-semibold text-white transition hover:bg-[#27466e]"
         >
           <span className="sm:hidden">{copy.authPanel}</span>
           <span className="hidden sm:inline">{copy.authManagement}</span>
@@ -73,7 +68,7 @@ export function SiteHeaderAuth({ initialUser = null }: SiteHeaderAuthProps) {
         <form action="/api/auth/logout" method="post">
           <button
             type="submit"
-            className="cursor-pointer rounded-full border border-[#55422b] px-3 py-1.5 font-semibold text-[#d4c09d] transition hover:bg-[#1a2635]"
+            className="cursor-pointer rounded-full border border-[var(--line-strong)] px-3 py-2 font-semibold text-[var(--brand-primary)] transition hover:bg-[rgba(29,56,92,0.05)]"
           >
             {copy.authLogout}
           </button>
@@ -82,13 +77,5 @@ export function SiteHeaderAuth({ initialUser = null }: SiteHeaderAuthProps) {
     );
   }
 
-  return (
-    <Link
-      href="/yetkili-giris"
-      className="rounded-full border border-[#564028] bg-[#121c28]/88 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.17em] text-[#dfc9a2] transition hover:bg-[#192739]"
-    >
-      <span className="sm:hidden">{copy.authShortLogin}</span>
-      <span className="hidden sm:inline">{copy.authLogin}</span>
-    </Link>
-  );
+  return null;
 }

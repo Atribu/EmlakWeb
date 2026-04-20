@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
-import { HeaderMarketControls } from "@/components/header-market-controls";
+import { HeaderMarketControlsInner } from "@/components/header-market-controls";
 import { SiteHeaderAuth } from "@/components/site-header-auth";
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { siteHeaderNavigationCopy } from "@/lib/site-copy";
@@ -13,10 +14,23 @@ type SiteHeaderProps = {
   initialUser?: SafeUser | null;
 };
 
-function ChevronIcon() {
+function ChevronIcon({ open = false }: { open?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      className={`h-3.5 w-3.5 transition ${open ? "rotate-180" : ""}`}
+      aria-hidden
+    >
+      <path d="m5.5 7.75 4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ArrowIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5" aria-hidden>
-      <path d="m5.5 7.75 4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7.5 5.75 12 10l-4.5 4.25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -25,126 +39,246 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
   const { language } = useSitePreferences();
   const copy = headerCopy(language);
   const navigation = siteHeaderNavigationCopy(language);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeMobileGroup, setActiveMobileGroup] = useState<string | null>(null);
+
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth >= 1280) {
+        setMobileMenuOpen(false);
+        setActiveMobileGroup(null);
+      }
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) {
+      document.body.style.removeProperty("overflow");
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.removeProperty("overflow");
+    };
+  }, [mobileMenuOpen]);
+
+  function closeMobileMenu() {
+    setMobileMenuOpen(false);
+    setActiveMobileGroup(null);
+  }
+
+  function toggleMobileGroup(groupHref: string) {
+    setActiveMobileGroup((current) => (current === groupHref ? null : groupHref));
+  }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#09111a]/72 backdrop-blur-xl">
-      <div className="frame-wide px-2 sm:px-4">
-        <div className="flex flex-col gap-2 border-b border-white/8 py-2 lg:flex-row lg:items-center lg:justify-between">
-          <HeaderMarketControls />
-          <p className="hidden text-[10px] font-semibold uppercase tracking-[0.2em] text-[#bfa98a] lg:block">
-            {copy.topMessage}
-          </p>
-        </div>
+    <>
+      <header className="sticky top-0 z-50 border-b border-[rgba(220,208,189,0.72)] bg-[rgba(255,251,245,0.92)] backdrop-blur-xl">
+        <div className="frame-wide px-2 sm:px-4">
+          <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-3 py-3 xl:flex xl:justify-between">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-[var(--line-strong)] bg-white text-[var(--brand-primary)] shadow-[0_18px_36px_-30px_rgba(22,32,48,0.34)] transition hover:border-[var(--brand-accent)] xl:hidden"
+              aria-label={navigation.mobileTitle}
+            >
+              <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" aria-hidden>
+                <path d="M4 6h12M4 10h12M4 14h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </button>
 
-        <div className="flex items-center justify-between gap-3 py-3.5">
-          <Link href="/" className="leading-none text-[#f8efdf]">
-            <span className="block text-[10px] font-semibold uppercase tracking-[0.27em] text-[#dcbc84]">PortföySatış</span>
-            <span className="text-[1.56rem] font-semibold tracking-[0.025em]">Signature Estates</span>
-          </Link>
+            <Link
+              href="/"
+              className="mx-auto flex items-center gap-3 leading-none text-[var(--brand-primary)] transition hover:opacity-90 xl:mx-0"
+              aria-label="PortföySatış ana sayfa"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-[0.95rem] bg-[linear-gradient(135deg,var(--brand-primary)_0%,#315682_100%)] text-base font-semibold text-white shadow-[0_18px_34px_-26px_rgba(29,56,92,0.62)]">
+                PS
+              </span>
+              <span className="block">
+                <span className="block text-[9px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-accent-strong)]">
+                  PortföySatış
+                </span>
+                <span className="text-[1rem] font-semibold tracking-[0.02em] sm:text-[1.12rem]">
+                  Signature Estates
+                </span>
+              </span>
+            </Link>
 
-          <nav className="hidden xl:flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#d5c3a1]">
-            {navigation.menuGroups.map((group) => (
-              <div key={group.href} className="group relative">
-                <Link
-                  href={group.href}
-                  className="flex items-center gap-1 rounded-full px-3 py-2 transition hover:bg-white/6 hover:text-white focus-visible:bg-white/6 focus-visible:text-white focus-visible:outline-none"
-                >
-                  {group.label}
-                  <ChevronIcon />
-                </Link>
+            <div className="hidden xl:flex xl:items-center xl:gap-4">
+              <nav className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">
+                {navigation.menuGroups.map((group) => (
+                  <div key={group.href} className="group relative">
+                    <Link
+                      href={group.href}
+                      className="flex min-h-10 items-center gap-1 rounded-full px-4 py-2 transition hover:bg-[rgba(29,56,92,0.07)] hover:text-[var(--brand-primary)] focus-visible:bg-[rgba(29,56,92,0.07)] focus-visible:text-[var(--brand-primary)] focus-visible:outline-none"
+                    >
+                      {group.label}
+                      <ChevronIcon />
+                    </Link>
 
-                <div className="pointer-events-none invisible absolute top-full left-1/2 z-30 w-max -translate-x-1/2 translate-y-2 pt-4 opacity-0 transition duration-200 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                  <div className={`overflow-hidden rounded-[1.35rem] border border-[#2e3a49] bg-[#0d1520]/96 shadow-[0_34px_70px_-34px_rgba(0,0,0,0.88)] backdrop-blur-xl ${group.panelClassName ?? "w-[30rem]"}`}>
-                    <div className="border-b border-white/8 bg-[linear-gradient(135deg,rgba(216,188,141,0.12)_0%,rgba(255,255,255,0.02)_70%)] px-5 py-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d8bc8d]">{group.label}</p>
-                      <p className="mt-2 max-w-[26rem] text-sm leading-6 text-[#d7c7ac]">{group.description}</p>
-                    </div>
+                    <div className="pointer-events-none invisible absolute top-full left-1/2 z-30 w-max -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition duration-200 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                      <div className={`min-w-[32rem] overflow-hidden rounded-[1.15rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] shadow-[0_30px_64px_-36px_rgba(22,30,42,0.24)] backdrop-blur-xl ${group.panelClassName ?? "w-[34rem]"}`}>
+                        <div className="border-b border-[rgba(220,208,189,0.72)] px-4 py-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-accent-strong)]">
+                            {group.label}
+                          </p>
+                          <p className="mt-1 max-w-[28rem] line-clamp-2 text-[12px] leading-5 text-[var(--ink-600)]">
+                            {group.description}
+                          </p>
+                        </div>
 
-                    <div className="grid gap-2 p-3 sm:grid-cols-2">
-                      {group.items.map((item) => (
-                        <Link
-                          key={`${item.href}-${item.label}`}
-                          href={item.href}
-                          className="rounded-[1rem] border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:border-[#d6b785]/38 hover:bg-white/[0.08]"
-                        >
-                          <p className="text-[0.8rem] font-semibold tracking-[0.01em] text-[#f7ecd8]">{item.label}</p>
-                          <p className="mt-1 text-xs leading-5 text-[#c4b49a]">{item.description}</p>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {navigation.directLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-full px-3 py-2 transition hover:bg-white/6 hover:text-white focus-visible:bg-white/6 focus-visible:text-white focus-visible:outline-none"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <details className="relative xl:hidden">
-              <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-full border border-[#4d3b24] bg-[#121c28]/90 text-[#e5d0ab] transition hover:bg-[#182535] [&::-webkit-details-marker]:hidden">
-                <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" aria-hidden>
-                  <path d="M4 6h12M4 10h12M4 14h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                </svg>
-              </summary>
-
-              <div className="absolute right-0 top-[calc(100%+0.9rem)] z-30 w-[min(92vw,26rem)] overflow-hidden rounded-[1.35rem] border border-[#2d3948] bg-[#0d1520]/96 shadow-[0_34px_70px_-34px_rgba(0,0,0,0.88)] backdrop-blur-xl">
-                <div className="border-b border-white/8 px-5 py-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">{navigation.mobileTitle}</p>
-                  <p className="mt-2 text-sm leading-6 text-[#d8c9ae]">
-                    {navigation.mobileDescription}
-                  </p>
-                </div>
-
-                <div className="max-h-[70vh] space-y-3 overflow-y-auto p-4">
-                  {navigation.menuGroups.map((group) => (
-                    <details key={group.href} className="rounded-[1rem] border border-white/8 bg-white/[0.03]">
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold tracking-[0.03em] text-[#f4ead7] [&::-webkit-details-marker]:hidden">
-                        <span>{group.label}</span>
-                        <ChevronIcon />
-                      </summary>
-                      <div className="grid gap-2 border-t border-white/8 px-3 py-3">
-                        {group.items.map((item) => (
-                          <Link
-                            key={`${group.href}-${item.href}-${item.label}`}
-                            href={item.href}
-                            className="rounded-[0.95rem] border border-white/8 bg-white/[0.03] px-3 py-3 transition hover:bg-white/[0.06]"
-                          >
-                            <p className="text-sm font-semibold text-[#f7ecd8]">{item.label}</p>
-                            <p className="mt-1 text-xs leading-5 text-[#c4b49a]">{item.description}</p>
-                          </Link>
-                        ))}
+                        <div className="flex flex-col p-2">
+                          {group.items.map((item) => (
+                            <Link
+                              key={`${item.href}-${item.label}`}
+                              href={item.href}
+                              className="group/item flex items-center justify-between gap-3 rounded-[0.95rem] border border-transparent bg-white px-3.5 py-2.5 transition hover:border-[var(--line-strong)] hover:bg-[rgba(29,56,92,0.03)]"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-[0.8rem] font-semibold tracking-[0.01em] text-[var(--brand-primary)]">
+                                  {item.label}
+                                </p>
+                                <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-[var(--ink-500)]">
+                                  {item.description}
+                                </p>
+                              </div>
+                              <span className="shrink-0 text-[var(--brand-accent-strong)] transition group-hover/item:translate-x-0.5">
+                                <ArrowIcon />
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                    </details>
-                  ))}
-
-                  <div className="grid gap-2">
-                    {navigation.directLinks.map((item) => (
-                      <Link
-                        key={`mobile-${item.href}`}
-                        href={item.href}
-                        className="rounded-[1rem] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm font-semibold tracking-[0.03em] text-[#f5ead8] transition hover:bg-white/[0.06]"
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              </div>
-            </details>
+                ))}
 
-            <SiteHeaderAuth initialUser={initialUser} />
+                {navigation.directLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex min-h-10 items-center rounded-full px-4 py-2 transition hover:bg-[rgba(29,56,92,0.07)] hover:text-[var(--brand-primary)] focus-visible:bg-[rgba(29,56,92,0.07)] focus-visible:text-[var(--brand-primary)] focus-visible:outline-none"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+
+              <HeaderMarketControlsInner className="flex" menuAlign="right" />
+              <SiteHeaderAuth initialUser={initialUser} />
+            </div>
+
+            <span className="block h-11 w-11 xl:hidden" aria-hidden />
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {mobileMenuOpen ? (
+        <div className="fixed inset-0 z-[90] xl:hidden">
+          <button
+            type="button"
+            aria-label="Menüyü kapat"
+            onClick={closeMobileMenu}
+            className="absolute inset-0 bg-[rgba(12,18,27,0.44)]"
+          />
+
+          <aside className="absolute left-0 top-0 flex h-full w-[min(88vw,23rem)] flex-col overflow-hidden border-r border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] shadow-[0_30px_64px_-30px_rgba(16,23,34,0.34)] backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-[rgba(220,208,189,0.72)] px-4 py-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-accent-strong)]">
+                  {navigation.mobileTitle}
+                </p>
+                <p className="mt-1 text-[12px] leading-5 text-[var(--ink-600)]">
+                  {navigation.mobileDescription}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeMobileMenu}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white text-[var(--brand-primary)]"
+                aria-label="Menüyü kapat"
+              >
+                <svg viewBox="0 0 20 20" fill="none" className="h-4.5 w-4.5" aria-hidden>
+                  <path d="M5 5l10 10M15 5 5 15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-4 overflow-y-auto p-4">
+              <div className="rounded-[1rem] border border-[var(--line-strong)] bg-white p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
+                  {copy.language} / {copy.currency}
+                </p>
+                <HeaderMarketControlsInner className="mt-3" variant="mobile-dropdown" />
+              </div>
+
+              <div className="space-y-2">
+                {navigation.menuGroups.map((group) => {
+                  const isOpen = activeMobileGroup === group.href;
+
+                  return (
+                    <div key={group.href} className="overflow-hidden rounded-[1rem] border border-[var(--line-strong)] bg-white">
+                      <button
+                        type="button"
+                        onClick={() => toggleMobileGroup(group.href)}
+                        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-[var(--brand-primary)]"
+                      >
+                        <span>{group.label}</span>
+                        <ChevronIcon open={isOpen} />
+                      </button>
+
+                      {isOpen ? (
+                        <div className="border-t border-[rgba(220,208,189,0.72)] px-3 py-3">
+                          <Link
+                            href={group.href}
+                            onClick={closeMobileMenu}
+                            className="mb-2 block rounded-[0.95rem] bg-[rgba(29,56,92,0.05)] px-3 py-2 text-[13px] font-semibold text-[var(--brand-primary)]"
+                          >
+                            {group.label}
+                          </Link>
+                          <div className="flex flex-col gap-1.5">
+                            {group.items.map((item) => (
+                              <Link
+                                key={`${group.href}-${item.href}-${item.label}`}
+                                href={item.href}
+                                onClick={closeMobileMenu}
+                                className="flex items-center justify-between gap-3 rounded-[0.95rem] px-3 py-2.5 text-[13px] font-medium text-[var(--ink-700)] transition hover:bg-[rgba(29,56,92,0.05)]"
+                              >
+                                <span className="min-w-0 truncate">{item.label}</span>
+                                <span className="shrink-0 text-[var(--brand-accent-strong)]">
+                                  <ArrowIcon />
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="grid gap-2">
+                {navigation.directLinks.map((item) => (
+                  <Link
+                    key={`mobile-${item.href}`}
+                    href={item.href}
+                    onClick={closeMobileMenu}
+                    className="rounded-[1rem] border border-[var(--line-strong)] bg-white px-4 py-3 text-sm font-semibold tracking-[0.03em] text-[var(--brand-primary)] transition hover:bg-[rgba(29,56,92,0.04)]"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </aside>
+        </div>
+      ) : null}
+    </>
   );
 }

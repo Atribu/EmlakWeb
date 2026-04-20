@@ -5,16 +5,23 @@ import { canCreateOrEditPortfolios } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
 import { createProperty, listProperties } from "@/lib/data-store";
 import {
-  buildRoomImageFileName,
+  buildGalleryImageFileName,
   createPropertyImageStorageKey,
   savePropertyImageFile,
 } from "@/lib/property-image-storage";
 import {
+  createGalleryImageLabel,
   getFilesFromFormData,
-  MAX_IMAGES_PER_ROOM,
-  PORTFOLIO_ROOM_FIELDS,
-  makeRoomImageLabel,
+  MAX_GALLERY_IMAGE_COUNT,
 } from "@/lib/portfolio-images";
+import {
+  readPropertyInfoItemsFromFormData,
+  readPropertyInfoItemsFromPayload,
+} from "@/lib/property-info-items";
+import {
+  readPropertyTranslationsFromFormData,
+  readPropertyTranslationsFromPayload,
+} from "@/lib/property-content";
 import type { CreatePropertyInput, PropertyType } from "@/lib/types";
 
 const validTypes: PropertyType[] = ["Daire", "Villa", "Rezidans", "Arsa", "Ofis"];
@@ -36,6 +43,15 @@ function parseOptionalNumber(value: unknown): number | undefined {
 
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : undefined;
+}
+
+function parseOptionalString(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 function parseString(value: unknown, fieldLabel: string): string {
@@ -62,21 +78,25 @@ function parseList(value: unknown, fieldLabel: string): string[] {
   return output;
 }
 
-function parseCommaSeparatedList(value: unknown, fieldLabel: string): string[] {
-  if (typeof value !== "string") {
-    throw new Error(`${fieldLabel} en az bir değer içermelidir.`);
+function parseOptionalList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
   }
 
-  const output = value
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+}
+
+function parseOptionalCommaSeparatedList(value: unknown): string[] {
+  if (typeof value !== "string" || !value.trim()) {
+    return [];
+  }
+
+  return value
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
-
-  if (output.length === 0) {
-    throw new Error(`${fieldLabel} en az bir değer içermelidir.`);
-  }
-
-  return output;
 }
 
 function parseCreateInput(value: unknown): CreatePropertyInput {
@@ -103,15 +123,20 @@ function parseCreateInput(value: unknown): CreatePropertyInput {
     floor: parseString(payload.floor, "Kat bilgisi"),
     heating: parseString(payload.heating, "Isıtma"),
     description: parseString(payload.description, "Açıklama"),
-    advisorId: parseString(payload.advisorId, "Danışman"),
+    advisorId: parseOptionalString(payload.advisorId),
     latitude: parseOptionalNumber(payload.latitude),
     longitude: parseOptionalNumber(payload.longitude),
     coverColor: parseString(payload.coverColor, "Kapak rengi"),
     coverImage: parseString(payload.coverImage, "Kapak görseli"),
     galleryImages: parseList(payload.galleryImages, "Galeri görselleri"),
-    highlights: parseList(payload.highlights, "Öne çıkanlar"),
-    features: parseList(payload.features, "Özellikler"),
-    imageLabels: parseList(payload.imageLabels, "Görsel etiketleri"),
+    highlights: parseOptionalList(payload.highlights),
+    features: parseOptionalList(payload.features),
+    infoItems: readPropertyInfoItemsFromPayload(payload.infoItems),
+    imageLabels:
+      parseOptionalList(payload.imageLabels).length > 0
+        ? parseOptionalList(payload.imageLabels)
+        : parseList(payload.galleryImages, "Galeri görselleri").map((_, index) => createGalleryImageLabel(index)),
+    translations: readPropertyTranslationsFromPayload(payload.translations),
   };
 }
 
@@ -134,38 +159,34 @@ async function parseCreateFormData(formData: FormData): Promise<CreatePropertyIn
     fileName: "cover",
     fieldLabel: "Kapak görseli",
   });
+
+  const galleryFiles = getFilesFromFormData(formData, "galleryImageFiles");
+
+  if (galleryFiles.length === 0) {
+    throw new Error("Kapak hariç en az bir galeri görseli yükleyin.");
+  }
+
+  if (galleryFiles.length > MAX_GALLERY_IMAGE_COUNT) {
+    throw new Error(`Galeri için en fazla ${MAX_GALLERY_IMAGE_COUNT} görsel yükleyebilirsiniz.`);
+  }
+
   const galleryImages: string[] = [];
   const imageLabels: string[] = [];
 
-  for (const field of PORTFOLIO_ROOM_FIELDS) {
-    const files = getFilesFromFormData(formData, field.name);
-
-    if (files.length === 0) {
-      if (field.requiredOnCreate) {
-        throw new Error(`${field.label} görseli zorunludur.`);
-      }
-      continue;
-    }
-
-    if (files.length > MAX_IMAGES_PER_ROOM) {
-      throw new Error(`${field.label} için en fazla ${MAX_IMAGES_PER_ROOM} görsel yükleyebilirsiniz.`);
-    }
-
-    for (const [index, file] of files.entries()) {
-      const label = makeRoomImageLabel(field, index, files.length);
-      galleryImages.push(
-        await savePropertyImageFile(file, {
-          storageKey,
-          fileName: buildRoomImageFileName(field.label, index, files.length),
-          fieldLabel: `${label} görseli`,
-        }),
-      );
-      imageLabels.push(label);
-    }
+  for (const [index, file] of galleryFiles.entries()) {
+    const label = createGalleryImageLabel(index);
+    galleryImages.push(
+      await savePropertyImageFile(file, {
+        storageKey,
+        fileName: buildGalleryImageFileName(index),
+        fieldLabel: `${label} görseli`,
+      }),
+    );
+    imageLabels.push(label);
   }
 
   if (galleryImages.length === 0) {
-    throw new Error("En az bir oda görseli yükleyin.");
+    throw new Error("Kapak hariç en az bir galeri görseli yükleyin.");
   }
 
   return {
@@ -180,15 +201,17 @@ async function parseCreateFormData(formData: FormData): Promise<CreatePropertyIn
     floor: parseString(formData.get("floor"), "Kat bilgisi"),
     heating: parseString(formData.get("heating"), "Isıtma"),
     description: parseString(formData.get("description"), "Açıklama"),
-    advisorId: parseString(formData.get("advisorId"), "Danışman"),
+    advisorId: parseOptionalString(formData.get("advisorId")),
     latitude: parseOptionalNumber(formData.get("latitude")),
     longitude: parseOptionalNumber(formData.get("longitude")),
     coverColor: parseString(formData.get("coverColor"), "Kapak rengi"),
     coverImage,
     galleryImages,
-    highlights: parseCommaSeparatedList(formData.get("highlights"), "Öne çıkanlar"),
-    features: parseCommaSeparatedList(formData.get("features"), "Özellikler"),
+    highlights: parseOptionalCommaSeparatedList(formData.get("highlights")),
+    features: parseOptionalCommaSeparatedList(formData.get("features")),
+    infoItems: readPropertyInfoItemsFromFormData(formData),
     imageLabels,
+    translations: readPropertyTranslationsFromFormData(formData),
   };
 }
 
