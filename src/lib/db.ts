@@ -2,11 +2,12 @@ import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
 import { initialAdvisors, initialBlogPosts, initialProperties, initialUsers } from "@/lib/mock-data";
+import { getDatabasePath } from "@/lib/persistent-storage";
 import { pickSampleAdvisorImageForSeed } from "@/lib/sample-advisor-images";
 import { pickSampleImageSet } from "@/lib/sample-images";
 
-const DB_DIR = path.join(process.cwd(), ".demo-data");
-const DB_PATH = path.join(DB_DIR, "emlak.db");
+const DB_PATH = getDatabasePath();
+const DB_DIR = path.dirname(DB_PATH);
 
 if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
