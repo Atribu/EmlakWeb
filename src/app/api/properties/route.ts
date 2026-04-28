@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { canCreateOrEditPortfolios } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
 import { createProperty, listProperties } from "@/lib/data-store";
+import { PROPERTY_MARKET_STATUS_OPTIONS, PROPERTY_PRICE_CURRENCY_OPTIONS, PROPERTY_TYPE_OPTIONS } from "@/lib/property-panel-options";
 import {
   buildGalleryImageFileName,
   createPropertyImageStorageKey,
@@ -22,9 +23,17 @@ import {
   readPropertyTranslationsFromFormData,
   readPropertyTranslationsFromPayload,
 } from "@/lib/property-content";
-import type { CreatePropertyInput, PropertyType } from "@/lib/types";
+import { convertPriceToTry } from "@/lib/site-preferences";
+import type { CreatePropertyInput, PropertyMarketStatus, PropertyPriceCurrency, PropertyType } from "@/lib/types";
 
-const validTypes: PropertyType[] = ["Daire", "Villa", "Rezidans", "Arsa", "Ofis"];
+const validTypes = [...PROPERTY_TYPE_OPTIONS] as PropertyType[];
+const validPriceCurrencies = PROPERTY_PRICE_CURRENCY_OPTIONS.map((option) => option.code) as PropertyPriceCurrency[];
+const validMarketStatuses = [...PROPERTY_MARKET_STATUS_OPTIONS] as PropertyMarketStatus[];
+
+type ParsedCreateRequest = {
+  input: CreatePropertyInput;
+  roomSelections: string[];
+};
 
 function parseNumber(value: unknown, fieldLabel: string): number {
   const numeric = Number(value);
@@ -52,6 +61,24 @@ function parseOptionalString(value: unknown): string | undefined {
 
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function parsePriceCurrency(value: unknown): PropertyPriceCurrency {
+  const currency = parseString(value, "Fiyat para birimi") as PropertyPriceCurrency;
+  if (!validPriceCurrencies.includes(currency)) {
+    throw new Error("Fiyat para birimi geçersiz.");
+  }
+
+  return currency;
+}
+
+function parseMarketStatus(value: unknown): PropertyMarketStatus {
+  const status = parseString(value, "Portföy durumu") as PropertyMarketStatus;
+  if (!validMarketStatuses.includes(status)) {
+    throw new Error("Portföy durumu geçersiz.");
+  }
+
+  return status;
 }
 
 function parseString(value: unknown, fieldLabel: string): string {
@@ -99,50 +126,127 @@ function parseOptionalCommaSeparatedList(value: unknown): string[] {
     .filter(Boolean);
 }
 
-function parseCreateInput(value: unknown): CreatePropertyInput {
+function parseRoomSelections(value: unknown, fallbackLabel = "Oda bilgisi"): string[] {
+  if (Array.isArray(value)) {
+    const rooms = value
+      .map((item) => (typeof item === "string" ? item.trim() : ""))
+      .filter(Boolean);
+
+    if (rooms.length > 0) {
+      return Array.from(new Set(rooms));
+    }
+  }
+
+  const singleValue = parseOptionalString(value);
+  if (singleValue) {
+    return [singleValue];
+  }
+
+  throw new Error(`${fallbackLabel} zorunludur.`);
+}
+
+function resolveVariantTitle(baseTitle: string, sourceRoom: string, nextRoom: string, selectionCount: number): string {
+  const normalizedTitle = baseTitle.trim();
+
+  if (selectionCount <= 1) {
+    return normalizedTitle;
+  }
+
+  if (sourceRoom && normalizedTitle.includes(sourceRoom)) {
+    return normalizedTitle.replace(sourceRoom, nextRoom);
+  }
+
+  if (normalizedTitle.endsWith(`- ${nextRoom}`) || normalizedTitle.endsWith(nextRoom)) {
+    return normalizedTitle;
+  }
+
+  return `${normalizedTitle} - ${nextRoom}`;
+}
+
+function createVariantInput(input: CreatePropertyInput, roomSelections: string[], room: string): CreatePropertyInput {
+  return {
+    ...input,
+    rooms: room,
+    title: resolveVariantTitle(input.title, input.rooms, room, roomSelections.length),
+  };
+}
+
+function applyRoleScopedFields(
+  input: CreatePropertyInput,
+  actorRole: string,
+): CreatePropertyInput {
+  const canSeeAdminFields = actorRole === "portal_admin" || actorRole === "admin";
+
+  return {
+    ...input,
+    floor: input.floor?.trim() ?? "",
+    publicationStatus: "Pasif",
+    adminCommissionNotes: canSeeAdminFields ? input.adminCommissionNotes : undefined,
+    adminPrivateNotes: canSeeAdminFields ? input.adminPrivateNotes : undefined,
+  };
+}
+
+function parseCreateInput(value: unknown): ParsedCreateRequest {
   if (!value || typeof value !== "object") {
     throw new Error("Geçersiz istek gövdesi.");
   }
 
   const payload = value as Record<string, unknown>;
   const type = parseString(payload.type, "Portföy tipi") as PropertyType;
+  const roomSelections = parseRoomSelections(payload.roomSelections ?? payload.rooms, "Oda bilgisi");
+  const priceCurrency = parsePriceCurrency(payload.priceCurrency);
+  const priceSourceAmount = parseNumber(payload.price, "Fiyat");
 
   if (!validTypes.includes(type)) {
     throw new Error("Portföy tipi geçersiz.");
   }
 
   return {
-    title: parseString(payload.title, "Başlık"),
-    city: parseString(payload.city, "Şehir"),
-    district: parseString(payload.district, "İlçe"),
-    neighborhood: parseString(payload.neighborhood, "Mahalle"),
-    type,
-    price: parseNumber(payload.price, "Fiyat"),
-    rooms: parseString(payload.rooms, "Oda bilgisi"),
-    areaM2: parseNumber(payload.areaM2, "Metrekare"),
-    floor: parseString(payload.floor, "Kat bilgisi"),
-    heating: parseString(payload.heating, "Isıtma"),
-    description: parseString(payload.description, "Açıklama"),
-    advisorId: parseOptionalString(payload.advisorId),
-    latitude: parseOptionalNumber(payload.latitude),
-    longitude: parseOptionalNumber(payload.longitude),
-    coverColor: parseString(payload.coverColor, "Kapak rengi"),
-    coverImage: parseString(payload.coverImage, "Kapak görseli"),
-    galleryImages: parseList(payload.galleryImages, "Galeri görselleri"),
-    highlights: parseOptionalList(payload.highlights),
-    features: parseOptionalList(payload.features),
-    infoItems: readPropertyInfoItemsFromPayload(payload.infoItems),
-    imageLabels:
-      parseOptionalList(payload.imageLabels).length > 0
-        ? parseOptionalList(payload.imageLabels)
-        : parseList(payload.galleryImages, "Galeri görselleri").map((_, index) => createGalleryImageLabel(index)),
-    translations: readPropertyTranslationsFromPayload(payload.translations),
+    roomSelections,
+    input: {
+      title: parseString(payload.title, "Başlık"),
+      city: parseString(payload.city, "Şehir"),
+      district: parseString(payload.district, "İlçe"),
+      neighborhood: parseString(payload.neighborhood, "Mahalle"),
+      type,
+      price: convertPriceToTry(priceSourceAmount, priceCurrency),
+      priceCurrency,
+      priceSourceAmount,
+      rooms: roomSelections[0],
+      areaM2: parseNumber(payload.areaM2, "Metrekare"),
+      floor: parseOptionalString(payload.floor) ?? "",
+      heating: parseString(payload.heating, "Isıtma"),
+      marketStatus: parseMarketStatus(payload.marketStatus),
+      description: parseString(payload.description, "Açıklama"),
+      developerCompany: parseOptionalString(payload.developerCompany),
+      staffNotes: parseOptionalString(payload.staffNotes),
+      customerFeedbackNotes: parseOptionalString(payload.customerFeedbackNotes),
+      adminCommissionNotes: parseOptionalString(payload.adminCommissionNotes),
+      adminPrivateNotes: parseOptionalString(payload.adminPrivateNotes),
+      advisorId: parseOptionalString(payload.advisorId),
+      latitude: parseOptionalNumber(payload.latitude),
+      longitude: parseOptionalNumber(payload.longitude),
+      coverColor: parseString(payload.coverColor, "Kapak rengi"),
+      coverImage: parseString(payload.coverImage, "Kapak görseli"),
+      galleryImages: parseList(payload.galleryImages, "Galeri görselleri"),
+      highlights: parseOptionalList(payload.highlights),
+      features: parseOptionalList(payload.features),
+      infoItems: readPropertyInfoItemsFromPayload(payload.infoItems),
+      imageLabels:
+        parseOptionalList(payload.imageLabels).length > 0
+          ? parseOptionalList(payload.imageLabels)
+          : parseList(payload.galleryImages, "Galeri görselleri").map((_, index) => createGalleryImageLabel(index)),
+      translations: readPropertyTranslationsFromPayload(payload.translations),
+    },
   };
 }
 
-async function parseCreateFormData(formData: FormData): Promise<CreatePropertyInput> {
+async function parseCreateFormData(formData: FormData): Promise<ParsedCreateRequest> {
   const type = parseString(formData.get("type"), "Portföy tipi") as PropertyType;
   const title = parseString(formData.get("title"), "Başlık");
+  const roomSelections = parseRoomSelections(formData.getAll("roomSelections"), "Oda bilgisi");
+  const priceCurrency = parsePriceCurrency(formData.get("priceCurrency"));
+  const priceSourceAmount = parseNumber(formData.get("price"), "Fiyat");
 
   if (!validTypes.includes(type)) {
     throw new Error("Portföy tipi geçersiz.");
@@ -190,28 +294,39 @@ async function parseCreateFormData(formData: FormData): Promise<CreatePropertyIn
   }
 
   return {
-    title,
-    city: parseString(formData.get("city"), "Şehir"),
-    district: parseString(formData.get("district"), "İlçe"),
-    neighborhood: parseString(formData.get("neighborhood"), "Mahalle"),
-    type,
-    price: parseNumber(formData.get("price"), "Fiyat"),
-    rooms: parseString(formData.get("rooms"), "Oda bilgisi"),
-    areaM2: parseNumber(formData.get("areaM2"), "Metrekare"),
-    floor: parseString(formData.get("floor"), "Kat bilgisi"),
-    heating: parseString(formData.get("heating"), "Isıtma"),
-    description: parseString(formData.get("description"), "Açıklama"),
-    advisorId: parseOptionalString(formData.get("advisorId")),
-    latitude: parseOptionalNumber(formData.get("latitude")),
-    longitude: parseOptionalNumber(formData.get("longitude")),
-    coverColor: parseString(formData.get("coverColor"), "Kapak rengi"),
-    coverImage,
-    galleryImages,
-    highlights: parseOptionalCommaSeparatedList(formData.get("highlights")),
-    features: parseOptionalCommaSeparatedList(formData.get("features")),
-    infoItems: readPropertyInfoItemsFromFormData(formData),
-    imageLabels,
-    translations: readPropertyTranslationsFromFormData(formData),
+    roomSelections,
+    input: {
+      title,
+      city: parseString(formData.get("city"), "Şehir"),
+      district: parseString(formData.get("district"), "İlçe"),
+      neighborhood: parseString(formData.get("neighborhood"), "Mahalle"),
+      type,
+      price: convertPriceToTry(priceSourceAmount, priceCurrency),
+      priceCurrency,
+      priceSourceAmount,
+      rooms: roomSelections[0],
+      areaM2: parseNumber(formData.get("areaM2"), "Metrekare"),
+      floor: parseOptionalString(formData.get("floor")) ?? "",
+      heating: parseString(formData.get("heating"), "Isıtma"),
+      marketStatus: parseMarketStatus(formData.get("marketStatus")),
+      description: parseString(formData.get("description"), "Açıklama"),
+      developerCompany: parseOptionalString(formData.get("developerCompany")),
+      staffNotes: parseOptionalString(formData.get("staffNotes")),
+      customerFeedbackNotes: parseOptionalString(formData.get("customerFeedbackNotes")),
+      adminCommissionNotes: parseOptionalString(formData.get("adminCommissionNotes")),
+      adminPrivateNotes: parseOptionalString(formData.get("adminPrivateNotes")),
+      advisorId: parseOptionalString(formData.get("advisorId")),
+      latitude: parseOptionalNumber(formData.get("latitude")),
+      longitude: parseOptionalNumber(formData.get("longitude")),
+      coverColor: parseString(formData.get("coverColor"), "Kapak rengi"),
+      coverImage,
+      galleryImages,
+      highlights: parseOptionalCommaSeparatedList(formData.get("highlights")),
+      features: parseOptionalCommaSeparatedList(formData.get("features")),
+      infoItems: readPropertyInfoItemsFromFormData(formData),
+      imageLabels,
+      translations: readPropertyTranslationsFromFormData(formData),
+    },
   };
 }
 
@@ -253,13 +368,19 @@ export async function POST(request: NextRequest) {
 
   try {
     const contentType = request.headers.get("content-type") ?? "";
-    const input = contentType.includes("multipart/form-data")
+    const parsed = contentType.includes("multipart/form-data")
       ? await parseCreateFormData(await request.formData())
       : parseCreateInput(await request.json());
+    const scopedInput = applyRoleScopedFields(parsed.input, user.role);
+    const properties = parsed.roomSelections.map((room) =>
+      createProperty(createVariantInput(scopedInput, parsed.roomSelections, room), user.id),
+    );
 
-    const property = createProperty(input, user.id);
-
-    return NextResponse.json({ property }, { status: 201 });
+    return NextResponse.json({
+      properties,
+      property: properties[0],
+      count: properties.length,
+    }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Portföy eklenemedi.";
     return NextResponse.json({ message }, { status: 400 });

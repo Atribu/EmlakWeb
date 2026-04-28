@@ -18,6 +18,17 @@ const db = new Database(DB_PATH);
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
+function hasColumn(tableName: string, columnName: string) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+  return columns.some((column) => column.name === columnName);
+}
+
+function addColumnIfMissing(tableName: string, columnName: string, definition: string) {
+  if (!hasColumn(tableName, columnName)) {
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+  }
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS advisors (
     id          TEXT PRIMARY KEY,
@@ -50,15 +61,24 @@ db.exec(`
     neighborhood    TEXT NOT NULL,
     type            TEXT NOT NULL,
     price           REAL NOT NULL,
+    priceCurrency   TEXT NOT NULL DEFAULT 'TRY',
+    priceSourceAmount REAL,
     rooms           TEXT NOT NULL,
     areaM2          REAL NOT NULL,
     floor           TEXT NOT NULL,
     heating         TEXT NOT NULL,
+    marketStatus    TEXT NOT NULL DEFAULT 'Hazır',
+    publicationStatus TEXT NOT NULL DEFAULT 'Aktif',
     listingRef      TEXT NOT NULL,
     description     TEXT NOT NULL,
     highlights      TEXT NOT NULL DEFAULT '[]',
     features        TEXT NOT NULL DEFAULT '[]',
     infoItems       TEXT NOT NULL DEFAULT '[]',
+    developerCompany TEXT,
+    staffNotes      TEXT,
+    customerFeedbackNotes TEXT,
+    adminCommissionNotes TEXT,
+    adminPrivateNotes TEXT,
     advisorId       TEXT NOT NULL,
     latitude        REAL NOT NULL DEFAULT 0,
     longitude       REAL NOT NULL DEFAULT 0,
@@ -122,6 +142,16 @@ db.exec(`
     createdAt         TEXT NOT NULL
   );
 `);
+
+addColumnIfMissing("properties", "priceCurrency", "TEXT NOT NULL DEFAULT 'TRY'");
+addColumnIfMissing("properties", "priceSourceAmount", "REAL");
+addColumnIfMissing("properties", "marketStatus", "TEXT NOT NULL DEFAULT 'Hazır'");
+addColumnIfMissing("properties", "publicationStatus", "TEXT NOT NULL DEFAULT 'Aktif'");
+addColumnIfMissing("properties", "developerCompany", "TEXT");
+addColumnIfMissing("properties", "staffNotes", "TEXT");
+addColumnIfMissing("properties", "customerFeedbackNotes", "TEXT");
+addColumnIfMissing("properties", "adminCommissionNotes", "TEXT");
+addColumnIfMissing("properties", "adminPrivateNotes", "TEXT");
 
 function seedIfEmpty() {
   const advisorCount = (db.prepare("SELECT COUNT(*) as c FROM advisors").get() as { c: number }).c;

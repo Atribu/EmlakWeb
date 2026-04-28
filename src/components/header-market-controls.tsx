@@ -17,6 +17,7 @@ const currencyOptions = [
   { code: "TRY", symbol: "₺", label: "Türk Lirası" },
   { code: "USD", symbol: "$", label: "US Dollar" },
   { code: "EUR", symbol: "€", label: "Euro" },
+  { code: "GBP", symbol: "£", label: "Sterlin" },
 ];
 
 function ChevronIcon({ open = false }: { open?: boolean }) {
@@ -172,8 +173,8 @@ export function HeaderMarketControlsInner({
           </button>
 
           {openMobileMenu === "currency" ? (
-            <div className="absolute right-0 top-[calc(100%+0.55rem)] z-30 w-[8.75rem] overflow-hidden rounded-[1rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] p-2 shadow-[0_28px_54px_-32px_rgba(16,23,34,0.34)] backdrop-blur">
-              <div className="grid grid-cols-3 gap-2">
+            <div className="absolute right-0 top-[calc(100%+0.55rem)] z-30 w-[10.5rem] overflow-hidden rounded-[1rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] p-2 shadow-[0_28px_54px_-32px_rgba(16,23,34,0.34)] backdrop-blur">
+              <div className="grid grid-cols-4 gap-2">
                 {currencyOptions.map((option) => (
                   <button
                     key={option.code}

@@ -4,7 +4,6 @@ import type { Property, PropertyTranslationFields, PropertyTranslations } from "
 export const PROPERTY_CONTENT_LANGUAGES = [
   { code: "EN", label: "English" },
   { code: "RU", label: "Русский" },
-  { code: "AR", label: "العربية" },
 ] as const satisfies ReadonlyArray<{ code: Exclude<SiteLanguage, "TR">; label: string }>;
 
 export type PropertyContentLanguage = (typeof PROPERTY_CONTENT_LANGUAGES)[number]["code"];

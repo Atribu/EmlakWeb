@@ -13,11 +13,13 @@ const DESCRIPTION_LANGUAGES = [
 type DescriptionLanguageCode = (typeof DESCRIPTION_LANGUAGES)[number]["code"];
 
 type PropertyDescriptionFieldsProps = {
+  defaultTitle?: string;
   defaultDescription?: string;
   defaultTranslations?: PropertyTranslations;
 };
 
 export function PropertyDescriptionFields({
+  defaultTitle,
   defaultDescription,
   defaultTranslations,
 }: PropertyDescriptionFieldsProps) {
@@ -28,22 +30,29 @@ export function PropertyDescriptionFields({
       new Map(
         DESCRIPTION_LANGUAGES.map((language) => [
           language.code,
-          language.code === "TR"
-            ? defaultDescription ?? ""
-            : defaultTranslations?.[language.code]?.description ?? "",
+          {
+            title:
+              language.code === "TR"
+                ? defaultTitle ?? ""
+                : defaultTranslations?.[language.code]?.title ?? "",
+            description:
+              language.code === "TR"
+                ? defaultDescription ?? ""
+                : defaultTranslations?.[language.code]?.description ?? "",
+          },
         ]),
       ),
-    [defaultDescription, defaultTranslations],
+    [defaultDescription, defaultTitle, defaultTranslations],
   );
 
   return (
     <section className="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
       <div className="max-w-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Açıklama Dilleri</p>
-        <h3 className="mt-2 text-lg font-semibold text-slate-900">Açıklamayı sekmeli olarak girin</h3>
+        <h3 className="mt-2 text-lg font-semibold text-slate-900">Başlık ve açıklamayı 3 dilde girin</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Ortak bilgiler tek alanda kalır. Açıklama için Türkçe ana metne ek olarak İngilizce ve Rusça versiyon
-          girebilirsiniz.
+          Türkçe ana dil olarak kullanılır. İngilizce ve Rusça alanlarını doldurduğunuzda kullanıcı seçtiği dilde
+          başlık ve açıklamayı görür; boş bırakırsanız sistem Türkçe içeriği gösterir.
         </p>
       </div>
 
@@ -67,8 +76,9 @@ export function PropertyDescriptionFields({
       <div className="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
         {DESCRIPTION_LANGUAGES.map((language) => {
           const isActive = activeLanguage === language.code;
+          const titleName = language.code === "TR" ? "title" : `translationTitle_${language.code}`;
           const textareaName = language.code === "TR" ? "description" : `translationDescription_${language.code}`;
-          const value = languageMap.get(language.code) ?? "";
+          const value = languageMap.get(language.code) ?? { title: "", description: "" };
 
           return (
             <div key={language.code} className={isActive ? "block" : "hidden"}>
@@ -86,9 +96,22 @@ export function PropertyDescriptionFields({
                 </span>
               </div>
 
+              <label className="mb-4 block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                  Başlık
+                </span>
+                <input
+                  name={titleName}
+                  defaultValue={value.title}
+                  required={language.code === "TR"}
+                  placeholder={`${language.label} başlık`}
+                  className="input"
+                />
+              </label>
+
               <textarea
                 name={textareaName}
-                defaultValue={value}
+                defaultValue={value.description}
                 required={language.code === "TR"}
                 rows={7}
                 placeholder={`${language.label} açıklama`}

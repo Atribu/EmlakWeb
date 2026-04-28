@@ -77,6 +77,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
   const propertyDescription = propertyDescriptionForLanguage(property, language);
   const propertyHighlights = propertyHighlightsForLanguage(property, language);
   const propertyFeatures = propertyFeaturesForLanguage(property, language);
+  const hasFloor = property.floor.trim().length > 0;
 
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : null;
   const whatsappHref = advisor
@@ -111,7 +112,9 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
                 <DetailItem label={copy.labels.type} value={translatePropertyType(property.type, language)} icon={<TypeFieldIcon />} />
                 <DetailItem label={copy.labels.rooms} value={translateRoomLabel(property.rooms, language)} icon={<RoomFieldIcon />} />
                 <DetailItem label={copy.labels.area} value={String(property.areaM2)} icon={<AreaFieldIcon />} />
-                <DetailItem label={copy.labels.floor} value={translateFloorLabel(property.floor, language)} icon={<FloorFieldIcon />} />
+                {hasFloor ? (
+                  <DetailItem label={copy.labels.floor} value={translateFloorLabel(property.floor, language)} icon={<FloorFieldIcon />} />
+                ) : null}
                 <DetailItem label={copy.labels.heating} value={translateHeatingLabel(property.heating, language)} icon={<HeatingFieldIcon />} />
               </div>
 

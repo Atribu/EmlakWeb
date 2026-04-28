@@ -137,6 +137,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
       : undefined;
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : undefined;
   const propertyInfoItems = property.infoItems?.filter((item) => item.value.trim().length > 0).slice(0, 3) ?? [];
+  const hasFloor = property.floor.trim().length > 0;
 
   function stepGallery(direction: -1 | 1) {
     if (gallery.length <= 1) {
@@ -267,7 +268,9 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             <div className="grid gap-3 sm:grid-cols-3">
               <Metric icon={<BedIcon />} label={copy.rooms} value={translateRoomLabel(property.rooms, language)} />
               <Metric icon={<AreaIcon />} label={copy.area} value={`${property.areaM2} m²`} />
-              <Metric icon={<FloorIcon />} label={copy.floor} value={translateFloorLabel(property.floor, language)} />
+              {hasFloor ? (
+                <Metric icon={<FloorIcon />} label={copy.floor} value={translateFloorLabel(property.floor, language)} />
+              ) : null}
             </div>
           </div>
 

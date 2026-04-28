@@ -56,6 +56,14 @@ export function PriceFieldIcon() {
   );
 }
 
+export function CurrencyFieldIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+      <path d="M10 4v12M13.75 6.5c-.6-.9-1.7-1.5-3.25-1.5-1.93 0-3.25.94-3.25 2.38 0 1.41 1.06 2.03 3.25 2.37 2.11.33 3.25.87 3.25 2.38 0 1.49-1.4 2.37-3.5 2.37-1.62 0-2.85-.55-3.75-1.62" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function RoomFieldIcon() {
   return <PropertyInfoIcon icon="rooms" />;
 }
@@ -77,6 +85,46 @@ export function HeatingFieldIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
       <path d="M10.3 3.5c1.85 2.07 2.96 3.47 2.96 5.2a3.26 3.26 0 1 1-6.52 0c0-1.15.58-2.17 1.65-3.5.22 1.26 1.16 2.23 1.91 2.68.23-1.13.54-2.3 2-4.38Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function StatusFieldIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+      <path d="M4.75 10 8 13.25 15.25 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="10" cy="10" r="6.25" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+export function BuildingFieldIcon() {
+  return <PropertyInfoIcon icon="building" />;
+}
+
+export function NoteFieldIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+      <path d="M5 4.75h10v10.5H8.5L5 18.5V4.75Z" stroke="currentColor" strokeWidth="1.45" strokeLinejoin="round" />
+      <path d="M7.25 8h5.5M7.25 11h5.5" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function ShieldFieldIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+      <path d="M10 3.75 15 5.6v4.05c0 3.08-2.06 5.87-5 6.6-2.94-.73-5-3.52-5-6.6V5.6l5-1.85Z" stroke="currentColor" strokeWidth="1.45" strokeLinejoin="round" />
+      <path d="m8.35 9.9 1.2 1.2 2.3-2.55" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function PublishFieldIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+      <path d="M10 3.75 15.25 6.5v7L10 16.25 4.75 13.5v-7L10 3.75Z" stroke="currentColor" strokeWidth="1.45" strokeLinejoin="round" />
+      <path d="m7.8 10.15 1.45 1.45 2.95-3.05" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

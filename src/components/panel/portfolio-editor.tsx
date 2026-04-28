@@ -5,6 +5,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "re
 import { useRouter } from "next/navigation";
 
 import { PropertyDescriptionFields } from "@/components/panel/property-description-fields";
+import { PropertyOperationalFields } from "@/components/panel/property-operational-fields";
 import {
   AdvisorFieldIcon,
   AreaFieldIcon,
@@ -15,11 +16,15 @@ import {
   PriceFieldIcon,
   PropertyFieldShell,
   RoomFieldIcon,
-  TitleFieldIcon,
   TypeFieldIcon,
 } from "@/components/panel/property-field-shell";
 import { PropertyInfoFields } from "@/components/panel/property-info-fields";
 import { formatPrice } from "@/lib/format";
+import {
+  PROPERTY_HEATING_OPTIONS,
+  PROPERTY_ROOM_OPTIONS,
+  PROPERTY_TYPE_OPTIONS,
+} from "@/lib/property-panel-options";
 import {
   MAX_GALLERY_IMAGE_COUNT,
   MAX_PORTFOLIO_REQUEST_MB,
@@ -28,11 +33,12 @@ import {
   validatePortfolioImageFile,
   validateTotalUploadSize,
 } from "@/lib/portfolio-images";
-import type { Advisor, Property } from "@/lib/types";
+import type { Advisor, Property, UserRole } from "@/lib/types";
 
 type PortfolioEditorProps = {
   initialProperties: Property[];
   advisors: Advisor[];
+  currentUserRole: UserRole;
 };
 
 type SubmitState =
@@ -41,7 +47,7 @@ type SubmitState =
   | { type: "error"; message: string }
   | { type: "success"; message: string };
 
-const typeOptions = ["Daire", "Villa", "Rezidans", "Arsa", "Ofis"];
+const typeOptions = [...PROPERTY_TYPE_OPTIONS];
 const coverOptions = [
   { label: "Turkuaz", value: "linear-gradient(120deg, #0f766e, #2dd4bf)" },
   { label: "Mavi", value: "linear-gradient(120deg, #1d4ed8, #60a5fa)" },
@@ -68,7 +74,7 @@ function syncFileInput(input: HTMLInputElement | null, files: File[]) {
   input.files = dataTransfer.files;
 }
 
-export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditorProps) {
+export function PortfolioEditor({ initialProperties, advisors, currentUserRole }: PortfolioEditorProps) {
   const router = useRouter();
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const [properties, setProperties] = useState<Property[]>(initialProperties);
@@ -77,6 +83,10 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
   const [coverFileName, setCoverFileName] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [removedGalleryImages, setRemovedGalleryImages] = useState<string[]>([]);
+  const [duplicateRoomSelections, setDuplicateRoomSelections] = useState<string[]>([]);
+  const [duplicateStatus, setDuplicateStatus] = useState<{ type: "idle" | "loading" | "error" | "success"; message?: string }>({
+    type: "idle",
+  });
 
   const selectedProperty = useMemo(
     () => properties.find((property) => property.slug === selectedSlug),
@@ -105,6 +115,11 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
     syncFileInput(galleryInputRef.current, []);
   }, [selectedSlug]);
 
+  useEffect(() => {
+    setDuplicateRoomSelections([]);
+    setDuplicateStatus({ type: "idle" });
+  }, [selectedSlug]);
+
   function handleGalleryChange(event: ChangeEvent<HTMLInputElement>) {
     setGalleryFiles(Array.from(event.currentTarget.files ?? []));
   }
@@ -119,6 +134,55 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
     setRemovedGalleryImages((current) =>
       current.includes(image) ? current.filter((item) => item !== image) : [...current, image],
     );
+  }
+
+  function toggleDuplicateRoom(room: string) {
+    setDuplicateRoomSelections((current) =>
+      current.includes(room) ? current.filter((item) => item !== room) : [...current, room],
+    );
+  }
+
+  async function handleDuplicateSelection() {
+    if (!selectedProperty) {
+      return;
+    }
+
+    setDuplicateStatus({ type: "loading" });
+
+    try {
+      const response = await fetch(`/api/properties/${selectedProperty.slug}/duplicate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ roomSelections: duplicateRoomSelections }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { message?: string; properties?: Property[]; count?: number }
+        | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.message ?? "Kopya portföy oluşturulamadı.");
+      }
+
+      const createdProperties = payload?.properties ?? [];
+      if (createdProperties.length > 0) {
+        setProperties((current) => [...createdProperties, ...current]);
+        setSelectedSlug(createdProperties[0].slug);
+      }
+      setDuplicateRoomSelections([]);
+      setDuplicateStatus({
+        type: "success",
+        message: `${payload?.count ?? createdProperties.length} adet kopya portföy oluşturuldu.`,
+      });
+      router.refresh();
+    } catch (error) {
+      setDuplicateStatus({
+        type: "error",
+        message: error instanceof Error ? error.message : "Kopya portföy oluşturulamadı.",
+      });
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -220,6 +284,12 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
 
   const visibleGalleryCount =
     selectedProperty.galleryImages.filter((image) => !removedGalleryImages.includes(image)).length + galleryFiles.length;
+  const availableHeatingOptions = PROPERTY_HEATING_OPTIONS.includes(selectedProperty.heating as (typeof PROPERTY_HEATING_OPTIONS)[number])
+    ? [...PROPERTY_HEATING_OPTIONS]
+    : [selectedProperty.heating, ...PROPERTY_HEATING_OPTIONS];
+  const availableRoomOptions = PROPERTY_ROOM_OPTIONS.includes(selectedProperty.rooms as (typeof PROPERTY_ROOM_OPTIONS)[number])
+    ? [...PROPERTY_ROOM_OPTIONS]
+    : [selectedProperty.rooms, ...PROPERTY_ROOM_OPTIONS];
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -251,20 +321,66 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
         </select>
       </div>
 
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Kopyala</p>
+          <h3 className="mt-2 text-lg font-semibold text-slate-900">Bu portföyden oda varyantı üretin</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Aynı proje veya firma için mevcut ilanı baz alıp farklı oda tiplerinde yeni kopyalar oluşturabilirsiniz.
+          </p>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-4">
+          {PROPERTY_ROOM_OPTIONS.map((room) => {
+            const isActive = duplicateRoomSelections.includes(room);
+            const isCurrentRoom = room === selectedProperty.rooms;
+
+            return (
+              <button
+                key={room}
+                type="button"
+                onClick={() => toggleDuplicateRoom(room)}
+                className={`rounded-xl border px-3 py-3 text-sm font-semibold transition ${
+                  isActive
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                } ${isCurrentRoom ? "ring-1 ring-amber-300" : ""}`}
+              >
+                {room}
+                {isCurrentRoom ? <span className="ml-2 text-[11px] uppercase tracking-[0.14em]">mevcut</span> : null}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={duplicateStatus.type === "loading"}
+            onClick={handleDuplicateSelection}
+            className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-500"
+          >
+            {duplicateStatus.type === "loading" ? "Kopyalanıyor..." : "Seçilen Oda Tiplerini Kopyala"}
+          </button>
+          <p className="text-xs text-slate-500">
+            Mevcut oda tipi seçiliyse sistem onu tekrar üretmez, sadece farklı varyantları oluşturur.
+          </p>
+        </div>
+
+        {duplicateStatus.type === "error" ? <p className="mt-3 text-sm text-rose-700">{duplicateStatus.message}</p> : null}
+        {duplicateStatus.type === "success" ? <p className="mt-3 text-sm text-emerald-700">{duplicateStatus.message}</p> : null}
+      </div>
+
       <form
         key={`${selectedProperty.slug}-${selectedProperty.title}-${selectedProperty.coverImage}-${selectedProperty.galleryImages.length}`}
         onSubmit={handleSubmit}
         className="mt-5 grid gap-3 md:grid-cols-2"
       >
-        <PropertyFieldShell label="Portföy Başlığı" icon={<TitleFieldIcon />} className="md:col-span-2">
-          <input
-            required
-            name="title"
-            defaultValue={selectedProperty.title}
-            placeholder="Portföy başlığı"
-            className="input"
-          />
-        </PropertyFieldShell>
+        <PropertyDescriptionFields
+          defaultTitle={selectedProperty.title}
+          defaultDescription={selectedProperty.description}
+          defaultTranslations={selectedProperty.translations}
+        />
 
         <PropertyFieldShell label="Şehir" icon={<LocationFieldIcon />}>
           <input required name="city" defaultValue={selectedProperty.city} placeholder="Şehir" className="input" />
@@ -300,14 +416,20 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
             name="price"
             type="number"
             min={1000}
-            defaultValue={selectedProperty.price}
-            placeholder="Fiyat (TRY)"
+            defaultValue={selectedProperty.priceSourceAmount ?? selectedProperty.price}
+            placeholder="Fiyat"
             className="input"
           />
         </PropertyFieldShell>
 
         <PropertyFieldShell label="Oda Sayısı" icon={<RoomFieldIcon />}>
-          <input required name="rooms" defaultValue={selectedProperty.rooms} placeholder="Oda sayısı (örn. 3+1)" className="input" />
+          <select required name="rooms" defaultValue={selectedProperty.rooms} className="input">
+            {availableRoomOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </PropertyFieldShell>
 
         <PropertyFieldShell label="Metrekare" icon={<AreaFieldIcon />}>
@@ -322,12 +444,18 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
           />
         </PropertyFieldShell>
 
-        <PropertyFieldShell label="Kat Bilgisi" icon={<FloorFieldIcon />}>
-          <input required name="floor" defaultValue={selectedProperty.floor} placeholder="Kat bilgisi" className="input" />
+        <PropertyFieldShell label="Kat Bilgisi" icon={<FloorFieldIcon />} hint="Opsiyonel">
+          <input name="floor" defaultValue={selectedProperty.floor} placeholder="Kat bilgisi (opsiyonel)" className="input" />
         </PropertyFieldShell>
 
         <PropertyFieldShell label="Isıtma" icon={<HeatingFieldIcon />}>
-          <input required name="heating" defaultValue={selectedProperty.heating} placeholder="Isıtma" className="input" />
+          <select required name="heating" defaultValue={selectedProperty.heating} className="input">
+            {availableHeatingOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </PropertyFieldShell>
 
         <PropertyFieldShell label="Enlem" icon={<LocationFieldIcon />} hint="Opsiyonel">
@@ -499,11 +627,6 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
           en fazla {MAX_WEBP_UPLOAD_MB} MB, toplam yükleme en fazla {MAX_PORTFOLIO_REQUEST_MB} MB.
         </p>
 
-        <PropertyDescriptionFields
-          defaultDescription={selectedProperty.description}
-          defaultTranslations={selectedProperty.translations}
-        />
-
         <label className="md:col-span-2">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
             Öne Çıkanlar
@@ -531,6 +654,11 @@ export function PortfolioEditor({ initialProperties, advisors }: PortfolioEditor
         </label>
 
         <PropertyInfoFields defaultItems={selectedProperty.infoItems} />
+        <PropertyOperationalFields
+          currentUserRole={currentUserRole}
+          defaults={selectedProperty}
+          allowPublicationControl={currentUserRole === "portal_admin" || currentUserRole === "admin"}
+        />
 
         <button
           type="submit"

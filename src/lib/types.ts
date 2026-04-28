@@ -2,6 +2,10 @@ import type { SiteLanguage } from "@/lib/site-preferences";
 
 export type UserRole = "portal_admin" | "admin" | "portfolio_manager" | "advisor" | "editor";
 
+export type PropertyPriceCurrency = "TRY" | "USD" | "EUR" | "GBP";
+export type PropertyMarketStatus = "Hazır" | "Proje";
+export type PropertyPublicationStatus = "Pasif" | "Aktif";
+
 export type PropertyType =
   | "Daire"
   | "Villa"
@@ -87,15 +91,24 @@ export type Property = {
   neighborhood: string;
   type: PropertyType;
   price: number;
+  priceCurrency?: PropertyPriceCurrency;
+  priceSourceAmount?: number;
   rooms: string;
   areaM2: number;
   floor: string;
   heating: string;
+  marketStatus?: PropertyMarketStatus;
+  publicationStatus?: PropertyPublicationStatus;
   listingRef: string;
   description: string;
   highlights: string[];
   features: string[];
   infoItems?: PropertyInfoItem[];
+  developerCompany?: string;
+  staffNotes?: string;
+  customerFeedbackNotes?: string;
+  adminCommissionNotes?: string;
+  adminPrivateNotes?: string;
   advisorId: string;
   latitude: number;
   longitude: number;
@@ -115,6 +128,8 @@ export type PropertyFilter = {
   maxPrice?: number;
   rooms?: string;
   advisorId?: string;
+  publicationStatus?: PropertyPublicationStatus;
+  includeInactive?: boolean;
 };
 
 export type CreatePropertyInput = {
@@ -124,14 +139,23 @@ export type CreatePropertyInput = {
   neighborhood: string;
   type: PropertyType;
   price: number;
+  priceCurrency?: PropertyPriceCurrency;
+  priceSourceAmount?: number;
   rooms: string;
   areaM2: number;
   floor: string;
   heating: string;
+  marketStatus?: PropertyMarketStatus;
+  publicationStatus?: PropertyPublicationStatus;
   description: string;
   highlights: string[];
   features: string[];
   infoItems?: PropertyInfoItem[];
+  developerCompany?: string;
+  staffNotes?: string;
+  customerFeedbackNotes?: string;
+  adminCommissionNotes?: string;
+  adminPrivateNotes?: string;
   advisorId?: string;
   latitude?: number;
   longitude?: number;

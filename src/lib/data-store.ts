@@ -105,12 +105,22 @@ function toSafeUser(user: User): SafeUser {
   };
 }
 
+function cleanOptionalText(value: string | undefined): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 // ─── row mappers ─────────────────────────────────────────────────────────────
 
 function rowToProperty(row: Record<string, unknown>): Property {
   return {
     ...(row as unknown as Property),
     price: Number(row.price),
+    priceSourceAmount: row.priceSourceAmount != null ? Number(row.priceSourceAmount) : undefined,
     areaM2: Number(row.areaM2),
     latitude: Number(row.latitude),
     longitude: Number(row.longitude),
@@ -120,6 +130,14 @@ function rowToProperty(row: Record<string, unknown>): Property {
     galleryImages: JSON.parse(row.galleryImages as string),
     imageLabels: JSON.parse(row.imageLabels as string),
     translations: JSON.parse(row.translations as string),
+    priceCurrency: (row.priceCurrency as Property["priceCurrency"]) ?? "TRY",
+    marketStatus: (row.marketStatus as Property["marketStatus"]) ?? "Hazır",
+    publicationStatus: (row.publicationStatus as Property["publicationStatus"]) ?? "Aktif",
+    developerCompany: cleanOptionalText(row.developerCompany as string | undefined),
+    staffNotes: cleanOptionalText(row.staffNotes as string | undefined),
+    customerFeedbackNotes: cleanOptionalText(row.customerFeedbackNotes as string | undefined),
+    adminCommissionNotes: cleanOptionalText(row.adminCommissionNotes as string | undefined),
+    adminPrivateNotes: cleanOptionalText(row.adminPrivateNotes as string | undefined),
   };
 }
 
@@ -240,8 +258,10 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
   const query = filter.query ? normalizeText(filter.query) : "";
 
   return rows.filter((p) => {
+    if (!filter.includeInactive && (p.publicationStatus ?? "Aktif") !== "Aktif") return false;
     if (filter.city && p.city !== filter.city) return false;
     if (filter.type && p.type !== filter.type) return false;
+    if (filter.publicationStatus && p.publicationStatus !== filter.publicationStatus) return false;
     if (typeof filter.minPrice === "number" && p.price < filter.minPrice) return false;
     if (typeof filter.maxPrice === "number" && p.price > filter.maxPrice) return false;
     if (filter.rooms && p.rooms !== filter.rooms) return false;
@@ -250,6 +270,7 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
 
     const haystack = normalizeText([
       p.title, p.city, p.district, p.neighborhood, p.listingRef,
+      p.developerCompany ?? "",
       ...(p.infoItems?.map((i) => i.value) ?? []),
       ...(p.translations ? Object.values(p.translations).flatMap((t) => [
         t?.title ?? "", t?.description ?? "",
@@ -262,8 +283,22 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
 }
 
 export function getPropertyBySlug(slug: string): Property | undefined {
+  return getPropertyBySlugWithOptions(slug);
+}
+
+export function getPropertyBySlugWithOptions(slug: string, options: { includeInactive?: boolean } = {}): Property | undefined {
   const row = db.prepare("SELECT * FROM properties WHERE slug = ?").get(slug) as Record<string, unknown> | undefined;
-  return row ? rowToProperty(row) : undefined;
+  const property = row ? rowToProperty(row) : undefined;
+
+  if (!property) {
+    return undefined;
+  }
+
+  if (!options.includeInactive && (property.publicationStatus ?? "Aktif") !== "Aktif") {
+    return undefined;
+  }
+
+  return property;
 }
 
 export function createProperty(input: CreatePropertyInput, actorId: string): Property {
@@ -279,9 +314,18 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
 
   const property: Property = {
     ...input,
+    priceCurrency: input.priceCurrency ?? "TRY",
+    priceSourceAmount: input.priceSourceAmount ?? input.price,
     advisorId: input.advisorId?.trim() ?? "",
+    marketStatus: input.marketStatus ?? "Hazır",
+    publicationStatus: input.publicationStatus ?? "Pasif",
     infoItems: sanitizePropertyInfoItems(input.infoItems),
     translations: sanitizePropertyTranslations(input.translations),
+    developerCompany: cleanOptionalText(input.developerCompany),
+    staffNotes: cleanOptionalText(input.staffNotes),
+    customerFeedbackNotes: cleanOptionalText(input.customerFeedbackNotes),
+    adminCommissionNotes: cleanOptionalText(input.adminCommissionNotes),
+    adminPrivateNotes: cleanOptionalText(input.adminPrivateNotes),
     latitude: location.latitude,
     longitude: location.longitude,
     coverImage: input.coverImage || sampleSet.cover,
@@ -295,13 +339,15 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
 
   db.prepare(`
     INSERT INTO properties
-      (id, slug, title, city, district, neighborhood, type, price, rooms, areaM2,
-       floor, heating, listingRef, description, highlights, features, infoItems,
+      (id, slug, title, city, district, neighborhood, type, price, priceCurrency, priceSourceAmount, rooms, areaM2,
+       floor, heating, marketStatus, publicationStatus, listingRef, description, highlights, features, infoItems,
+       developerCompany, staffNotes, customerFeedbackNotes, adminCommissionNotes, adminPrivateNotes,
        advisorId, latitude, longitude, coverColor, coverImage, galleryImages,
        imageLabels, translations, publishedAt)
     VALUES
-      (@id, @slug, @title, @city, @district, @neighborhood, @type, @price, @rooms, @areaM2,
-       @floor, @heating, @listingRef, @description, @highlights, @features, @infoItems,
+      (@id, @slug, @title, @city, @district, @neighborhood, @type, @price, @priceCurrency, @priceSourceAmount, @rooms, @areaM2,
+       @floor, @heating, @marketStatus, @publicationStatus, @listingRef, @description, @highlights, @features, @infoItems,
+       @developerCompany, @staffNotes, @customerFeedbackNotes, @adminCommissionNotes, @adminPrivateNotes,
        @advisorId, @latitude, @longitude, @coverColor, @coverImage, @galleryImages,
        @imageLabels, @translations, @publishedAt)
   `).run({
@@ -312,13 +358,18 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
     galleryImages: JSON.stringify(property.galleryImages),
     imageLabels: JSON.stringify(property.imageLabels),
     translations: JSON.stringify(property.translations),
+    developerCompany: property.developerCompany ?? null,
+    staffNotes: property.staffNotes ?? null,
+    customerFeedbackNotes: property.customerFeedbackNotes ?? null,
+    adminCommissionNotes: property.adminCommissionNotes ?? null,
+    adminPrivateNotes: property.adminPrivateNotes ?? null,
   });
 
   return property;
 }
 
 export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): Property {
-  const property = getPropertyBySlug(slug);
+  const property = getPropertyBySlugWithOptions(slug, { includeInactive: true });
   if (!property) throw new Error("Portföy bulunamadı.");
 
   if (input.advisorId && !getAdvisorById(input.advisorId)) {
@@ -340,14 +391,23 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
     neighborhood: input.neighborhood.trim(),
     type: input.type,
     price: input.price,
+    priceCurrency: input.priceCurrency ?? property.priceCurrency ?? "TRY",
+    priceSourceAmount: input.priceSourceAmount ?? input.price,
     rooms: input.rooms.trim(),
     areaM2: input.areaM2,
     floor: input.floor.trim(),
     heating: input.heating.trim(),
+    marketStatus: input.marketStatus ?? property.marketStatus ?? "Hazır",
+    publicationStatus: input.publicationStatus ?? property.publicationStatus ?? "Pasif",
     description: input.description.trim(),
     highlights: input.highlights,
     features: input.features,
     infoItems: sanitizePropertyInfoItems(input.infoItems),
+    developerCompany: cleanOptionalText(input.developerCompany),
+    staffNotes: cleanOptionalText(input.staffNotes),
+    customerFeedbackNotes: cleanOptionalText(input.customerFeedbackNotes),
+    adminCommissionNotes: cleanOptionalText(input.adminCommissionNotes),
+    adminPrivateNotes: cleanOptionalText(input.adminPrivateNotes),
     advisorId: input.advisorId?.trim() ?? "",
     latitude: location.latitude,
     longitude: location.longitude,
@@ -361,9 +421,12 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
   db.prepare(`
     UPDATE properties SET
       title=@title, city=@city, district=@district, neighborhood=@neighborhood,
-      type=@type, price=@price, rooms=@rooms, areaM2=@areaM2, floor=@floor,
-      heating=@heating, description=@description, highlights=@highlights,
-      features=@features, infoItems=@infoItems, advisorId=@advisorId,
+      type=@type, price=@price, priceCurrency=@priceCurrency, priceSourceAmount=@priceSourceAmount,
+      rooms=@rooms, areaM2=@areaM2, floor=@floor,
+      heating=@heating, marketStatus=@marketStatus, publicationStatus=@publicationStatus, description=@description, highlights=@highlights,
+      features=@features, infoItems=@infoItems, developerCompany=@developerCompany,
+      staffNotes=@staffNotes, customerFeedbackNotes=@customerFeedbackNotes,
+      adminCommissionNotes=@adminCommissionNotes, adminPrivateNotes=@adminPrivateNotes, advisorId=@advisorId,
       latitude=@latitude, longitude=@longitude, coverColor=@coverColor,
       coverImage=@coverImage, galleryImages=@galleryImages, imageLabels=@imageLabels,
       translations=@translations
@@ -376,28 +439,45 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
     galleryImages: JSON.stringify(updated.galleryImages),
     imageLabels: JSON.stringify(updated.imageLabels),
     translations: JSON.stringify(updated.translations),
+    developerCompany: updated.developerCompany ?? null,
+    staffNotes: updated.staffNotes ?? null,
+    customerFeedbackNotes: updated.customerFeedbackNotes ?? null,
+    adminCommissionNotes: updated.adminCommissionNotes ?? null,
+    adminPrivateNotes: updated.adminPrivateNotes ?? null,
   });
 
   return updated;
 }
 
 export function deletePropertyBySlug(slug: string): Property {
-  const property = getPropertyBySlug(slug);
+  const property = getPropertyBySlugWithOptions(slug, { includeInactive: true });
   if (!property) throw new Error("Portföy bulunamadı.");
   db.prepare("DELETE FROM properties WHERE slug = ?").run(slug);
   return property;
 }
 
 export function listCities(): string[] {
-  return (db.prepare("SELECT DISTINCT city FROM properties ORDER BY city").all() as { city: string }[]).map((r) => r.city);
+  return Array.from(new Set(listProperties().map((property) => property.city))).sort((left, right) =>
+    left.localeCompare(right, "tr"),
+  );
 }
 
 export function listTypes(): string[] {
-  return (db.prepare("SELECT DISTINCT type FROM properties ORDER BY type").all() as { type: string }[]).map((r) => r.type);
+  return Array.from(new Set(listProperties().map((property) => property.type))).sort((left, right) =>
+    left.localeCompare(right, "tr"),
+  );
 }
 
 export function listRoomOptions(): string[] {
-  return (db.prepare("SELECT DISTINCT rooms FROM properties ORDER BY rooms").all() as { rooms: string }[]).map((r) => r.rooms);
+  return Array.from(new Set(listProperties().map((property) => property.rooms))).sort((left, right) =>
+    left.localeCompare(right, "tr"),
+  );
+}
+
+export function countPropertiesReferencingImagePath(imagePath: string): number {
+  return listProperties({ includeInactive: true }).filter((property) =>
+    property.coverImage === imagePath || property.galleryImages.includes(imagePath),
+  ).length;
 }
 
 // ─── users ───────────────────────────────────────────────────────────────────

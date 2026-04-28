@@ -1,5 +1,5 @@
 export type SiteLanguage = "TR" | "EN" | "RU" | "AR";
-export type SiteCurrency = "TRY" | "USD" | "EUR";
+export type SiteCurrency = "TRY" | "USD" | "EUR" | "GBP";
 
 export type SitePreferencesSnapshot = {
   language: SiteLanguage;
@@ -24,12 +24,14 @@ const currencyRates: Record<SiteCurrency, number> = {
   TRY: 1,
   USD: 0.031,
   EUR: 0.029,
+  GBP: 0.025,
 };
 
 const currencyLocales: Record<SiteCurrency, string> = {
   TRY: "tr-TR",
   USD: "en-US",
   EUR: "de-DE",
+  GBP: "en-GB",
 };
 
 const languageLocales: Record<SiteLanguage, string> = {
@@ -55,7 +57,7 @@ export function normalizeSiteLanguage(value: string | null | undefined): SiteLan
 }
 
 export function normalizeSiteCurrency(value: string | null | undefined): SiteCurrency {
-  if (value === "USD" || value === "EUR") {
+  if (value === "USD" || value === "EUR" || value === "GBP") {
     return value;
   }
 
@@ -100,6 +102,15 @@ export function readSitePreferencesFromCookieHeader(cookieHeader: string | null 
 export function convertPriceFromTry(value: number, currency: SiteCurrency): number {
   const rate = currencyRates[currency] ?? 1;
   return Math.round(value * rate);
+}
+
+export function convertPriceToTry(value: number, currency: SiteCurrency): number {
+  if (currency === "TRY") {
+    return Math.round(value);
+  }
+
+  const rate = currencyRates[currency] ?? 1;
+  return Math.round(value / rate);
 }
 
 export function localeForCurrency(currency: SiteCurrency): string {

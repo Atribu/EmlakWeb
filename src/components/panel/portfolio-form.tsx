@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PropertyDescriptionFields } from "@/components/panel/property-description-fields";
+import { PropertyOperationalFields } from "@/components/panel/property-operational-fields";
 import {
   AdvisorFieldIcon,
   AreaFieldIcon,
@@ -15,10 +15,14 @@ import {
   PriceFieldIcon,
   PropertyFieldShell,
   RoomFieldIcon,
-  TitleFieldIcon,
   TypeFieldIcon,
 } from "@/components/panel/property-field-shell";
 import { PropertyInfoFields } from "@/components/panel/property-info-fields";
+import {
+  PROPERTY_HEATING_OPTIONS,
+  PROPERTY_ROOM_OPTIONS,
+  PROPERTY_TYPE_OPTIONS,
+} from "@/lib/property-panel-options";
 import {
   MAX_GALLERY_IMAGE_COUNT,
   MAX_PORTFOLIO_REQUEST_MB,
@@ -27,19 +31,20 @@ import {
   validatePortfolioImageFile,
   validateTotalUploadSize,
 } from "@/lib/portfolio-images";
-import type { Advisor } from "@/lib/types";
+import type { Advisor, UserRole } from "@/lib/types";
 
 type PortfolioFormProps = {
   advisors: Advisor[];
+  currentUserRole: UserRole;
 };
 
 type SubmitState =
   | { type: "idle" }
   | { type: "loading" }
   | { type: "error"; message: string }
-  | { type: "success"; listingRef: string; slug: string };
+  | { type: "success"; listingRef: string; slug: string; count: number };
 
-const typeOptions = ["Daire", "Villa", "Rezidans", "Arsa", "Ofis"];
+const typeOptions = [...PROPERTY_TYPE_OPTIONS];
 const coverOptions = [
   { label: "Turkuaz", value: "linear-gradient(120deg, #0f766e, #2dd4bf)" },
   { label: "Mavi", value: "linear-gradient(120deg, #1d4ed8, #60a5fa)" },
@@ -66,7 +71,7 @@ function syncFileInput(input: HTMLInputElement | null, files: File[]) {
   input.files = dataTransfer.files;
 }
 
-export function PortfolioForm({ advisors }: PortfolioFormProps) {
+export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps) {
   const router = useRouter();
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
@@ -137,12 +142,14 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
 
       const payload = (await response.json()) as {
         property: { listingRef: string; slug: string };
+        count?: number;
       };
 
       setStatus({
         type: "success",
         listingRef: payload.property.listingRef,
         slug: payload.property.slug,
+        count: payload.count ?? 1,
       });
 
       form.reset();
@@ -160,14 +167,12 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-xl font-semibold tracking-tight text-slate-900">Yeni Portföy Yükle</h2>
       <p className="mt-2 text-sm text-slate-600">
-        Ortak alanları tek formda doldurun; açıklamayı Türkçe ana metne ek olarak İngilizce ve Rusça girebilirsiniz.
-        Kapak hariç tüm görselleri tek galeri alanından topluca yükleyebilirsiniz.
+        Ortak alanları tek formda doldurun; başlık ve açıklamayı Türkçe, İngilizce ve Rusça girin. Birden fazla oda
+        tipi seçerseniz sistem aynı bilgilerle ayrı ilanlar oluşturur.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-5 grid gap-3 md:grid-cols-2">
-        <PropertyFieldShell label="Portföy Başlığı" icon={<TitleFieldIcon />} className="md:col-span-2">
-          <input required name="title" placeholder="Portföy başlığı" className="input" />
-        </PropertyFieldShell>
+        <PropertyDescriptionFields />
 
         <PropertyFieldShell label="Şehir" icon={<LocationFieldIcon />}>
           <input required name="city" placeholder="Şehir" className="input" />
@@ -192,23 +197,39 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
         </PropertyFieldShell>
 
         <PropertyFieldShell label="Fiyat" icon={<PriceFieldIcon />}>
-          <input required name="price" type="number" min={1000} placeholder="Fiyat (TRY)" className="input" />
-        </PropertyFieldShell>
-
-        <PropertyFieldShell label="Oda Sayısı" icon={<RoomFieldIcon />}>
-          <input required name="rooms" placeholder="Oda sayısı (örn. 3+1)" className="input" />
+          <input required name="price" type="number" min={1000} placeholder="Fiyat" className="input" />
         </PropertyFieldShell>
 
         <PropertyFieldShell label="Metrekare" icon={<AreaFieldIcon />}>
           <input required name="areaM2" type="number" min={20} placeholder="m²" className="input" />
         </PropertyFieldShell>
 
-        <PropertyFieldShell label="Kat Bilgisi" icon={<FloorFieldIcon />}>
-          <input required name="floor" placeholder="Kat bilgisi" className="input" />
+        <PropertyFieldShell label="Kat Bilgisi" icon={<FloorFieldIcon />} className="md:col-span-2" hint="Opsiyonel">
+          <input name="floor" placeholder="Kat bilgisi (opsiyonel)" className="input" />
+        </PropertyFieldShell>
+
+        <PropertyFieldShell label="Oda Sayıları" icon={<RoomFieldIcon />} className="md:col-span-2">
+          <div className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:grid-cols-3 xl:grid-cols-4">
+            {PROPERTY_ROOM_OPTIONS.map((option) => (
+              <label key={option} className="cursor-pointer">
+                <input type="checkbox" name="roomSelections" value={option} className="peer sr-only" />
+                <span className="flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 peer-checked:border-slate-900 peer-checked:bg-slate-900 peer-checked:text-white">
+                  {option}
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500">Birden fazla oda seçerseniz sistem her oda tipi için ayrı ilan oluşturur.</p>
         </PropertyFieldShell>
 
         <PropertyFieldShell label="Isıtma" icon={<HeatingFieldIcon />}>
-          <input required name="heating" placeholder="Isıtma" className="input" />
+          <select required name="heating" className="input">
+            {PROPERTY_HEATING_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </PropertyFieldShell>
 
         <PropertyFieldShell label="Enlem" icon={<LocationFieldIcon />} hint="Opsiyonel">
@@ -319,8 +340,6 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
           Dosya başına en fazla {MAX_WEBP_UPLOAD_MB} MB, toplam yükleme en fazla {MAX_PORTFOLIO_REQUEST_MB} MB.
         </p>
 
-        <PropertyDescriptionFields />
-
         <label className="md:col-span-2">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
             Öne Çıkanlar
@@ -346,13 +365,14 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
         </label>
 
         <PropertyInfoFields />
+        <PropertyOperationalFields currentUserRole={currentUserRole} allowPublicationControl={false} />
 
         <button
           type="submit"
           disabled={status.type === "loading"}
           className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-500 md:col-span-2"
         >
-          {status.type === "loading" ? "Kaydediliyor..." : "Portföyü Yayına Al"}
+          {status.type === "loading" ? "Kaydediliyor..." : "Portföyü Pasif Olarak Kaydet"}
         </button>
       </form>
 
@@ -360,10 +380,9 @@ export function PortfolioForm({ advisors }: PortfolioFormProps) {
 
       {status.type === "success" ? (
         <p className="mt-3 text-sm text-emerald-700">
-          {status.listingRef} kodlu portföy eklendi.
-          <Link href={`/ilan/${status.slug}`} className="ml-1 font-semibold underline">
-            İlanı görüntüle
-          </Link>
+          {status.count > 1
+            ? `${status.count} adet portföy pasif olarak oluşturuldu. İlk ilan kodu: ${status.listingRef}. Yönetici onayı sonrası yayına alınabilir.`
+            : `${status.listingRef} kodlu portföy pasif olarak eklendi. Yönetici onayı sonrası yayına alınabilir.`}
         </p>
       ) : null}
     </section>

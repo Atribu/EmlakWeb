@@ -128,7 +128,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
   const visibleTabs = panelTabs.filter((tab) => allowedTabs.includes(tab.id));
 
   const advisors = listAdvisors();
-  const properties = listProperties();
+  const properties = listProperties({ includeInactive: true });
   const allUsers = listUsers();
   const users = filterUsersForActor(currentUser, allUsers);
   const summary = dashboardSummary();
@@ -190,8 +190,14 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
               />
             ) : null}
 
-            {activeTab === "portfolio-create" ? <PortfolioForm advisors={advisors} /> : null}
-            {activeTab === "portfolio-edit" ? <PortfolioEditor initialProperties={properties} advisors={advisors} /> : null}
+            {activeTab === "portfolio-create" ? <PortfolioForm advisors={advisors} currentUserRole={currentUser.role} /> : null}
+            {activeTab === "portfolio-edit" ? (
+              <PortfolioEditor
+                initialProperties={properties}
+                advisors={advisors}
+                currentUserRole={currentUser.role}
+              />
+            ) : null}
             {activeTab === "portfolio-delete" ? (
               <PortfolioDelete
                 initialProperties={properties}
@@ -324,18 +330,29 @@ function OverviewSection({
                 </tr>
               </thead>
               <tbody>
-                {properties.slice(0, 8).map((property) => (
-                  <tr key={property.id} className="border-b border-slate-100">
-                    <td className="py-2 pr-3 font-semibold">{property.listingRef}</td>
-                    <td className="py-2 pr-3">
-                      <Link href={`/ilan/${property.slug}`} className="hover:underline">
-                        {property.title}
-                      </Link>
-                    </td>
-                    <td className="py-2 pr-3">{advisorMap.get(property.advisorId)?.name ?? "-"}</td>
-                    <td className="py-2 pr-3 text-emerald-700">Yayında</td>
-                  </tr>
-                ))}
+                {properties.slice(0, 8).map((property) => {
+                  const publicationStatus = property.publicationStatus ?? "Aktif";
+                  const isPublished = publicationStatus === "Aktif";
+
+                  return (
+                    <tr key={property.id} className="border-b border-slate-100">
+                      <td className="py-2 pr-3 font-semibold">{property.listingRef}</td>
+                      <td className="py-2 pr-3">
+                        {isPublished ? (
+                          <Link href={`/ilan/${property.slug}`} className="hover:underline">
+                            {property.title}
+                          </Link>
+                        ) : (
+                          <span className="font-medium text-slate-900">{property.title}</span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-3">{advisorMap.get(property.advisorId)?.name ?? "-"}</td>
+                      <td className={`py-2 pr-3 font-medium ${isPublished ? "text-emerald-700" : "text-amber-700"}`}>
+                        {publicationStatus}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
