@@ -9,6 +9,7 @@ import { PropertyOperationalFields } from "@/components/panel/property-operation
 import {
   AdvisorFieldIcon,
   AreaFieldIcon,
+  CurrencyFieldIcon,
   FloorFieldIcon,
   HeatingFieldIcon,
   LocationFieldIcon,
@@ -20,8 +21,10 @@ import {
 } from "@/components/panel/property-field-shell";
 import { PropertyInfoFields } from "@/components/panel/property-info-fields";
 import { formatPrice } from "@/lib/format";
+import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import {
   PROPERTY_HEATING_OPTIONS,
+  PROPERTY_PRICE_CURRENCY_OPTIONS,
   PROPERTY_ROOM_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
 } from "@/lib/property-panel-options";
@@ -315,7 +318,13 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
         >
           {properties.map((property) => (
             <option key={property.id} value={property.slug}>
-              {property.listingRef} • {property.title} • {formatPrice(property.price)}
+              {property.listingRef} • {property.title} • {formatPrice(
+                propertyDisplayAmount(property),
+                propertyDisplayCurrency(property),
+                {
+                  sourceCurrency: propertyDisplayCurrency(property),
+                },
+              )}
             </option>
           ))}
         </select>
@@ -410,17 +419,37 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
           </select>
         </PropertyFieldShell>
 
-        <PropertyFieldShell label="Fiyat" icon={<PriceFieldIcon />}>
-          <input
-            required
-            name="price"
-            type="number"
-            min={1000}
-            defaultValue={selectedProperty.priceSourceAmount ?? selectedProperty.price}
-            placeholder="Fiyat"
-            className="input"
-          />
-        </PropertyFieldShell>
+        <div className="grid gap-3 md:col-span-2 sm:grid-cols-[minmax(0,1fr)_180px]">
+          <PropertyFieldShell
+            label="Fiyat"
+            icon={<PriceFieldIcon />}
+            hint="Tutarı seçtiğiniz para biriminde düzenleyin."
+          >
+            <input
+              required
+              name="price"
+              type="number"
+              min={1000}
+              defaultValue={selectedProperty.priceSourceAmount ?? selectedProperty.price}
+              placeholder="Fiyat"
+              className="input"
+            />
+          </PropertyFieldShell>
+
+          <PropertyFieldShell label="Para Birimi" icon={<CurrencyFieldIcon />}>
+            <select
+              name="priceCurrency"
+              defaultValue={selectedProperty.priceCurrency ?? "TRY"}
+              className="input"
+            >
+              {PROPERTY_PRICE_CURRENCY_OPTIONS.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.symbol} {option.code}
+                </option>
+              ))}
+            </select>
+          </PropertyFieldShell>
+        </div>
 
         <PropertyFieldShell label="Oda Sayısı" icon={<RoomFieldIcon />}>
           <select required name="rooms" defaultValue={selectedProperty.rooms} className="input">

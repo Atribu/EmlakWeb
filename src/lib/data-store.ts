@@ -120,7 +120,7 @@ function rowToProperty(row: Record<string, unknown>): Property {
   return {
     ...(row as unknown as Property),
     price: Number(row.price),
-    priceSourceAmount: row.priceSourceAmount != null ? Number(row.priceSourceAmount) : undefined,
+    priceSourceAmount: row.priceSourceAmount != null ? Number(row.priceSourceAmount) : Number(row.price),
     areaM2: Number(row.areaM2),
     latitude: Number(row.latitude),
     longitude: Number(row.longitude),

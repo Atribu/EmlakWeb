@@ -1,6 +1,5 @@
 import {
   BuildingFieldIcon,
-  CurrencyFieldIcon,
   NoteFieldIcon,
   PropertyFieldShell,
   PublishFieldIcon,
@@ -9,7 +8,6 @@ import {
 } from "@/components/panel/property-field-shell";
 import {
   PROPERTY_MARKET_STATUS_OPTIONS,
-  PROPERTY_PRICE_CURRENCY_OPTIONS,
   PROPERTY_PUBLICATION_STATUS_OPTIONS,
 } from "@/lib/property-panel-options";
 import type { Property, UserRole } from "@/lib/types";
@@ -19,8 +17,6 @@ type PropertyOperationalFieldsProps = {
   allowPublicationControl?: boolean;
   defaults?: Pick<
     Property,
-    | "priceCurrency"
-    | "priceSourceAmount"
     | "marketStatus"
     | "publicationStatus"
     | "developerCompany"
@@ -44,20 +40,6 @@ export function PropertyOperationalFields({
 
   return (
     <>
-      <PropertyFieldShell label="Fiyat Para Birimi" icon={<CurrencyFieldIcon />}>
-        <select
-          name="priceCurrency"
-          defaultValue={defaults?.priceCurrency ?? "TRY"}
-          className="input"
-        >
-          {PROPERTY_PRICE_CURRENCY_OPTIONS.map((option) => (
-            <option key={option.code} value={option.code}>
-              {option.label} ({option.symbol})
-            </option>
-          ))}
-        </select>
-      </PropertyFieldShell>
-
       <PropertyFieldShell label="Portföy Durumu" icon={<StatusFieldIcon />}>
         <select
           name="marketStatus"

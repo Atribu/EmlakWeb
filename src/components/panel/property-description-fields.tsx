@@ -51,8 +51,8 @@ export function PropertyDescriptionFields({
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Açıklama Dilleri</p>
         <h3 className="mt-2 text-lg font-semibold text-slate-900">Başlık ve açıklamayı 3 dilde girin</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Türkçe ana dil olarak kullanılır. İngilizce ve Rusça alanlarını doldurduğunuzda kullanıcı seçtiği dilde
-          başlık ve açıklamayı görür; boş bırakırsanız sistem Türkçe içeriği gösterir.
+          İngilizce ve Rusça alanları tamamen manuel girilir; sistem otomatik çeviri üretmez. Boş kalan ek dil
+          alanlarında kullanıcıya Türkçe içerik gösterilmeye devam edilir.
         </p>
       </div>
 

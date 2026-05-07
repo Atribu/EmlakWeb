@@ -24,6 +24,8 @@ import {
   readPropertyTranslationsFromFormData,
   readPropertyTranslationsFromPayload,
 } from "@/lib/property-content";
+import { getExchangeRateSnapshot } from "@/lib/exchange-rates";
+import { type ExchangeRateTable } from "@/lib/exchange-rates-shared";
 import { convertPriceToTry } from "@/lib/site-preferences";
 import type { CreatePropertyInput, Property, PropertyMarketStatus, PropertyPriceCurrency, PropertyPublicationStatus, PropertyType } from "@/lib/types";
 
@@ -85,6 +87,14 @@ function parsePublicationStatus(value: unknown): PropertyPublicationStatus {
   }
 
   return status;
+}
+
+function parseOptionalPublicationStatus(value: unknown): PropertyPublicationStatus | undefined {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  return parsePublicationStatus(value);
 }
 
 function parseString(value: unknown, fieldLabel: string): string {
@@ -150,7 +160,7 @@ function applyRoleScopedFields(
   };
 }
 
-function parseInput(value: unknown): CreatePropertyInput {
+function parseInput(value: unknown, exchangeRates: ExchangeRateTable): CreatePropertyInput {
   if (!value || typeof value !== "object") {
     throw new Error("Geçersiz istek gövdesi.");
   }
@@ -170,7 +180,7 @@ function parseInput(value: unknown): CreatePropertyInput {
     district: parseString(payload.district, "İlçe"),
     neighborhood: parseString(payload.neighborhood, "Mahalle"),
     type,
-    price: convertPriceToTry(priceSourceAmount, priceCurrency),
+    price: convertPriceToTry(priceSourceAmount, priceCurrency, exchangeRates),
     priceCurrency,
     priceSourceAmount,
     rooms: parseString(payload.rooms, "Oda bilgisi"),
@@ -178,7 +188,7 @@ function parseInput(value: unknown): CreatePropertyInput {
     floor: parseOptionalString(payload.floor) ?? "",
     heating: parseString(payload.heating, "Isıtma"),
     marketStatus: parseMarketStatus(payload.marketStatus),
-    publicationStatus: parsePublicationStatus(payload.publicationStatus),
+    publicationStatus: parseOptionalPublicationStatus(payload.publicationStatus),
     description: parseString(payload.description, "Açıklama"),
     developerCompany: parseOptionalString(payload.developerCompany),
     staffNotes: parseOptionalString(payload.staffNotes),
@@ -219,7 +229,11 @@ function galleryEntriesFromProperty(property: Property): GalleryEntry[] {
   }));
 }
 
-async function parseFormDataInput(formData: FormData, existing: Property): Promise<ParsedUpdateRequest> {
+async function parseFormDataInput(
+  formData: FormData,
+  existing: Property,
+  exchangeRates: ExchangeRateTable,
+): Promise<ParsedUpdateRequest> {
   const type = parseString(formData.get("type"), "Portföy tipi") as PropertyType;
   const title = parseString(formData.get("title"), "Başlık");
   const priceCurrency = parsePriceCurrency(formData.get("priceCurrency"));
@@ -293,7 +307,7 @@ async function parseFormDataInput(formData: FormData, existing: Property): Promi
       district: parseString(formData.get("district"), "İlçe"),
       neighborhood: parseString(formData.get("neighborhood"), "Mahalle"),
       type,
-      price: convertPriceToTry(priceSourceAmount, priceCurrency),
+      price: convertPriceToTry(priceSourceAmount, priceCurrency, exchangeRates),
       priceCurrency,
       priceSourceAmount,
       rooms: parseString(formData.get("rooms"), "Oda bilgisi"),
@@ -301,7 +315,7 @@ async function parseFormDataInput(formData: FormData, existing: Property): Promi
     floor: parseOptionalString(formData.get("floor")) ?? "",
     heating: parseString(formData.get("heating"), "Isıtma"),
     marketStatus: parseMarketStatus(formData.get("marketStatus")),
-    publicationStatus: parsePublicationStatus(formData.get("publicationStatus")),
+    publicationStatus: parseOptionalPublicationStatus(formData.get("publicationStatus")),
       description: parseString(formData.get("description"), "Açıklama"),
       developerCompany: parseOptionalString(formData.get("developerCompany")),
       staffNotes: parseOptionalString(formData.get("staffNotes")),
@@ -346,9 +360,10 @@ export async function PATCH(
 
   try {
     const contentType = request.headers.get("content-type") ?? "";
+    const exchangeRates = (await getExchangeRateSnapshot()).rates;
     const parsed = contentType.includes("multipart/form-data")
-      ? await parseFormDataInput(await request.formData(), existing)
-      : { input: parseInput(await request.json()), orphanedImages: [] };
+      ? await parseFormDataInput(await request.formData(), existing, exchangeRates)
+      : { input: parseInput(await request.json(), exchangeRates), orphanedImages: [] };
     const scopedInput = applyRoleScopedFields(parsed.input, user.role, existing);
     const property = updatePropertyBySlug(slug, scopedInput);
 

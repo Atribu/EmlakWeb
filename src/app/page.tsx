@@ -10,6 +10,7 @@ import { SiteHeader } from "@/components/site-header";
 import { listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { propertyTitleForLanguage } from "@/lib/property-content";
+import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import { homePageCopy, summarizeLocationStockLabel } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 import { homeListingSchema } from "@/lib/seo";
@@ -30,7 +31,10 @@ type PopularLocationCard = {
   badge: string;
   blurb: string;
   stat: string;
-  priceValue: number | null;
+  priceValue: {
+    amount: number;
+    currency: "TRY" | "USD" | "EUR" | "GBP";
+  } | null;
   className: string;
 };
 
@@ -79,7 +83,22 @@ function summarizeLocationPrice(properties: Property[]) {
     return null;
   }
 
-  return Math.min(...properties.map((property) => property.price));
+  const lowestProperty = properties.reduce<Property | null>((currentLowest, property) => {
+    if (!currentLowest || property.price < currentLowest.price) {
+      return property;
+    }
+
+    return currentLowest;
+  }, null);
+
+  if (!lowestProperty) {
+    return null;
+  }
+
+  return {
+    amount: propertyDisplayAmount(lowestProperty),
+    currency: propertyDisplayCurrency(lowestProperty),
+  };
 }
 
 export default async function HomePage() {
@@ -414,7 +433,12 @@ export default async function HomePage() {
                           {copy.startingBand}
                         </p>
                         <p className="mt-1 text-lg font-semibold text-[#fff4de]">
-                          {location.priceValue ? <PriceText amount={location.priceValue} /> : copy.newSelection}
+                          {location.priceValue ? (
+                            <PriceText
+                              amount={location.priceValue.amount}
+                              sourceCurrency={location.priceValue.currency}
+                            />
+                          ) : copy.newSelection}
                         </p>
                       </div>
                       <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#f8edd8]">

@@ -23,7 +23,9 @@ import {
   readPropertyTranslationsFromFormData,
   readPropertyTranslationsFromPayload,
 } from "@/lib/property-content";
-import { convertPriceToTry } from "@/lib/site-preferences";
+import { getExchangeRateSnapshot } from "@/lib/exchange-rates";
+import { convertAmountBetweenCurrencies, type ExchangeRateTable } from "@/lib/exchange-rates-shared";
+import { convertPriceToTry, normalizeSiteCurrency, readSitePreferencesFromCookieHeader } from "@/lib/site-preferences";
 import type { CreatePropertyInput, PropertyMarketStatus, PropertyPriceCurrency, PropertyType } from "@/lib/types";
 
 const validTypes = [...PROPERTY_TYPE_OPTIONS] as PropertyType[];
@@ -171,6 +173,20 @@ function createVariantInput(input: CreatePropertyInput, roomSelections: string[]
   };
 }
 
+function normalizePriceFilterToTry(
+  value: number | undefined,
+  currency: PropertyPriceCurrency,
+  exchangeRates: ExchangeRateTable,
+  direction: "min" | "max",
+) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  const converted = convertAmountBetweenCurrencies(value, currency, "TRY", exchangeRates);
+  return direction === "min" ? Math.ceil(converted) : Math.floor(converted);
+}
+
 function applyRoleScopedFields(
   input: CreatePropertyInput,
   actorRole: string,
@@ -186,7 +202,7 @@ function applyRoleScopedFields(
   };
 }
 
-function parseCreateInput(value: unknown): ParsedCreateRequest {
+function parseCreateInput(value: unknown, exchangeRates: ExchangeRateTable): ParsedCreateRequest {
   if (!value || typeof value !== "object") {
     throw new Error("Geçersiz istek gövdesi.");
   }
@@ -209,7 +225,7 @@ function parseCreateInput(value: unknown): ParsedCreateRequest {
       district: parseString(payload.district, "İlçe"),
       neighborhood: parseString(payload.neighborhood, "Mahalle"),
       type,
-      price: convertPriceToTry(priceSourceAmount, priceCurrency),
+      price: convertPriceToTry(priceSourceAmount, priceCurrency, exchangeRates),
       priceCurrency,
       priceSourceAmount,
       rooms: roomSelections[0],
@@ -241,7 +257,7 @@ function parseCreateInput(value: unknown): ParsedCreateRequest {
   };
 }
 
-async function parseCreateFormData(formData: FormData): Promise<ParsedCreateRequest> {
+async function parseCreateFormData(formData: FormData, exchangeRates: ExchangeRateTable): Promise<ParsedCreateRequest> {
   const type = parseString(formData.get("type"), "Portföy tipi") as PropertyType;
   const title = parseString(formData.get("title"), "Başlık");
   const roomSelections = parseRoomSelections(formData.getAll("roomSelections"), "Oda bilgisi");
@@ -301,7 +317,7 @@ async function parseCreateFormData(formData: FormData): Promise<ParsedCreateRequ
       district: parseString(formData.get("district"), "İlçe"),
       neighborhood: parseString(formData.get("neighborhood"), "Mahalle"),
       type,
-      price: convertPriceToTry(priceSourceAmount, priceCurrency),
+      price: convertPriceToTry(priceSourceAmount, priceCurrency, exchangeRates),
       priceCurrency,
       priceSourceAmount,
       rooms: roomSelections[0],
@@ -336,6 +352,11 @@ export async function GET(request: NextRequest) {
   const city = url.searchParams.get("city") ?? undefined;
   const type = url.searchParams.get("type") ?? undefined;
   const rooms = url.searchParams.get("rooms") ?? undefined;
+  const selectedCurrency = normalizeSiteCurrency(
+    url.searchParams.get("currency")
+      ?? readSitePreferencesFromCookieHeader(request.headers.get("cookie")).currency,
+  );
+  const exchangeRates = (await getExchangeRateSnapshot()).rates;
 
   const minPriceRaw = url.searchParams.get("minPrice");
   const maxPriceRaw = url.searchParams.get("maxPrice");
@@ -348,8 +369,18 @@ export async function GET(request: NextRequest) {
     city,
     type,
     rooms,
-    minPrice: Number.isFinite(minPrice) ? minPrice : undefined,
-    maxPrice: Number.isFinite(maxPrice) ? maxPrice : undefined,
+    minPrice: normalizePriceFilterToTry(
+      Number.isFinite(minPrice) ? minPrice : undefined,
+      selectedCurrency,
+      exchangeRates,
+      "min",
+    ),
+    maxPrice: normalizePriceFilterToTry(
+      Number.isFinite(maxPrice) ? maxPrice : undefined,
+      selectedCurrency,
+      exchangeRates,
+      "max",
+    ),
   });
 
   return NextResponse.json({ properties });
@@ -367,10 +398,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const exchangeRates = (await getExchangeRateSnapshot()).rates;
     const contentType = request.headers.get("content-type") ?? "";
     const parsed = contentType.includes("multipart/form-data")
-      ? await parseCreateFormData(await request.formData())
-      : parseCreateInput(await request.json());
+      ? await parseCreateFormData(await request.formData(), exchangeRates)
+      : parseCreateInput(await request.json(), exchangeRates);
     const scopedInput = applyRoleScopedFields(parsed.input, user.role);
     const properties = parsed.roomSelections.map((room) =>
       createProperty(createVariantInput(scopedInput, parsed.roomSelections, room), user.id),

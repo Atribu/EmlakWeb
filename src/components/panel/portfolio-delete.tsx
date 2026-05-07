@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { formatPrice } from "@/lib/format";
+import { PriceText } from "@/components/price-text";
+import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import type { Advisor, Property } from "@/lib/types";
 
 type PortfolioDeleteProps = {
@@ -123,7 +124,12 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
                   </div>
                   <p className="mt-2 text-lg font-semibold text-slate-900">{property.title}</p>
                   <p className="mt-1 text-sm text-slate-600">
-                    {formatPrice(property.price)} • {property.type} • {property.rooms}
+                    <PriceText
+                      amount={propertyDisplayAmount(property)}
+                      sourceCurrency={propertyDisplayCurrency(property)}
+                      displayCurrency={propertyDisplayCurrency(property)}
+                    />{" "}
+                    • {property.type} • {property.rooms}
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
                     Danışman: {advisorMap.get(property.advisorId) ?? "Atanmamış"}

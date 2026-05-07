@@ -5,8 +5,10 @@ import { PropertyCard } from "@/components/property-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listAdvisors, listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
+import { getExchangeRateSnapshot } from "@/lib/exchange-rates";
+import { convertAmountBetweenCurrencies } from "@/lib/exchange-rates-shared";
 import { portfolioPageCopy, translatePropertyType, translateRoomLabel } from "@/lib/site-copy";
-import { getServerSiteLanguage } from "@/lib/site-preferences-server";
+import { getServerSiteLanguage, getServerSitePreferences } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
   title: "Portföyler | PortföySatış",
@@ -37,7 +39,11 @@ function toNumber(value: string): number | undefined {
 }
 
 export default async function PortfoylerPage({ searchParams }: PortfoylerPageProps) {
-  const language = await getServerSiteLanguage();
+  const [language, preferences, exchangeRateSnapshot] = await Promise.all([
+    getServerSiteLanguage(),
+    getServerSitePreferences(),
+    getExchangeRateSnapshot(),
+  ]);
   const copy = portfolioPageCopy(language);
   const params = await searchParams;
 
@@ -47,14 +53,22 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
   const rooms = readString(params.rooms).trim();
   const minPriceValue = readString(params.minPrice);
   const maxPriceValue = readString(params.maxPrice);
+  const minPrice = toNumber(minPriceValue);
+  const maxPrice = toNumber(maxPriceValue);
 
   const properties = listProperties({
     query: query || undefined,
     city: city || undefined,
     type: type || undefined,
     rooms: rooms || undefined,
-    minPrice: toNumber(minPriceValue),
-    maxPrice: toNumber(maxPriceValue),
+    minPrice:
+      typeof minPrice === "number"
+        ? Math.ceil(convertAmountBetweenCurrencies(minPrice, preferences.currency, "TRY", exchangeRateSnapshot.rates))
+        : undefined,
+    maxPrice:
+      typeof maxPrice === "number"
+        ? Math.floor(convertAmountBetweenCurrencies(maxPrice, preferences.currency, "TRY", exchangeRateSnapshot.rates))
+        : undefined,
   });
 
   const advisors = listAdvisors();

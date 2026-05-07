@@ -8,6 +8,7 @@ import { PropertyOperationalFields } from "@/components/panel/property-operation
 import {
   AdvisorFieldIcon,
   AreaFieldIcon,
+  CurrencyFieldIcon,
   FloorFieldIcon,
   HeatingFieldIcon,
   LocationFieldIcon,
@@ -20,6 +21,7 @@ import {
 import { PropertyInfoFields } from "@/components/panel/property-info-fields";
 import {
   PROPERTY_HEATING_OPTIONS,
+  PROPERTY_PRICE_CURRENCY_OPTIONS,
   PROPERTY_ROOM_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
 } from "@/lib/property-panel-options";
@@ -196,9 +198,25 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
           </select>
         </PropertyFieldShell>
 
-        <PropertyFieldShell label="Fiyat" icon={<PriceFieldIcon />}>
-          <input required name="price" type="number" min={1000} placeholder="Fiyat" className="input" />
-        </PropertyFieldShell>
+        <div className="grid gap-3 md:col-span-2 sm:grid-cols-[minmax(0,1fr)_180px]">
+          <PropertyFieldShell
+            label="Fiyat"
+            icon={<PriceFieldIcon />}
+            hint="Tutarı seçtiğiniz para biriminde girin."
+          >
+            <input required name="price" type="number" min={1000} placeholder="Fiyat" className="input" />
+          </PropertyFieldShell>
+
+          <PropertyFieldShell label="Para Birimi" icon={<CurrencyFieldIcon />}>
+            <select name="priceCurrency" defaultValue="TRY" className="input">
+              {PROPERTY_PRICE_CURRENCY_OPTIONS.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.symbol} {option.code}
+                </option>
+              ))}
+            </select>
+          </PropertyFieldShell>
+        </div>
 
         <PropertyFieldShell label="Metrekare" icon={<AreaFieldIcon />}>
           <input required name="areaM2" type="number" min={20} placeholder="m²" className="input" />

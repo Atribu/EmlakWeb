@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Manrope } from "next/font/google";
 
 import { FloatingContactDock } from "@/components/floating-contact-dock";
 import { SitePreferencesProvider } from "@/components/site-preferences-provider";
+import { getExchangeRateSnapshot } from "@/lib/exchange-rates";
 import { baseMetadata } from "@/lib/seo";
 import { getServerHtmlLang, getServerSitePreferences } from "@/lib/site-preferences-server";
 import "./globals.css";
@@ -29,11 +30,15 @@ export default async function RootLayout({
     getServerHtmlLang(),
     getServerSitePreferences(),
   ]);
+  const initialExchangeRates = await getExchangeRateSnapshot();
 
   return (
     <html lang={htmlLang}>
       <body className={`${manrope.variable} ${cormorant.variable} antialiased`}>
-        <SitePreferencesProvider initialPreferences={initialPreferences}>
+        <SitePreferencesProvider
+          initialPreferences={initialPreferences}
+          initialExchangeRates={initialExchangeRates}
+        >
           {children}
           <FloatingContactDock />
         </SitePreferencesProvider>

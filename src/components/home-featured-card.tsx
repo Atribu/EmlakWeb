@@ -7,6 +7,7 @@ import { useMemo, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { PriceText } from "@/components/price-text";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { propertyTitleForLanguage } from "@/lib/property-content";
+import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import { translatePropertyType, translateRoomLabel } from "@/lib/site-copy";
 import type { SiteLanguage } from "@/lib/site-preferences";
 import type { Property } from "@/lib/types";
@@ -265,7 +266,10 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
               {copy.startingPrice}
             </p>
             <p className="mt-1 text-[1.18rem] font-semibold text-[var(--brand-primary)]">
-              <PriceText amount={property.price} />
+              <PriceText
+                amount={propertyDisplayAmount(property)}
+                sourceCurrency={propertyDisplayCurrency(property)}
+              />
             </p>
           </div>
 

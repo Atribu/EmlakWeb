@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { parseBlogContent } from "@/lib/blog-content";
+import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import type { BlogPost, Property } from "@/lib/types";
 
 const defaultTitle = "PortföySatış | Premium Emlak ve Yatırım Portföyleri";
@@ -111,8 +112,8 @@ export function propertySchema(property: Property) {
     },
     offers: {
       "@type": "Offer",
-      priceCurrency: "TRY",
-      price: property.price,
+      priceCurrency: propertyDisplayCurrency(property),
+      price: propertyDisplayAmount(property),
       availability: "https://schema.org/InStock",
       url: `${baseUrl}/ilan/${property.slug}`,
     },

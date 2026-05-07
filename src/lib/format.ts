@@ -1,5 +1,4 @@
 import {
-  convertPriceFromTry,
   DEFAULT_SITE_CURRENCY,
   DEFAULT_SITE_LANGUAGE,
   localeForCurrency,
@@ -7,15 +6,34 @@ import {
   type SiteCurrency,
   type SiteLanguage,
 } from "@/lib/site-preferences";
+import { convertAmountBetweenCurrencies, type ExchangeRateTable } from "@/lib/exchange-rates-shared";
 
-export function formatPrice(value: number, currency: SiteCurrency = DEFAULT_SITE_CURRENCY): string {
+type FormatPriceOptions = {
+  sourceCurrency?: SiteCurrency;
+  exchangeRates?: ExchangeRateTable;
+  maximumFractionDigits?: number;
+};
+
+export function formatPrice(
+  value: number,
+  currency: SiteCurrency = DEFAULT_SITE_CURRENCY,
+  options: FormatPriceOptions = {},
+): string {
+  const sourceCurrency = options.sourceCurrency ?? currency;
   const formatter = new Intl.NumberFormat(localeForCurrency(currency), {
     style: "currency",
     currency,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: options.maximumFractionDigits ?? 0,
   });
 
-  return formatter.format(convertPriceFromTry(value, currency));
+  const convertedValue = convertAmountBetweenCurrencies(
+    value,
+    sourceCurrency,
+    currency,
+    options.exchangeRates,
+  );
+
+  return formatter.format(convertedValue);
 }
 
 export function formatPhoneForHref(value: string): string {

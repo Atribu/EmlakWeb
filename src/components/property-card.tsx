@@ -12,6 +12,7 @@ import { useSitePreferences } from "@/components/use-site-preferences";
 import { formatPhoneForHref } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { propertyDescriptionForLanguage, propertyTitleForLanguage } from "@/lib/property-content";
+import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import {
   propertyCardCopy,
   propertyWhatsAppInquiry,
@@ -315,7 +316,10 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             <div className="rounded-[1.1rem] border border-[#eadfce] bg-white px-4 py-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7f6d5d]">{copy.startingPrice}</p>
               <p className="mt-1 break-words text-[1.45rem] leading-none font-semibold text-[#d2232d]">
-                <PriceText amount={property.price} />
+                <PriceText
+                  amount={propertyDisplayAmount(property)}
+                  sourceCurrency={propertyDisplayCurrency(property)}
+                />
               </p>
             </div>
           </div>

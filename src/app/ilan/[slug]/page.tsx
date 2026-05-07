@@ -27,6 +27,7 @@ import {
   propertyHighlightsForLanguage,
   propertyTitleForLanguage,
 } from "@/lib/property-content";
+import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import { getProjectMeta } from "@/lib/project-meta";
 import {
   propertyDetailPageCopy,
@@ -108,7 +109,17 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
           <div className="grid gap-6 p-6 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <DetailItem label={copy.labels.price} value={<PriceText amount={property.price} />} icon={<PriceFieldIcon />} highlight />
+                <DetailItem
+                  label={copy.labels.price}
+                  value={
+                    <PriceText
+                      amount={propertyDisplayAmount(property)}
+                      sourceCurrency={propertyDisplayCurrency(property)}
+                    />
+                  }
+                  icon={<PriceFieldIcon />}
+                  highlight
+                />
                 <DetailItem label={copy.labels.type} value={translatePropertyType(property.type, language)} icon={<TypeFieldIcon />} />
                 <DetailItem label={copy.labels.rooms} value={translateRoomLabel(property.rooms, language)} icon={<RoomFieldIcon />} />
                 <DetailItem label={copy.labels.area} value={String(property.areaM2)} icon={<AreaFieldIcon />} />
