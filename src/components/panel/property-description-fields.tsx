@@ -8,6 +8,7 @@ const DESCRIPTION_LANGUAGES = [
   { code: "TR", label: "Türkçe", note: "Ana açıklama" },
   { code: "EN", label: "English", note: "Ek dil" },
   { code: "RU", label: "Русский", note: "Ek dil" },
+  { code: "AR", label: "العربية", note: "Ek dil" },
 ] as const;
 
 type DescriptionLanguageCode = (typeof DESCRIPTION_LANGUAGES)[number]["code"];
@@ -49,10 +50,10 @@ export function PropertyDescriptionFields({
     <section className="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
       <div className="max-w-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Açıklama Dilleri</p>
-        <h3 className="mt-2 text-lg font-semibold text-slate-900">Başlık ve açıklamayı 3 dilde girin</h3>
+        <h3 className="mt-2 text-lg font-semibold text-slate-900">Başlık ve açıklamayı 4 dilde girin</h3>
         <p className="mt-1 text-sm text-slate-600">
-          İngilizce ve Rusça alanları tamamen manuel girilir; sistem otomatik çeviri üretmez. Boş kalan ek dil
-          alanlarında kullanıcıya Türkçe içerik gösterilmeye devam edilir.
+          İngilizce, Rusça ve Arapça alanları tamamen manuel girilir; sistem otomatik çeviri üretmez. Boş kalan ek
+          dil alanlarında kullanıcıya Türkçe içerik gösterilmeye devam edilir.
         </p>
       </div>
 
@@ -76,6 +77,7 @@ export function PropertyDescriptionFields({
       <div className="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
         {DESCRIPTION_LANGUAGES.map((language) => {
           const isActive = activeLanguage === language.code;
+          const isRtl = language.code === "AR";
           const titleName = language.code === "TR" ? "title" : `translationTitle_${language.code}`;
           const textareaName = language.code === "TR" ? "description" : `translationDescription_${language.code}`;
           const value = languageMap.get(language.code) ?? { title: "", description: "" };
@@ -105,7 +107,8 @@ export function PropertyDescriptionFields({
                   defaultValue={value.title}
                   required={language.code === "TR"}
                   placeholder={`${language.label} başlık`}
-                  className="input"
+                  dir={isRtl ? "rtl" : "ltr"}
+                  className={`input ${isRtl ? "text-right" : ""}`}
                 />
               </label>
 
@@ -115,7 +118,8 @@ export function PropertyDescriptionFields({
                 required={language.code === "TR"}
                 rows={7}
                 placeholder={`${language.label} açıklama`}
-                className="input min-h-[180px]"
+                dir={isRtl ? "rtl" : "ltr"}
+                className={`input min-h-[180px] ${isRtl ? "text-right" : ""}`}
               />
             </div>
           );
