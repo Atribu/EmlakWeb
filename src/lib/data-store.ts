@@ -119,6 +119,7 @@ function cleanOptionalText(value: string | undefined): string | undefined {
 function rowToProperty(row: Record<string, unknown>): Property {
   return {
     ...(row as unknown as Property),
+    country: cleanOptionalText(row.country as string | undefined) ?? "Türkiye",
     price: Number(row.price),
     priceSourceAmount: row.priceSourceAmount != null ? Number(row.priceSourceAmount) : Number(row.price),
     areaM2: Number(row.areaM2),
@@ -269,8 +270,7 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
     if (!query) return true;
 
     const haystack = normalizeText([
-      p.title, p.city, p.district, p.neighborhood, p.listingRef,
-      p.developerCompany ?? "",
+      p.title, p.country ?? "", p.city, p.district, p.neighborhood, p.listingRef,
       ...(p.infoItems?.map((i) => i.value) ?? []),
       ...(p.translations ? Object.values(p.translations).flatMap((t) => [
         t?.title ?? "", t?.description ?? "",
@@ -314,6 +314,7 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
 
   const property: Property = {
     ...input,
+    country: input.country?.trim() || "Türkiye",
     priceCurrency: input.priceCurrency ?? "TRY",
     priceSourceAmount: input.priceSourceAmount ?? input.price,
     advisorId: input.advisorId?.trim() ?? "",
@@ -339,13 +340,13 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
 
   db.prepare(`
     INSERT INTO properties
-      (id, slug, title, city, district, neighborhood, type, price, priceCurrency, priceSourceAmount, rooms, areaM2,
+      (id, slug, title, country, city, district, neighborhood, type, price, priceCurrency, priceSourceAmount, rooms, areaM2,
        floor, heating, marketStatus, publicationStatus, listingRef, description, highlights, features, infoItems,
        developerCompany, staffNotes, customerFeedbackNotes, adminCommissionNotes, adminPrivateNotes,
        advisorId, latitude, longitude, coverColor, coverImage, galleryImages,
        imageLabels, translations, publishedAt)
     VALUES
-      (@id, @slug, @title, @city, @district, @neighborhood, @type, @price, @priceCurrency, @priceSourceAmount, @rooms, @areaM2,
+      (@id, @slug, @title, @country, @city, @district, @neighborhood, @type, @price, @priceCurrency, @priceSourceAmount, @rooms, @areaM2,
        @floor, @heating, @marketStatus, @publicationStatus, @listingRef, @description, @highlights, @features, @infoItems,
        @developerCompany, @staffNotes, @customerFeedbackNotes, @adminCommissionNotes, @adminPrivateNotes,
        @advisorId, @latitude, @longitude, @coverColor, @coverImage, @galleryImages,
@@ -386,6 +387,7 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
   const updated: Property = {
     ...property,
     title: input.title.trim(),
+    country: input.country?.trim() || property.country || "Türkiye",
     city: input.city.trim(),
     district: input.district.trim(),
     neighborhood: input.neighborhood.trim(),
@@ -420,7 +422,7 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
 
   db.prepare(`
     UPDATE properties SET
-      title=@title, city=@city, district=@district, neighborhood=@neighborhood,
+      title=@title, country=@country, city=@city, district=@district, neighborhood=@neighborhood,
       type=@type, price=@price, priceCurrency=@priceCurrency, priceSourceAmount=@priceSourceAmount,
       rooms=@rooms, areaM2=@areaM2, floor=@floor,
       heating=@heating, marketStatus=@marketStatus, publicationStatus=@publicationStatus, description=@description, highlights=@highlights,

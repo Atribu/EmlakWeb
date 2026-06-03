@@ -86,6 +86,7 @@ export type Property = {
   id: string;
   slug: string;
   title: string;
+  country?: string;
   city: string;
   district: string;
   neighborhood: string;
@@ -134,6 +135,7 @@ export type PropertyFilter = {
 
 export type CreatePropertyInput = {
   title: string;
+  country?: string;
   city: string;
   district: string;
   neighborhood: string;

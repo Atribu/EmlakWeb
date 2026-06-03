@@ -127,6 +127,10 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const activeImage = gallery[activeImageIndex] ?? property.coverImage ?? "/next.svg";
   const photoCount = Math.max(1, gallery.length);
+  const locationLine =
+    property.country && property.country !== "Türkiye"
+      ? `${property.country} / ${property.city}`
+      : `${property.city} / ${property.district}`;
 
   function stepGallery(direction: -1 | 1) {
     if (gallery.length <= 1) {
@@ -237,7 +241,7 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--ink-500)]">
               <PinIcon />
-              <span>{property.city} / {property.district}</span>
+              <span>{locationLine}</span>
             </p>
             <h3 className="mt-2 line-clamp-2 text-[1.02rem] leading-5 font-semibold text-[var(--ink-950)]">
               {propertyTitle}

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { PriceText } from "@/components/price-text";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
-import type { Advisor, Property } from "@/lib/types";
+import type { Advisor, Property, PropertyPublicationStatus } from "@/lib/types";
 
 type PortfolioDeleteProps = {
   initialProperties: Property[];
@@ -19,10 +19,19 @@ type SubmitState =
   | { type: "error"; message: string }
   | { type: "success"; message: string };
 
+function normalizeText(value: string) {
+  return value
+    .toLocaleLowerCase("tr")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
 export function PortfolioDelete({ initialProperties, advisors, canManage }: PortfolioDeleteProps) {
   const router = useRouter();
   const [properties, setProperties] = useState<Property[]>(initialProperties);
   const [query, setQuery] = useState("");
+  const [publicationFilter, setPublicationFilter] = useState<"all" | PropertyPublicationStatus>("all");
+  const [internalSearch, setInternalSearch] = useState("");
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
   const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
 
@@ -32,19 +41,54 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
   );
 
   const filteredProperties = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("tr");
+    const normalizedQuery = normalizeText(query.trim());
+    const normalizedInternalSearch = normalizeText(internalSearch.trim());
 
-    if (!normalizedQuery) {
-      return properties;
-    }
+    return properties.filter((property) => {
+      if (publicationFilter !== "all" && (property.publicationStatus ?? "Aktif") !== publicationFilter) {
+        return false;
+      }
 
-    return properties.filter((property) =>
-      [property.title, property.listingRef, property.city, property.district, property.neighborhood]
-        .join(" ")
-        .toLocaleLowerCase("tr")
-        .includes(normalizedQuery),
-    );
-  }, [properties, query]);
+      if (normalizedQuery) {
+        const publicHaystack = normalizeText(
+          [
+            property.title,
+            property.listingRef,
+            property.country ?? "",
+            property.city,
+            property.district,
+            property.neighborhood,
+          ].join(" "),
+        );
+
+        if (!publicHaystack.includes(normalizedQuery)) {
+          return false;
+        }
+      }
+
+      if (!normalizedInternalSearch) {
+        return true;
+      }
+
+      const internalHaystack = normalizeText(
+        [
+          property.title,
+          property.listingRef,
+          property.country ?? "",
+          property.city,
+          property.district,
+          property.neighborhood,
+          property.developerCompany ?? "",
+          property.adminCommissionNotes ?? "",
+          property.adminPrivateNotes ?? "",
+          property.staffNotes ?? "",
+          property.customerFeedbackNotes ?? "",
+        ].join(" "),
+      );
+
+      return internalHaystack.includes(normalizedInternalSearch);
+    });
+  }, [internalSearch, properties, publicationFilter, query]);
 
   async function handleDelete(property: Property) {
     if (!canManage) {
@@ -89,15 +133,30 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
         </p>
       ) : null}
 
-      <div className="mt-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+      <div className="mt-5 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px_220px]">
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Portföy ara (başlık, kod, şehir, ilçe)"
+          placeholder="Portföy ara (başlık, kod, ülke, şehir)"
           className="input"
         />
+        <input
+          value={internalSearch}
+          onChange={(event) => setInternalSearch(event.target.value)}
+          placeholder="Firma, komisyon veya iç not ara"
+          className="input"
+        />
+        <select
+          value={publicationFilter}
+          onChange={(event) => setPublicationFilter(event.target.value as "all" | PropertyPublicationStatus)}
+          className="input"
+        >
+          <option value="all">Tüm Yayın Durumları</option>
+          <option value="Aktif">Sadece Aktif</option>
+          <option value="Pasif">Sadece Pasif</option>
+        </select>
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-          Toplam kayıt: <strong className="text-slate-900">{properties.length}</strong>
+          Filtrelenen kayıt: <strong className="text-slate-900">{filteredProperties.length}</strong> / {properties.length}
         </div>
       </div>
 
@@ -118,8 +177,19 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
                     <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
                       {property.listingRef}
                     </span>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] ${
+                        (property.publicationStatus ?? "Aktif") === "Pasif"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-emerald-100 text-emerald-800"
+                      }`}
+                    >
+                      {property.publicationStatus ?? "Aktif"}
+                    </span>
                     <span className="text-xs font-medium text-slate-500">
-                      {property.city} / {property.district} / {property.neighborhood}
+                      {property.country && property.country !== "Türkiye"
+                        ? `${property.country} / ${property.city} / ${property.district}`
+                        : `${property.city} / ${property.district} / ${property.neighborhood}`}
                     </span>
                   </div>
                   <p className="mt-2 text-lg font-semibold text-slate-900">{property.title}</p>
@@ -134,6 +204,9 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
                   <p className="mt-1 text-sm text-slate-500">
                     Danışman: {advisorMap.get(property.advisorId) ?? "Atanmamış"}
                   </p>
+                  {property.developerCompany ? (
+                    <p className="mt-1 text-sm text-slate-500">İnşaat firması: {property.developerCompany}</p>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">

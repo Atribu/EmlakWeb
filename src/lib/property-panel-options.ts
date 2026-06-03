@@ -2,6 +2,17 @@ import type { PropertyMarketStatus, PropertyPriceCurrency, PropertyPublicationSt
 
 export const PROPERTY_TYPE_OPTIONS = ["Daire", "Villa", "Rezidans", "Arsa", "Ofis"] as const;
 
+export const PROPERTY_COUNTRY_OPTIONS = [
+  "Türkiye",
+  "Birleşik Arap Emirlikleri",
+  "Katar",
+  "Suudi Arabistan",
+  "Kuzey Kıbrıs",
+  "İngiltere",
+  "Almanya",
+  "Rusya",
+] as const;
+
 export const PROPERTY_PRICE_CURRENCY_OPTIONS: Array<{ code: PropertyPriceCurrency; label: string; symbol: string }> = [
   { code: "TRY", label: "Türk Lirası", symbol: "₺" },
   { code: "USD", label: "Dolar", symbol: "$" },

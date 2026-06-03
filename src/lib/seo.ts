@@ -103,7 +103,7 @@ export function propertySchema(property: Property) {
       addressLocality: property.district,
       addressRegion: property.city,
       streetAddress: property.neighborhood,
-      addressCountry: "TR",
+      addressCountry: property.country ?? "Türkiye",
     },
     geo: {
       "@type": "GeoCoordinates",

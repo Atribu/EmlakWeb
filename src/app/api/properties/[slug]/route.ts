@@ -34,8 +34,12 @@ const validPriceCurrencies = PROPERTY_PRICE_CURRENCY_OPTIONS.map((option) => opt
 const validMarketStatuses = [...PROPERTY_MARKET_STATUS_OPTIONS] as PropertyMarketStatus[];
 const validPublicationStatuses = [...PROPERTY_PUBLICATION_STATUS_OPTIONS] as PropertyPublicationStatus[];
 
+function normalizeNumericValue(value: unknown) {
+  return typeof value === "string" ? value.trim().replace(",", ".") : value;
+}
+
 function parseNumber(value: unknown, fieldLabel: string): number {
-  const numeric = Number(value);
+  const numeric = Number(normalizeNumericValue(value));
 
   if (!Number.isFinite(numeric) || numeric <= 0) {
     throw new Error(`${fieldLabel} geçerli bir sayı olmalıdır.`);
@@ -49,7 +53,7 @@ function parseOptionalNumber(value: unknown): number | undefined {
     return undefined;
   }
 
-  const numeric = Number(value);
+  const numeric = Number(normalizeNumericValue(value));
   return Number.isFinite(numeric) ? numeric : undefined;
 }
 
@@ -151,6 +155,7 @@ function applyRoleScopedFields(
 
   return {
     ...input,
+    country: input.country?.trim() || existing?.country || "Türkiye",
     floor: input.floor?.trim() ?? "",
     publicationStatus: canSeeAdminFields
       ? (input.publicationStatus ?? existing?.publicationStatus ?? "Pasif")
@@ -176,6 +181,7 @@ function parseInput(value: unknown, exchangeRates: ExchangeRateTable): CreatePro
 
   return {
     title: parseString(payload.title, "Başlık"),
+    country: parseOptionalString(payload.country) ?? "Türkiye",
     city: parseString(payload.city, "Şehir"),
     district: parseString(payload.district, "İlçe"),
     neighborhood: parseString(payload.neighborhood, "Mahalle"),
@@ -303,6 +309,7 @@ async function parseFormDataInput(
     orphanedImages,
     input: {
       title,
+      country: parseOptionalString(formData.get("country")) ?? existing.country ?? "Türkiye",
       city: parseString(formData.get("city"), "Şehir"),
       district: parseString(formData.get("district"), "İlçe"),
       neighborhood: parseString(formData.get("neighborhood"), "Mahalle"),

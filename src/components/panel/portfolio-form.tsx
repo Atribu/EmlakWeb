@@ -20,6 +20,7 @@ import {
 } from "@/components/panel/property-field-shell";
 import { PropertyInfoFields } from "@/components/panel/property-info-fields";
 import {
+  PROPERTY_COUNTRY_OPTIONS,
   PROPERTY_HEATING_OPTIONS,
   PROPERTY_PRICE_CURRENCY_OPTIONS,
   PROPERTY_ROOM_OPTIONS,
@@ -176,6 +177,24 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
       <form onSubmit={handleSubmit} className="mt-5 grid gap-3 md:grid-cols-2">
         <PropertyDescriptionFields />
 
+        <PropertyFieldShell label="Ülke" icon={<LocationFieldIcon />}>
+          <>
+            <input
+              required
+              name="country"
+              list="portfolio-country-options"
+              defaultValue="Türkiye"
+              placeholder="Ülke"
+              className="input"
+            />
+            <datalist id="portfolio-country-options">
+              {PROPERTY_COUNTRY_OPTIONS.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+          </>
+        </PropertyFieldShell>
+
         <PropertyFieldShell label="Şehir" icon={<LocationFieldIcon />}>
           <input required name="city" placeholder="Şehir" className="input" />
         </PropertyFieldShell>
@@ -219,7 +238,7 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
         </div>
 
         <PropertyFieldShell label="Metrekare" icon={<AreaFieldIcon />}>
-          <input required name="areaM2" type="number" min={20} placeholder="m²" className="input" />
+          <input required name="areaM2" type="number" min={20} step="0.01" inputMode="decimal" placeholder="m²" className="input" />
         </PropertyFieldShell>
 
         <PropertyFieldShell label="Kat Bilgisi" icon={<FloorFieldIcon />} className="md:col-span-2" hint="Opsiyonel">

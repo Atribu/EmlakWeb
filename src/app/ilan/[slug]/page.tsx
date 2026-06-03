@@ -79,6 +79,10 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
   const propertyHighlights = propertyHighlightsForLanguage(property, language);
   const propertyFeatures = propertyFeaturesForLanguage(property, language);
   const hasFloor = property.floor.trim().length > 0;
+  const locationLabel =
+    property.country && property.country !== "Türkiye"
+      ? [property.country, property.city, property.district, property.neighborhood].join(" / ")
+      : [property.city, property.district, property.neighborhood].join(" / ");
 
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : null;
   const whatsappHref = advisor
@@ -100,7 +104,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
           <PropertyDetailGallery
             title={propertyTitle}
             listingRef={property.listingRef}
-            locationLabel={`${property.city} / ${property.district} / ${property.neighborhood}`}
+            locationLabel={locationLabel}
             coverImage={property.coverImage}
             galleryImages={property.galleryImages}
             imageLabels={property.imageLabels}

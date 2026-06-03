@@ -23,8 +23,10 @@ import { PropertyInfoFields } from "@/components/panel/property-info-fields";
 import { formatPrice } from "@/lib/format";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import {
+  PROPERTY_COUNTRY_OPTIONS,
   PROPERTY_HEATING_OPTIONS,
   PROPERTY_PRICE_CURRENCY_OPTIONS,
+  PROPERTY_PUBLICATION_STATUS_OPTIONS,
   PROPERTY_ROOM_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
 } from "@/lib/property-panel-options";
@@ -36,7 +38,7 @@ import {
   validatePortfolioImageFile,
   validateTotalUploadSize,
 } from "@/lib/portfolio-images";
-import type { Advisor, Property, UserRole } from "@/lib/types";
+import type { Advisor, Property, PropertyPublicationStatus, UserRole } from "@/lib/types";
 
 type PortfolioEditorProps = {
   initialProperties: Property[];
@@ -77,6 +79,13 @@ function syncFileInput(input: HTMLInputElement | null, files: File[]) {
   input.files = dataTransfer.files;
 }
 
+function normalizeText(value: string) {
+  return value
+    .toLocaleLowerCase("tr")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
 export function PortfolioEditor({ initialProperties, advisors, currentUserRole }: PortfolioEditorProps) {
   const router = useRouter();
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
@@ -86,15 +95,53 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
   const [coverFileName, setCoverFileName] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [removedGalleryImages, setRemovedGalleryImages] = useState<string[]>([]);
+  const [publicationFilter, setPublicationFilter] = useState<"all" | PropertyPublicationStatus>("all");
+  const [internalSearch, setInternalSearch] = useState("");
   const [duplicateRoomSelections, setDuplicateRoomSelections] = useState<string[]>([]);
   const [duplicateStatus, setDuplicateStatus] = useState<{ type: "idle" | "loading" | "error" | "success"; message?: string }>({
     type: "idle",
   });
 
+  const filteredProperties = useMemo(() => {
+    const normalizedSearch = normalizeText(internalSearch.trim());
+
+    return properties.filter((property) => {
+      if (publicationFilter !== "all" && (property.publicationStatus ?? "Aktif") !== publicationFilter) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return normalizeText([
+        property.listingRef,
+        property.title,
+        property.country ?? "",
+        property.city,
+        property.district,
+        property.neighborhood,
+        property.developerCompany ?? "",
+        property.adminCommissionNotes ?? "",
+        property.adminPrivateNotes ?? "",
+        property.staffNotes ?? "",
+        property.customerFeedbackNotes ?? "",
+      ].join(" ")).includes(normalizedSearch);
+    });
+  }, [internalSearch, properties, publicationFilter]);
+
   const selectedProperty = useMemo(
     () => properties.find((property) => property.slug === selectedSlug),
     [properties, selectedSlug],
   );
+
+  const optionProperties = useMemo(() => {
+    if (filteredProperties.length > 0) {
+      return filteredProperties;
+    }
+
+    return selectedProperty ? [selectedProperty] : [];
+  }, [filteredProperties, selectedProperty]);
 
   const availableCoverOptions = useMemo(() => {
     if (!selectedProperty) {
@@ -122,6 +169,16 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
     setDuplicateRoomSelections([]);
     setDuplicateStatus({ type: "idle" });
   }, [selectedSlug]);
+
+  useEffect(() => {
+    if (filteredProperties.length === 0) {
+      return;
+    }
+
+    if (!filteredProperties.some((property) => property.slug === selectedSlug)) {
+      setSelectedSlug(filteredProperties[0]?.slug ?? "");
+    }
+  }, [filteredProperties, selectedSlug]);
 
   function handleGalleryChange(event: ChangeEvent<HTMLInputElement>) {
     setGalleryFiles(Array.from(event.currentTarget.files ?? []));
@@ -311,14 +368,35 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
         <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Düzenlenecek Portföy</p>
+        <div className="mt-3 grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
+          <select
+            value={publicationFilter}
+            onChange={(event) => setPublicationFilter(event.target.value as "all" | PropertyPublicationStatus)}
+            className="input"
+          >
+            <option value="all">Tüm Yayın Durumları</option>
+            {PROPERTY_PUBLICATION_STATUS_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                Sadece {option}
+              </option>
+            ))}
+          </select>
+
+          <input
+            value={internalSearch}
+            onChange={(event) => setInternalSearch(event.target.value)}
+            placeholder="Firma, komisyon, özel not veya ilan kodu ile ara"
+            className="input"
+          />
+        </div>
         <select
           value={selectedSlug}
           onChange={(event) => setSelectedSlug(event.target.value)}
           className="input mt-2"
         >
-          {properties.map((property) => (
+          {optionProperties.map((property) => (
             <option key={property.id} value={property.slug}>
-              {property.listingRef} • {property.title} • {formatPrice(
+              [{property.publicationStatus ?? "Aktif"}] {property.listingRef} • {property.title} • {formatPrice(
                 propertyDisplayAmount(property),
                 propertyDisplayCurrency(property),
                 {
@@ -328,6 +406,11 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
             </option>
           ))}
         </select>
+        <p className="mt-2 text-xs text-slate-500">
+          {filteredProperties.length > 0
+            ? `${filteredProperties.length} portföy filtreye uygun bulundu.`
+            : "Filtreye uyan portföy bulunamadı; mevcut seçim korunuyor."}
+        </p>
       </div>
 
       <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
@@ -390,6 +473,24 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
           defaultDescription={selectedProperty.description}
           defaultTranslations={selectedProperty.translations}
         />
+
+        <PropertyFieldShell label="Ülke" icon={<LocationFieldIcon />}>
+          <>
+            <input
+              required
+              name="country"
+              list="portfolio-editor-country-options"
+              defaultValue={selectedProperty.country ?? "Türkiye"}
+              placeholder="Ülke"
+              className="input"
+            />
+            <datalist id="portfolio-editor-country-options">
+              {PROPERTY_COUNTRY_OPTIONS.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+          </>
+        </PropertyFieldShell>
 
         <PropertyFieldShell label="Şehir" icon={<LocationFieldIcon />}>
           <input required name="city" defaultValue={selectedProperty.city} placeholder="Şehir" className="input" />
@@ -467,6 +568,8 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
             name="areaM2"
             type="number"
             min={20}
+            step="0.01"
+            inputMode="decimal"
             defaultValue={selectedProperty.areaM2}
             placeholder="m²"
             className="input"

@@ -56,6 +56,7 @@ db.exec(`
     id              TEXT PRIMARY KEY,
     slug            TEXT NOT NULL UNIQUE,
     title           TEXT NOT NULL,
+    country         TEXT NOT NULL DEFAULT 'Türkiye',
     city            TEXT NOT NULL,
     district        TEXT NOT NULL,
     neighborhood    TEXT NOT NULL,
@@ -145,6 +146,7 @@ db.exec(`
 
 addColumnIfMissing("properties", "priceCurrency", "TEXT NOT NULL DEFAULT 'TRY'");
 addColumnIfMissing("properties", "priceSourceAmount", "REAL");
+addColumnIfMissing("properties", "country", "TEXT NOT NULL DEFAULT 'Türkiye'");
 addColumnIfMissing("properties", "marketStatus", "TEXT NOT NULL DEFAULT 'Hazır'");
 addColumnIfMissing("properties", "publicationStatus", "TEXT NOT NULL DEFAULT 'Aktif'");
 addColumnIfMissing("properties", "developerCompany", "TEXT");

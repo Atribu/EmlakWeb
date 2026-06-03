@@ -139,6 +139,11 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : undefined;
   const propertyInfoItems = property.infoItems?.filter((item) => item.value.trim().length > 0).slice(0, 3) ?? [];
   const hasFloor = property.floor.trim().length > 0;
+  const locationBadge = property.country && property.country !== "Türkiye" ? `${property.country} / ${property.city}` : property.city;
+  const locationSummary =
+    property.country && property.country !== "Türkiye"
+      ? `${property.neighborhood} / ${property.district} / ${property.city}`
+      : `${property.neighborhood} / ${property.district}`;
 
   function stepGallery(direction: -1 | 1) {
     if (gallery.length <= 1) {
@@ -207,7 +212,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
               {translatePropertyType(property.type, language)}
             </span>
             <span className="rounded-full border border-white/36 bg-white/18 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-              {property.city}
+              {locationBadge}
             </span>
           </div>
 
@@ -257,7 +262,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
                   {propertyTitle}
                 </h3>
                 <p className="mt-1.5 text-[11px] font-medium tracking-[0.08em] text-[#6d655b]">
-                  {property.neighborhood} / {property.district}
+                  {locationSummary}
                 </p>
               </div>
 
