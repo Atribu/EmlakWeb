@@ -110,7 +110,7 @@ export function AdvisorManagement({ initialAdvisors, canManage }: AdvisorManagem
   }
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <article className="admin-card p-6 sm:p-7">
       <h2 className="text-xl font-semibold tracking-tight text-slate-900">Danışman Yönetimi</h2>
       <p className="mt-2 text-sm text-slate-600">
         Panelden danışman ekleyebilir, bağlı kaydı olmayan danışmanları silebilirsiniz.

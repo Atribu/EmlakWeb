@@ -84,13 +84,13 @@ export function PropertyOperationalFields({
       </PropertyFieldShell>
 
       {!allowPublicationControl ? (
-        <div className="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-700">
+        <div className="admin-note md:col-span-2 p-4 text-sm text-slate-700">
           Yeni eklenen portföyler ilk etapta <strong>pasif</strong> kaydedilir. Yönetici onayı sonrası yayına alınır.
         </div>
       ) : null}
 
       {showAdminFields ? (
-        <section className="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 sm:p-5">
+        <section className="admin-subsection-warm md:col-span-2 p-4 sm:p-5">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Yöneticiye Özel Alan</p>
             <h3 className="mt-2 text-lg font-semibold text-slate-900">Bu alanlar sadece yönetici için görünür</h3>

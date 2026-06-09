@@ -47,7 +47,7 @@ export function PropertyDescriptionFields({
   );
 
   return (
-    <section className="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+    <section className="admin-subsection md:col-span-2 p-4 sm:p-5">
       <div className="max-w-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Açıklama Dilleri</p>
         <h3 className="mt-2 text-lg font-semibold text-slate-900">Başlık ve açıklamayı 4 dilde girin</h3>
@@ -74,7 +74,7 @@ export function PropertyDescriptionFields({
         ))}
       </div>
 
-      <div className="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="mt-4 space-y-3 rounded-2xl border border-[rgba(220,208,189,0.9)] bg-white/92 p-4 shadow-[0_18px_30px_-28px_rgba(20,24,32,0.28)]">
         {DESCRIPTION_LANGUAGES.map((language) => {
           const isActive = activeLanguage === language.code;
           const isRtl = language.code === "AR";

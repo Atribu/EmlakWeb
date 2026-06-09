@@ -114,15 +114,16 @@ export function UserManagement({
     router.refresh();
   }
 
-  return (
+    return (
     <section className="space-y-6">
-      <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900">Kullanıcı Yönetimi</h2>
-        <p className="mt-2 text-sm text-slate-600">
+      <article className="admin-card p-6 sm:p-7">
+        <span className="admin-kicker">Ekip Yetkileri</span>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">Kullanıcı Yönetimi</h2>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
           Panel kullanıcılarını oluşturun, rollerini belirleyin ve görünür hesapları yönetin.
         </p>
 
-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        <div className="admin-note mt-4 px-4 py-3 text-sm text-slate-600">
           {currentUser.role === "portal_admin"
             ? "Portal admin tüm rolleri, danışman hesapları dahil atayabilir."
             : "Admin yeni admin, portföy yetkilisi, danışman ve içerik yükleyici hesapları oluşturabilir. Portal admin hesaplarını göremez."}
@@ -182,7 +183,7 @@ export function UserManagement({
           <button
             type="submit"
             disabled={status.type === "loading" || (requiresAdvisorSelection && advisors.length === 0)}
-            className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-500 md:col-span-2"
+            className="admin-button-primary cursor-pointer px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2"
           >
             {status.type === "loading" ? "Kullanıcı Oluşturuluyor..." : "Kullanıcı Oluştur"}
           </button>
@@ -192,14 +193,14 @@ export function UserManagement({
         {status.type === "success" ? <p className="mt-3 text-sm text-emerald-700">{status.message}</p> : null}
       </article>
 
-      <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <article className="admin-card p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">Mevcut Kullanıcılar</h3>
             <p className="mt-1 text-sm text-slate-600">Yalnızca bu hesabın görme yetkisi olan kullanıcılar listelenir.</p>
           </div>
 
-          <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:w-[240px]">
+          <div className="admin-note w-full px-4 py-3 text-sm text-slate-600 md:w-[240px]">
             Toplam kayıt: <strong className="text-slate-900">{users.length}</strong>
           </div>
         </div>

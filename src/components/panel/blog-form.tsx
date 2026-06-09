@@ -93,9 +93,10 @@ export function BlogForm({ defaultAuthorName }: BlogFormProps) {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold tracking-tight text-slate-900">SEO Odaklı Blog Yazısı Oluştur</h2>
-      <p className="mt-2 text-sm text-slate-600">
+    <section className="admin-card p-6 sm:p-7">
+      <span className="admin-kicker">İçerik Stüdyosu</span>
+      <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">SEO Odaklı Blog Yazısı Oluştur</h2>
+      <p className="mt-3 text-sm leading-6 text-slate-600">
         Hazır bileşenleri sürükle-bırak ile sıralayıp tasarımı düzenleyin.
       </p>
 
@@ -225,7 +226,7 @@ export function BlogForm({ defaultAuthorName }: BlogFormProps) {
         <button
           type="submit"
           disabled={status.type === "loading"}
-          className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-500 md:col-span-2"
+          className="admin-button-primary cursor-pointer px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2"
         >
           {status.type === "loading" ? "Yayınlanıyor..." : "Blog Yazısını Yayınla"}
         </button>

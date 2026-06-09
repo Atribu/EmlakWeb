@@ -167,12 +167,23 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold tracking-tight text-slate-900">Yeni Portföy Yükle</h2>
-      <p className="mt-2 text-sm text-slate-600">
-        Ortak alanları tek formda doldurun; başlık ve açıklamayı Türkçe, İngilizce ve Rusça girin. Birden fazla oda
-        tipi seçerseniz sistem aynı bilgilerle ayrı ilanlar oluşturur.
-      </p>
+    <section className="admin-card p-6 sm:p-7">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="max-w-3xl">
+          <span className="admin-kicker">Portföy Girişi</span>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">Yeni Portföy Yükle</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            Ortak alanları tek formda doldurun; başlık ve açıklamayı tüm aktif site dillerine göre yönetin. Birden
+            fazla oda tipi seçerseniz sistem aynı bilgilerle ayrı ilanlar oluşturur.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <span className="admin-chip">4 Dil Girişi</span>
+          <span className="admin-chip">Tek Galeri Akışı</span>
+          <span className="admin-chip">Yönetici Onaylı Yayın</span>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="mt-5 grid gap-3 md:grid-cols-2">
         <PropertyDescriptionFields />
@@ -407,7 +418,7 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
         <button
           type="submit"
           disabled={status.type === "loading"}
-          className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-500 md:col-span-2"
+          className="admin-button-primary cursor-pointer px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2"
         >
           {status.type === "loading" ? "Kaydediliyor..." : "Portföyü Pasif Olarak Kaydet"}
         </button>

@@ -18,15 +18,15 @@ export function PropertyFieldShell({
   children,
 }: PropertyFieldShellProps) {
   return (
-    <label className={`flex min-w-0 flex-col gap-1.5 ${className}`}>
-      <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600">
+    <label className={`flex min-w-0 flex-col gap-2 ${className}`}>
+      <span className="inline-flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6f6355]">
+        <span className="flex h-8 w-8 items-center justify-center rounded-[0.95rem] border border-[rgba(217,205,185,0.92)] bg-white/90 text-[#675848] shadow-[0_14px_20px_-18px_rgba(17,24,39,0.42)]">
           {icon}
         </span>
         {label}
       </span>
       {children}
-      {hint ? <span className="text-xs text-slate-500">{hint}</span> : null}
+      {hint ? <span className="pl-1 text-[11px] text-[#8b7f71]">{hint}</span> : null}
     </label>
   );
 }

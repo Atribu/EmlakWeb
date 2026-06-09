@@ -70,7 +70,7 @@ export function AdvisorEditor({ initialAdvisors, canManage }: AdvisorEditorProps
 
   if (!selectedAdvisor) {
     return (
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="admin-card p-6 sm:p-7">
         <h2 className="text-xl font-semibold tracking-tight text-slate-900">Danışman Düzenle</h2>
         <p className="mt-2 text-sm text-slate-600">Düzenlenecek danışman bulunamadı.</p>
       </section>
@@ -78,7 +78,7 @@ export function AdvisorEditor({ initialAdvisors, canManage }: AdvisorEditorProps
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="admin-card p-6 sm:p-7">
       <h2 className="text-xl font-semibold tracking-tight text-slate-900">Danışman Düzenle</h2>
       <p className="mt-2 text-sm text-slate-600">Mevcut danışman bilgilerini güncelleyin.</p>
 

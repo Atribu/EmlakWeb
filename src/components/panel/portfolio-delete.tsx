@@ -31,6 +31,7 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
   const [properties, setProperties] = useState<Property[]>(initialProperties);
   const [query, setQuery] = useState("");
   const [publicationFilter, setPublicationFilter] = useState<"all" | PropertyPublicationStatus>("all");
+  const [companyFilter, setCompanyFilter] = useState("");
   const [internalSearch, setInternalSearch] = useState("");
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
   const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
@@ -40,13 +41,34 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
     [advisors],
   );
 
+  const developerCompanyOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          properties
+            .map((property) => property.developerCompany?.trim())
+            .filter((company): company is string => Boolean(company)),
+        ),
+      ).sort((left, right) => left.localeCompare(right, "tr")),
+    [properties],
+  );
+
   const filteredProperties = useMemo(() => {
     const normalizedQuery = normalizeText(query.trim());
+    const normalizedCompany = normalizeText(companyFilter.trim());
     const normalizedInternalSearch = normalizeText(internalSearch.trim());
 
     return properties.filter((property) => {
       if (publicationFilter !== "all" && (property.publicationStatus ?? "Aktif") !== publicationFilter) {
         return false;
+      }
+
+      if (normalizedCompany) {
+        const companyName = normalizeText(property.developerCompany ?? "");
+
+        if (!companyName.includes(normalizedCompany)) {
+          return false;
+        }
       }
 
       if (normalizedQuery) {
@@ -88,7 +110,7 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
 
       return internalHaystack.includes(normalizedInternalSearch);
     });
-  }, [internalSearch, properties, publicationFilter, query]);
+  }, [companyFilter, internalSearch, properties, publicationFilter, query]);
 
   async function handleDelete(property: Property) {
     if (!canManage) {
@@ -121,9 +143,10 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold tracking-tight text-slate-900">Portföy Sil</h2>
-      <p className="mt-2 text-sm text-slate-600">
+    <section className="admin-card p-6 sm:p-7">
+      <span className="admin-kicker">Portföy Temizliği</span>
+      <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">Portföy Sil</h2>
+      <p className="mt-3 text-sm leading-6 text-slate-600">
         Yayındaki portföyleri listeden bulun ve panel üzerinden güvenli şekilde kaldırın.
       </p>
 
@@ -133,17 +156,31 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
         </p>
       ) : null}
 
-      <div className="mt-5 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px_220px]">
+      <div className="mt-5 grid gap-3 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_220px_220px]">
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Portföy ara (başlık, kod, ülke, şehir)"
           className="input"
         />
+        <div>
+          <input
+            value={companyFilter}
+            onChange={(event) => setCompanyFilter(event.target.value)}
+            list="portfolio-delete-company-options"
+            placeholder="Firma adına göre filtrele"
+            className="input"
+          />
+          <datalist id="portfolio-delete-company-options">
+            {developerCompanyOptions.map((company) => (
+              <option key={company} value={company} />
+            ))}
+          </datalist>
+        </div>
         <input
           value={internalSearch}
           onChange={(event) => setInternalSearch(event.target.value)}
-          placeholder="Firma, komisyon veya iç not ara"
+          placeholder="Komisyon veya iç not ara"
           className="input"
         />
         <select
@@ -158,6 +195,19 @@ export function PortfolioDelete({ initialProperties, advisors, canManage }: Port
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
           Filtrelenen kayıt: <strong className="text-slate-900">{filteredProperties.length}</strong> / {properties.length}
         </div>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+        <p>Firma adı yazdığınızda o firmaya ait tüm projeler listede otomatik olarak öne çıkar.</p>
+        {companyFilter ? (
+          <button
+            type="button"
+            onClick={() => setCompanyFilter("")}
+            className="admin-button-secondary cursor-pointer px-3 py-1 font-semibold text-slate-600 transition"
+          >
+            Firma filtresini temizle
+          </button>
+        ) : null}
       </div>
 
       {status.type === "error" ? <p className="mt-3 text-sm text-rose-700">{status.message}</p> : null}

@@ -66,7 +66,7 @@ export function BlogDelete({ initialPosts, canManage }: BlogDeleteProps) {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="admin-card p-6 sm:p-7">
       <h2 className="text-xl font-semibold tracking-tight text-slate-900">Blog Yazısı Sil</h2>
       <p className="mt-2 text-sm text-slate-600">
         Yayınlanan blog içeriklerini listeden bulun ve panel üzerinden kaldırın.

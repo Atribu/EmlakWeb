@@ -86,10 +86,11 @@ export function LeadPipelineBoard({ initialLeads, properties, currentUser, advis
   }
 
   return (
-    <section className="rounded-2xl border border-[#d8ccb9] bg-[#fffdf8] p-6 shadow-sm">
+    <section className="admin-card p-6 sm:p-7">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-[1.9rem] font-semibold leading-none text-[#231d15]">CRM Lead Pipeline</h2>
+          <span className="admin-kicker">CRM Operasyonu</span>
+          <h2 className="mt-4 text-[1.9rem] font-semibold leading-none text-[#231d15]">CRM Lead Pipeline</h2>
           <p className="mt-2 text-sm text-[#665c4f]">
             {currentUser.role === "advisor"
               ? "Size atanmış bilgi ve randevu taleplerini tek ekrandan takip edin."
@@ -113,7 +114,7 @@ export function LeadPipelineBoard({ initialLeads, properties, currentUser, advis
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         {stageOptions.map((stage) => (
-          <article key={stage} className="rounded-xl border border-[#e2d6c4] bg-white p-3">
+          <article key={stage} className="admin-stat-card p-3">
             <p className="text-[10px] uppercase tracking-[0.16em] text-[#8b7e69]">{leadStageLabel(stage)}</p>
             <p className="mt-1 text-2xl font-semibold text-[#2d251a]">{stageCounts[stage]}</p>
           </article>
@@ -129,7 +130,7 @@ export function LeadPipelineBoard({ initialLeads, properties, currentUser, advis
           filteredLeads.slice(0, 20).map((lead) => {
             const property = propertyBySlug.get(lead.propertySlug);
             return (
-              <article key={lead.id} className="rounded-xl border border-[#e2d7c5] bg-white p-4">
+              <article key={lead.id} className="admin-list-item p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.16em] text-[#8e816b]">
@@ -194,7 +195,7 @@ export function LeadPipelineBoard({ initialLeads, properties, currentUser, advis
                       <button
                         type="submit"
                         disabled={savingLeadId === lead.id}
-                        className="cursor-pointer rounded-full border border-[#d0c2ad] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-[#6f5a3c] transition hover:bg-[#f1e6d5] disabled:cursor-not-allowed"
+                        className="admin-button-secondary cursor-pointer px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] transition disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {savingLeadId === lead.id ? "Kaydediliyor" : "Notu Kaydet"}
                       </button>

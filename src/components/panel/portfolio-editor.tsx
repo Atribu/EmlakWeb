@@ -96,18 +96,40 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [removedGalleryImages, setRemovedGalleryImages] = useState<string[]>([]);
   const [publicationFilter, setPublicationFilter] = useState<"all" | PropertyPublicationStatus>("all");
+  const [companyFilter, setCompanyFilter] = useState("");
   const [internalSearch, setInternalSearch] = useState("");
   const [duplicateRoomSelections, setDuplicateRoomSelections] = useState<string[]>([]);
   const [duplicateStatus, setDuplicateStatus] = useState<{ type: "idle" | "loading" | "error" | "success"; message?: string }>({
     type: "idle",
   });
 
+  const developerCompanyOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          properties
+            .map((property) => property.developerCompany?.trim())
+            .filter((company): company is string => Boolean(company)),
+        ),
+      ).sort((left, right) => left.localeCompare(right, "tr")),
+    [properties],
+  );
+
   const filteredProperties = useMemo(() => {
+    const normalizedCompany = normalizeText(companyFilter.trim());
     const normalizedSearch = normalizeText(internalSearch.trim());
 
     return properties.filter((property) => {
       if (publicationFilter !== "all" && (property.publicationStatus ?? "Aktif") !== publicationFilter) {
         return false;
+      }
+
+      if (normalizedCompany) {
+        const companyName = normalizeText(property.developerCompany ?? "");
+
+        if (!companyName.includes(normalizedCompany)) {
+          return false;
+        }
       }
 
       if (!normalizedSearch) {
@@ -128,7 +150,7 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
         property.customerFeedbackNotes ?? "",
       ].join(" ")).includes(normalizedSearch);
     });
-  }, [internalSearch, properties, publicationFilter]);
+  }, [companyFilter, internalSearch, properties, publicationFilter]);
 
   const selectedProperty = useMemo(
     () => properties.find((property) => property.slug === selectedSlug),
@@ -335,7 +357,7 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
 
   if (properties.length === 0 || !selectedProperty) {
     return (
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="admin-card p-6 sm:p-7">
         <h2 className="text-xl font-semibold tracking-tight text-slate-900">Portföy Düzenle</h2>
         <p className="mt-2 text-sm text-slate-600">Düzenlenecek portföy bulunamadı.</p>
       </section>
@@ -352,23 +374,24 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
     : [selectedProperty.rooms, ...PROPERTY_ROOM_OPTIONS];
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="admin-card p-6 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900">Portföy Düzenle</h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <span className="admin-kicker">Portföy Yönetimi</span>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">Portföy Düzenle</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
             Kapak ayrı, diğer görseller tek galeri alanında yönetilir. İsterseniz mevcut görselleri tek tek kaldırıp
             yenilerini ekleyebilirsiniz.
           </p>
         </div>
-        <Link href={`/ilan/${selectedProperty.slug}`} className="text-sm font-semibold text-slate-700 underline">
+        <Link href={`/ilan/${selectedProperty.slug}`} className="admin-button-secondary px-4 py-2 text-sm font-semibold">
           İlanı aç
         </Link>
       </div>
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
         <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Düzenlenecek Portföy</p>
-        <div className="mt-3 grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="mt-3 grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)]">
           <select
             value={publicationFilter}
             onChange={(event) => setPublicationFilter(event.target.value as "all" | PropertyPublicationStatus)}
@@ -382,10 +405,25 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
             ))}
           </select>
 
+          <div>
+            <input
+              value={companyFilter}
+              onChange={(event) => setCompanyFilter(event.target.value)}
+              list="portfolio-editor-company-options"
+              placeholder="Firma adına göre filtrele"
+              className="input"
+            />
+            <datalist id="portfolio-editor-company-options">
+              {developerCompanyOptions.map((company) => (
+                <option key={company} value={company} />
+              ))}
+            </datalist>
+          </div>
+
           <input
             value={internalSearch}
             onChange={(event) => setInternalSearch(event.target.value)}
-            placeholder="Firma, komisyon, özel not veya ilan kodu ile ara"
+            placeholder="Komisyon, özel not veya ilan kodu ile ara"
             className="input"
           />
         </div>
@@ -402,14 +440,28 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
                 {
                   sourceCurrency: propertyDisplayCurrency(property),
                 },
-              )}
+              )}{property.developerCompany ? ` • ${property.developerCompany}` : ""}
             </option>
           ))}
         </select>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+          <p>
+            {filteredProperties.length > 0
+              ? `${filteredProperties.length} portföy filtreye uygun bulundu.`
+              : "Filtreye uyan portföy bulunamadı; mevcut seçim korunuyor."}
+          </p>
+          {companyFilter ? (
+            <button
+              type="button"
+              onClick={() => setCompanyFilter("")}
+              className="admin-button-secondary cursor-pointer px-3 py-1 font-semibold text-slate-600 transition"
+            >
+              Firma filtresini temizle
+            </button>
+          ) : null}
+        </div>
         <p className="mt-2 text-xs text-slate-500">
-          {filteredProperties.length > 0
-            ? `${filteredProperties.length} portföy filtreye uygun bulundu.`
-            : "Filtreye uyan portföy bulunamadı; mevcut seçim korunuyor."}
+          Firma adı yazdığınızda o firmaya ait tüm projeler bu listede otomatik olarak gruplanır.
         </p>
       </div>
 
@@ -450,7 +502,7 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
             type="button"
             disabled={duplicateStatus.type === "loading"}
             onClick={handleDuplicateSelection}
-            className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-500"
+            className="admin-button-primary cursor-pointer px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
           >
             {duplicateStatus.type === "loading" ? "Kopyalanıyor..." : "Seçilen Oda Tiplerini Kopyala"}
           </button>
@@ -795,7 +847,7 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
         <button
           type="submit"
           disabled={status.type === "loading"}
-          className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-500 md:col-span-2"
+          className="admin-button-primary cursor-pointer px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2"
         >
           {status.type === "loading" ? "Güncelleniyor..." : "Portföyü Güncelle"}
         </button>

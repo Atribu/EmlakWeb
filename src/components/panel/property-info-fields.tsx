@@ -8,7 +8,7 @@ type PropertyInfoFieldsProps = {
 
 export function PropertyInfoFields({ defaultItems }: PropertyInfoFieldsProps) {
   return (
-    <section className="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+    <section className="admin-subsection md:col-span-2 p-4 sm:p-5">
       <div className="max-w-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">İkonlu Bilgiler</p>
         <h3 className="mt-2 text-lg font-semibold text-slate-900">Sadece ekstra özel bilgileri ekleyin</h3>
@@ -23,7 +23,7 @@ export function PropertyInfoFields({ defaultItems }: PropertyInfoFieldsProps) {
           const item = defaultItems?.[index];
 
           return (
-            <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div key={index} className="admin-list-item p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-slate-900">Bilgi Satırı {index + 1}</p>
                 <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
