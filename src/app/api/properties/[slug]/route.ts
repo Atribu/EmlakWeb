@@ -3,7 +3,19 @@ import type { NextRequest } from "next/server";
 
 import { canCreateOrEditPortfolios, canDeletePortfolios } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
-import { countPropertiesReferencingImagePath, deletePropertyBySlug, getPropertyBySlugWithOptions, updatePropertyBySlug } from "@/lib/data-store";
+import {
+  countPropertiesReferencingImagePath,
+  createPropertyActivityLog,
+  deletePropertyBySlug,
+  getPropertyBySlugWithOptions,
+  listAdvisors,
+  updatePropertyBySlug,
+} from "@/lib/data-store";
+import {
+  buildPropertyDeletedActivity,
+  buildPropertyUpdatedActivity,
+  createPropertyActivityActor,
+} from "@/lib/property-activity";
 import { PROPERTY_MARKET_STATUS_OPTIONS, PROPERTY_PRICE_CURRENCY_OPTIONS, PROPERTY_PUBLICATION_STATUS_OPTIONS, PROPERTY_TYPE_OPTIONS } from "@/lib/property-panel-options";
 import {
   buildGalleryImageFileName,
@@ -158,8 +170,8 @@ function applyRoleScopedFields(
     country: input.country?.trim() || existing?.country || "Türkiye",
     floor: input.floor?.trim() ?? "",
     publicationStatus: canSeeAdminFields
-      ? (input.publicationStatus ?? existing?.publicationStatus ?? "Pasif")
-      : (existing?.publicationStatus ?? "Pasif"),
+      ? (input.publicationStatus ?? existing?.publicationStatus ?? "Onay Bekliyor")
+      : (existing?.publicationStatus ?? "Onay Bekliyor"),
     adminCommissionNotes: canSeeAdminFields ? input.adminCommissionNotes : existing?.adminCommissionNotes,
     adminPrivateNotes: canSeeAdminFields ? input.adminPrivateNotes : existing?.adminPrivateNotes,
   };
@@ -373,6 +385,15 @@ export async function PATCH(
       : { input: parseInput(await request.json(), exchangeRates), orphanedImages: [] };
     const scopedInput = applyRoleScopedFields(parsed.input, user.role, existing);
     const property = updatePropertyBySlug(slug, scopedInput);
+    const actor = createPropertyActivityActor(user);
+    const advisorMap = new Map(listAdvisors().map((advisor) => [advisor.id, advisor.name]));
+
+    createPropertyActivityLog(
+      buildPropertyUpdatedActivity(existing, property, actor, {
+        previousAdvisorName: advisorMap.get(existing.advisorId),
+        nextAdvisorName: advisorMap.get(property.advisorId),
+      }),
+    );
 
     const unusedImages = parsed.orphanedImages.filter((imagePath) => countPropertiesReferencingImagePath(imagePath) === 0);
     if (unusedImages.length > 0) {
@@ -409,6 +430,15 @@ export async function DELETE(
 
   try {
     const removed = deletePropertyBySlug(slug);
+    const actor = createPropertyActivityActor(user);
+    const advisorMap = new Map(listAdvisors().map((advisor) => [advisor.id, advisor.name]));
+
+    createPropertyActivityLog(
+      buildPropertyDeletedActivity(removed, actor, {
+        advisorName: advisorMap.get(removed.advisorId),
+      }),
+    );
+
     const removableImages = [removed.coverImage, ...removed.galleryImages].filter(
       (imagePath) => countPropertiesReferencingImagePath(imagePath) === 0,
     );

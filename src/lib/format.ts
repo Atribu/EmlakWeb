@@ -87,6 +87,23 @@ export function formatDateTR(value: string): string {
   return formatDate(value, "TR");
 }
 
+export function formatDateTimeTR(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Istanbul",
+  }).format(date);
+}
+
 export function leadStageLabel(stage: string): string {
   if (stage === "new") return "Yeni";
   if (stage === "called") return "Arandı";

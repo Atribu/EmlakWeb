@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { PortfolioFilterToolbar } from "@/components/panel/portfolio-filter-toolbar";
 import { PropertyDescriptionFields } from "@/components/panel/property-description-fields";
 import { PropertyOperationalFields } from "@/components/panel/property-operational-fields";
 import {
@@ -20,16 +21,30 @@ import {
   TypeFieldIcon,
 } from "@/components/panel/property-field-shell";
 import { PropertyInfoFields } from "@/components/panel/property-info-fields";
-import { formatPrice } from "@/lib/format";
+import { formatDateTimeTR, formatPrice } from "@/lib/format";
+import {
+  buildPanelCompanyOptions,
+  buildPanelCountryOptions,
+  defaultPropertyPanelFilters,
+  filterPanelProperties,
+  type PropertyPanelFilterState,
+} from "@/lib/panel-property-filters";
+import { exportPropertiesToCsv } from "@/lib/property-export";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import {
   PROPERTY_COUNTRY_OPTIONS,
   PROPERTY_HEATING_OPTIONS,
   PROPERTY_PRICE_CURRENCY_OPTIONS,
-  PROPERTY_PUBLICATION_STATUS_OPTIONS,
+  normalizePropertyPublicationStatus,
   PROPERTY_ROOM_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
 } from "@/lib/property-panel-options";
+import {
+  propertyActivityActionBadgeClass,
+  propertyActivityActionLabel,
+  propertyActivityActorRoleLabel,
+} from "@/lib/property-activity";
+import { summarizePropertyQuality } from "@/lib/property-quality";
 import {
   MAX_GALLERY_IMAGE_COUNT,
   MAX_PORTFOLIO_REQUEST_MB,
@@ -38,12 +53,14 @@ import {
   validatePortfolioImageFile,
   validateTotalUploadSize,
 } from "@/lib/portfolio-images";
-import type { Advisor, Property, PropertyPublicationStatus, UserRole } from "@/lib/types";
+import type { Advisor, Property, PropertyActivityLog, UserRole } from "@/lib/types";
 
 type PortfolioEditorProps = {
   initialProperties: Property[];
   advisors: Advisor[];
   currentUserRole: UserRole;
+  initialSelectedSlug?: string;
+  recentActivityLogs: PropertyActivityLog[];
 };
 
 type SubmitState =
@@ -79,82 +96,52 @@ function syncFileInput(input: HTMLInputElement | null, files: File[]) {
   input.files = dataTransfer.files;
 }
 
-function normalizeText(value: string) {
-  return value
-    .toLocaleLowerCase("tr")
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "");
-}
-
-export function PortfolioEditor({ initialProperties, advisors, currentUserRole }: PortfolioEditorProps) {
+export function PortfolioEditor({
+  initialProperties,
+  advisors,
+  currentUserRole,
+  initialSelectedSlug,
+  recentActivityLogs,
+}: PortfolioEditorProps) {
   const router = useRouter();
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const lastSyncedSelectedSlugRef = useRef(initialSelectedSlug ?? "");
   const [properties, setProperties] = useState<Property[]>(initialProperties);
-  const [selectedSlug, setSelectedSlug] = useState<string>(initialProperties[0]?.slug ?? "");
+  const [selectedSlug, setSelectedSlug] = useState<string>(() => {
+    if (initialSelectedSlug && initialProperties.some((property) => property.slug === initialSelectedSlug)) {
+      return initialSelectedSlug;
+    }
+
+    return initialProperties[0]?.slug ?? "";
+  });
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
   const [coverFileName, setCoverFileName] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [removedGalleryImages, setRemovedGalleryImages] = useState<string[]>([]);
-  const [publicationFilter, setPublicationFilter] = useState<"all" | PropertyPublicationStatus>("all");
-  const [companyFilter, setCompanyFilter] = useState("");
-  const [internalSearch, setInternalSearch] = useState("");
+  const [filters, setFilters] = useState<PropertyPanelFilterState>(defaultPropertyPanelFilters);
   const [duplicateRoomSelections, setDuplicateRoomSelections] = useState<string[]>([]);
   const [duplicateStatus, setDuplicateStatus] = useState<{ type: "idle" | "loading" | "error" | "success"; message?: string }>({
     type: "idle",
   });
 
-  const developerCompanyOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          properties
-            .map((property) => property.developerCompany?.trim())
-            .filter((company): company is string => Boolean(company)),
-        ),
-      ).sort((left, right) => left.localeCompare(right, "tr")),
-    [properties],
-  );
+  const developerCompanyOptions = useMemo(() => buildPanelCompanyOptions(properties), [properties]);
+  const countryOptions = useMemo(() => buildPanelCountryOptions(properties), [properties]);
 
   const filteredProperties = useMemo(() => {
-    const normalizedCompany = normalizeText(companyFilter.trim());
-    const normalizedSearch = normalizeText(internalSearch.trim());
-
-    return properties.filter((property) => {
-      if (publicationFilter !== "all" && (property.publicationStatus ?? "Aktif") !== publicationFilter) {
-        return false;
-      }
-
-      if (normalizedCompany) {
-        const companyName = normalizeText(property.developerCompany ?? "");
-
-        if (!companyName.includes(normalizedCompany)) {
-          return false;
-        }
-      }
-
-      if (!normalizedSearch) {
-        return true;
-      }
-
-      return normalizeText([
-        property.listingRef,
-        property.title,
-        property.country ?? "",
-        property.city,
-        property.district,
-        property.neighborhood,
-        property.developerCompany ?? "",
-        property.adminCommissionNotes ?? "",
-        property.adminPrivateNotes ?? "",
-        property.staffNotes ?? "",
-        property.customerFeedbackNotes ?? "",
-      ].join(" ")).includes(normalizedSearch);
-    });
-  }, [companyFilter, internalSearch, properties, publicationFilter]);
+    return filterPanelProperties(properties, filters);
+  }, [filters, properties]);
 
   const selectedProperty = useMemo(
     () => properties.find((property) => property.slug === selectedSlug),
     [properties, selectedSlug],
+  );
+  const selectedPropertyQuality = useMemo(
+    () => (selectedProperty ? summarizePropertyQuality(selectedProperty) : null),
+    [selectedProperty],
+  );
+  const selectedPropertyActivityLogs = useMemo(
+    () => recentActivityLogs.filter((activity) => activity.propertySlug === selectedSlug).slice(0, 8),
+    [recentActivityLogs, selectedSlug],
   );
 
   const optionProperties = useMemo(() => {
@@ -180,6 +167,10 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
   }, [selectedProperty]);
 
   useEffect(() => {
+    setProperties(initialProperties);
+  }, [initialProperties]);
+
+  useEffect(() => {
     setStatus({ type: "idle" });
     setCoverFileName("");
     setGalleryFiles([]);
@@ -193,6 +184,19 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
   }, [selectedSlug]);
 
   useEffect(() => {
+    if (!initialSelectedSlug || lastSyncedSelectedSlugRef.current === initialSelectedSlug) {
+      return;
+    }
+
+    if (!properties.some((property) => property.slug === initialSelectedSlug)) {
+      return;
+    }
+
+    lastSyncedSelectedSlugRef.current = initialSelectedSlug;
+    setSelectedSlug(initialSelectedSlug);
+  }, [initialSelectedSlug, properties]);
+
+  useEffect(() => {
     if (filteredProperties.length === 0) {
       return;
     }
@@ -201,6 +205,12 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
       setSelectedSlug(filteredProperties[0]?.slug ?? "");
     }
   }, [filteredProperties, selectedSlug]);
+
+  function handleExportFiltered() {
+    exportPropertiesToCsv(filteredProperties, advisors, {
+      fileLabel: "portfoy-duzenleme-listesi",
+    });
+  }
 
   function handleGalleryChange(event: ChangeEvent<HTMLInputElement>) {
     setGalleryFiles(Array.from(event.currentTarget.files ?? []));
@@ -389,52 +399,28 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
         </Link>
       </div>
 
-      <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <PortfolioFilterToolbar
+        advisors={advisors}
+        companyOptions={developerCompanyOptions}
+        countryOptions={countryOptions}
+        disableExport={filteredProperties.length === 0}
+        exportButtonLabel="CSV İndir"
+        filteredCount={filteredProperties.length}
+        filters={filters}
+        idPrefix="portfolio-editor"
+        internalSearchPlaceholder="Komisyon, özel not veya iç alanlarda ara"
+        onExport={handleExportFiltered}
+        publicSearchPlaceholder="Başlık, kod, şehir, mahalle veya oda tipi ile ara"
+        setFilters={setFilters}
+        totalCount={properties.length}
+      />
+
+      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
         <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Düzenlenecek Portföy</p>
-        <div className="mt-3 grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)]">
-          <select
-            value={publicationFilter}
-            onChange={(event) => setPublicationFilter(event.target.value as "all" | PropertyPublicationStatus)}
-            className="input"
-          >
-            <option value="all">Tüm Yayın Durumları</option>
-            {PROPERTY_PUBLICATION_STATUS_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                Sadece {option}
-              </option>
-            ))}
-          </select>
-
-          <div>
-            <input
-              value={companyFilter}
-              onChange={(event) => setCompanyFilter(event.target.value)}
-              list="portfolio-editor-company-options"
-              placeholder="Firma adına göre filtrele"
-              className="input"
-            />
-            <datalist id="portfolio-editor-company-options">
-              {developerCompanyOptions.map((company) => (
-                <option key={company} value={company} />
-              ))}
-            </datalist>
-          </div>
-
-          <input
-            value={internalSearch}
-            onChange={(event) => setInternalSearch(event.target.value)}
-            placeholder="Komisyon, özel not veya ilan kodu ile ara"
-            className="input"
-          />
-        </div>
-        <select
-          value={selectedSlug}
-          onChange={(event) => setSelectedSlug(event.target.value)}
-          className="input mt-2"
-        >
+        <select value={selectedSlug} onChange={(event) => setSelectedSlug(event.target.value)} className="input mt-3">
           {optionProperties.map((property) => (
             <option key={property.id} value={property.slug}>
-              [{property.publicationStatus ?? "Aktif"}] {property.listingRef} • {property.title} • {formatPrice(
+              [{normalizePropertyPublicationStatus(property.publicationStatus)}] {property.listingRef} • {property.title} • {formatPrice(
                 propertyDisplayAmount(property),
                 propertyDisplayCurrency(property),
                 {
@@ -450,22 +436,138 @@ export function PortfolioEditor({ initialProperties, advisors, currentUserRole }
               ? `${filteredProperties.length} portföy filtreye uygun bulundu.`
               : "Filtreye uyan portföy bulunamadı; mevcut seçim korunuyor."}
           </p>
-          {companyFilter ? (
-            <button
-              type="button"
-              onClick={() => setCompanyFilter("")}
-              className="admin-button-secondary cursor-pointer px-3 py-1 font-semibold text-slate-600 transition"
-            >
-              Firma filtresini temizle
-            </button>
-          ) : null}
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Firma adı yazdığınızda o firmaya ait tüm projeler bu listede otomatik olarak gruplanır.
+          Filtreler değiştikçe bu seçim listesi anlık olarak daralır; doğru portföye birkaç adımda ulaşabilirsiniz.
         </p>
       </div>
 
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+      {selectedPropertyQuality ? (
+        <section className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Kalite Kontrol</p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-900">Yayın öncesi hazır olma durumu</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Kritik alanlar tamamlandığında kayıt onaya daha hızlı alınır. Ek içerik uyarıları ise ilanı daha güçlü hale getirir.
+              </p>
+            </div>
+            <span
+              className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                selectedPropertyQuality.criticalIssues.length > 0
+                  ? "border border-rose-200 bg-rose-50 text-rose-700"
+                  : selectedPropertyQuality.advisoryIssues.length > 0
+                    ? "border border-amber-200 bg-amber-50 text-amber-700"
+                    : "border border-emerald-200 bg-emerald-50 text-emerald-700"
+              }`}
+            >
+              {selectedPropertyQuality.criticalIssues.length > 0
+                ? `${selectedPropertyQuality.criticalIssues.length} kritik eksik`
+                : selectedPropertyQuality.advisoryIssues.length > 0
+                  ? `${selectedPropertyQuality.advisoryIssues.length} içerik uyarısı`
+                  : "Yayına hazır"}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <article className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-sm font-semibold text-slate-900">Kritik alanlar</p>
+              {selectedPropertyQuality.criticalIssues.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {selectedPropertyQuality.criticalIssues.map((issue) => (
+                    <span
+                      key={`critical-${issue.id}`}
+                      className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs text-rose-700"
+                    >
+                      {issue.label}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-emerald-700">Kritik eksik bulunmuyor.</p>
+              )}
+            </article>
+
+            <article className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-sm font-semibold text-slate-900">İçerik ve zenginlik uyarıları</p>
+              {selectedPropertyQuality.advisoryIssues.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {selectedPropertyQuality.advisoryIssues.map((issue) => (
+                    <span
+                      key={`advisory-${issue.id}`}
+                      className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-700"
+                    >
+                      {issue.label}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-emerald-700">Ek içerik uyarısı bulunmuyor.</p>
+              )}
+            </article>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Aktivite Geçmişi</p>
+            <h3 className="mt-2 text-lg font-semibold text-slate-900">Seçili portföyün son hareketleri</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Bu blokta seçili ilana ait son düzenleme, durum değişimi, danışman ataması ve kopyalama kayıtlarını görürsünüz.
+            </p>
+          </div>
+          <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+            {selectedPropertyActivityLogs.length} kayıt
+          </span>
+        </div>
+
+        {selectedPropertyActivityLogs.length > 0 ? (
+          <div className="mt-4 space-y-3">
+            {selectedPropertyActivityLogs.map((activity) => (
+              <article key={activity.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${propertyActivityActionBadgeClass(
+                          activity.actionType,
+                        )}`}
+                      >
+                        {propertyActivityActionLabel(activity.actionType)}
+                      </span>
+                      <span className="text-xs text-slate-500">{formatDateTimeTR(activity.createdAt)}</span>
+                    </div>
+                    <p className="mt-3 text-sm font-semibold text-slate-900">{activity.summary}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {activity.actorName} • {propertyActivityActorRoleLabel(activity.actorRole)}
+                    </p>
+                    {activity.details.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {activity.details.slice(0, 4).map((detail) => (
+                          <span
+                            key={`${activity.id}-${detail}`}
+                            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600"
+                          >
+                            {detail}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
+            Bu portföy için henüz kaydedilmiş bir hareket bulunmuyor.
+          </p>
+        )}
+      </section>
+
+      <div id="kopyala-varyantlari" className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Kopyala</p>
           <h3 className="mt-2 text-lg font-semibold text-slate-900">Bu portföyden oda varyantı üretin</h3>

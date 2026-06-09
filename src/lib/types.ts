@@ -4,7 +4,7 @@ export type UserRole = "portal_admin" | "admin" | "portfolio_manager" | "advisor
 
 export type PropertyPriceCurrency = "TRY" | "USD" | "EUR" | "GBP";
 export type PropertyMarketStatus = "Hazır" | "Proje";
-export type PropertyPublicationStatus = "Pasif" | "Aktif";
+export type PropertyPublicationStatus = "Taslak" | "Onay Bekliyor" | "Aktif" | "Pasif" | "Satıldı";
 
 export type PropertyType =
   | "Daire"
@@ -119,6 +119,44 @@ export type Property = {
   imageLabels: string[];
   translations?: PropertyTranslations;
   publishedAt: string;
+};
+
+export type PropertyActivityAction =
+  | "created"
+  | "updated"
+  | "publication_status_changed"
+  | "advisor_changed"
+  | "note_added"
+  | "duplicated"
+  | "deleted";
+
+export type PropertyActivityLog = {
+  id: string;
+  propertySlug: string;
+  propertyId?: string;
+  listingRef?: string;
+  propertyTitle: string;
+  actionType: PropertyActivityAction;
+  actorUserId?: string;
+  actorName: string;
+  actorRole: UserRole | string;
+  summary: string;
+  details: string[];
+  createdAt: string;
+};
+
+export type CreatePropertyActivityLogInput = {
+  propertySlug: string;
+  propertyId?: string;
+  listingRef?: string;
+  propertyTitle: string;
+  actionType: PropertyActivityAction;
+  actorUserId?: string;
+  actorName: string;
+  actorRole: UserRole | string;
+  summary: string;
+  details: string[];
+  createdAt?: string;
 };
 
 export type PropertyFilter = {

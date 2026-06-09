@@ -11,6 +11,7 @@ import { LeadPipelineBoard } from "@/components/panel/lead-pipeline-board";
 import { PortfolioDelete } from "@/components/panel/portfolio-delete";
 import { PortfolioEditor } from "@/components/panel/portfolio-editor";
 import { PortfolioForm } from "@/components/panel/portfolio-form";
+import { PortfolioProjectCenter } from "@/components/panel/portfolio-project-center";
 import { UserManagement } from "@/components/panel/user-management";
 import {
   assignableUserRoles,
@@ -31,15 +32,23 @@ import {
   listAdvisors,
   listBlogPosts,
   listLeads,
+  listPropertyActivityLogs,
   listProperties,
   listUsers,
 } from "@/lib/data-store";
-import { formatDateTR, roleLabel } from "@/lib/format";
+import { formatDateTimeTR, roleLabel } from "@/lib/format";
+import {
+  propertyActivityActionBadgeClass,
+  propertyActivityActionLabel,
+} from "@/lib/property-activity";
+import { isPropertyPublished, normalizePropertyPublicationStatus } from "@/lib/property-panel-options";
+import { summarizePropertyQuality } from "@/lib/property-quality";
 import type { LeadStage } from "@/lib/types";
 
 type PanelTab =
   | "overview"
   | "portfolio-create"
+  | "portfolio-projects"
   | "portfolio-edit"
   | "portfolio-delete"
   | "blog-create"
@@ -54,12 +63,18 @@ type AdminOfficePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const portfolioGroupTabs: PanelTab[] = ["portfolio-create", "portfolio-edit", "portfolio-delete"];
+const portfolioGroupTabs: PanelTab[] = [
+  "portfolio-create",
+  "portfolio-projects",
+  "portfolio-edit",
+  "portfolio-delete",
+];
 const blogGroupTabs: PanelTab[] = ["blog-create", "blog-edit", "blog-delete"];
 
 const panelTabs: Array<{ id: PanelTab; label: string; hint: string }> = [
   { id: "overview", label: "Genel Bakış", hint: "Metrikler ve genel görünüm" },
   { id: "portfolio-create", label: "Portföy Ekle", hint: "Yeni ilan oluştur" },
+  { id: "portfolio-projects", label: "Proje / Firma Merkezi", hint: "Firmaya göre ilanları grupla" },
   { id: "portfolio-edit", label: "Portföy Düzenle", hint: "Mevcut ilanı güncelle" },
   { id: "portfolio-delete", label: "Portföy Sil", hint: "Yayındaki ilanı kaldır" },
   { id: "blog-create", label: "Blog Ekle", hint: "Yeni içerik yayınla" },
@@ -81,7 +96,7 @@ function visibleTabsForRole(role: string): PanelTab[] {
   }
 
   if (canCreateOrEditPortfolios(role)) {
-    output.push("portfolio-create", "portfolio-edit");
+    output.push("portfolio-create", "portfolio-projects", "portfolio-edit");
   }
 
   if (canDeletePortfolios(role)) {
@@ -228,6 +243,10 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
   const resolvedSearchParams = await searchParams;
   const requestedTabRaw = resolvedSearchParams.tab;
   const requestedTab = Array.isArray(requestedTabRaw) ? requestedTabRaw[0] : requestedTabRaw;
+  const requestedSlugRaw = resolvedSearchParams.slug;
+  const requestedSlug = Array.isArray(requestedSlugRaw) ? requestedSlugRaw[0] : requestedSlugRaw;
+  const requestedCompanyRaw = resolvedSearchParams.company;
+  const requestedCompany = Array.isArray(requestedCompanyRaw) ? requestedCompanyRaw[0] : requestedCompanyRaw;
   const allowedTabs = visibleTabsForRole(currentUser.role);
   const activeTab = resolveTab(requestedTab, allowedTabs);
   const visibleTabs = panelTabs.filter((tab) => allowedTabs.includes(tab.id));
@@ -247,18 +266,18 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
   const summary = dashboardSummary();
   const blogPosts = listBlogPosts();
   const allLeads = listLeads();
+  const propertyActivityLogs = listPropertyActivityLogs({ limit: 160 });
   const leads = filterLeadsForActor(currentUser, allLeads);
   const stageSummary = leadStageSummary();
   const appointmentLeadCount = allLeads.filter((lead) => lead.source === "appointment_form").length;
   const contactLeadCount = allLeads.filter((lead) => lead.source === "contact_form").length;
-  const activePropertyCount = properties.filter((property) => (property.publicationStatus ?? "Aktif") === "Aktif").length;
+  const activePropertyCount = properties.filter((property) => isPropertyPublished(property.publicationStatus)).length;
   const passivePropertyCount = properties.length - activePropertyCount;
   const advisorStats = advisors.map((advisor) => ({
     ...advisor,
     propertyCount: properties.filter((property) => property.advisorId === advisor.id).length,
     linkedUserCount: allUsers.filter((user) => user.advisorId === advisor.id).length,
   }));
-  const advisorMap = new Map(advisors.map((advisor) => [advisor.id, advisor]));
   const primaryAction = primaryActionForTabs(allowedTabs);
 
   const toolbarTitle = activeTab === "overview" ? "Yönetim Paneline Genel Bakış" : activeTabMeta.label;
@@ -520,19 +539,30 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                   passivePropertyCount={passivePropertyCount}
                   users={users}
                   properties={properties}
+                  propertyActivityLogs={propertyActivityLogs}
                   blogPosts={blogPosts}
-                  advisorMap={advisorMap}
                 />
               ) : null}
 
               {activeTab === "portfolio-create" ? (
                 <PortfolioForm advisors={advisors} currentUserRole={currentUser.role} />
               ) : null}
+              {activeTab === "portfolio-projects" ? (
+                <PortfolioProjectCenter
+                  initialCompanyFilter={requestedCompany}
+                  initialProperties={properties}
+                  advisors={advisors}
+                  canDelete={canDeletePortfolios(currentUser.role)}
+                  recentActivityLogs={propertyActivityLogs}
+                />
+              ) : null}
               {activeTab === "portfolio-edit" ? (
                 <PortfolioEditor
                   initialProperties={properties}
                   advisors={advisors}
                   currentUserRole={currentUser.role}
+                  initialSelectedSlug={requestedSlug}
+                  recentActivityLogs={propertyActivityLogs}
                 />
               ) : null}
               {activeTab === "portfolio-delete" ? (
@@ -601,8 +631,8 @@ type OverviewSectionProps = {
   passivePropertyCount: number;
   users: Array<{ id: string; name: string; email: string; role: string }>;
   properties: ReturnType<typeof listProperties>;
+  propertyActivityLogs: ReturnType<typeof listPropertyActivityLogs>;
   blogPosts: ReturnType<typeof listBlogPosts>;
-  advisorMap: Map<string, { name: string }>;
 };
 
 function OverviewSection({
@@ -614,8 +644,8 @@ function OverviewSection({
   passivePropertyCount,
   users,
   properties,
+  propertyActivityLogs,
   blogPosts,
-  advisorMap,
 }: OverviewSectionProps) {
   const totalPortfolioValue = properties.reduce((total, property) => total + property.price, 0);
   const offerAnalyticsValue = stageSummary.offer_submitted + stageSummary.called + stageSummary.appointment_scheduled;
@@ -659,10 +689,25 @@ function OverviewSection({
     { label: "Sosyal", value: contactLeadCount, color: "#60a5fa" },
     { label: "Doğrudan", value: otherLeadCount, color: "#93c5fd" },
   ];
-
-  const recentTransactions = [...properties]
-    .sort((left, right) => new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime())
-    .slice(0, 6);
+  const qualitySummaries = properties.map((property) => summarizePropertyQuality(property));
+  const readyForApprovalCount = qualitySummaries.filter((summaryItem) => summaryItem.isReadyForApproval).length;
+  const criticalAttentionCount = qualitySummaries.filter((summaryItem) => summaryItem.criticalIssues.length > 0).length;
+  const advisoryAttentionCount = qualitySummaries.filter(
+    (summaryItem) => summaryItem.criticalIssues.length === 0 && summaryItem.advisoryIssues.length > 0,
+  ).length;
+  const pendingApprovalProperties = properties
+    .filter((property) => normalizePropertyPublicationStatus(property.publicationStatus) === "Onay Bekliyor")
+    .slice(0, 5);
+  const criticalAttentionProperties = properties
+    .map((property, index) => ({
+      property,
+      quality: qualitySummaries[index],
+    }))
+    .filter((entry) => entry.quality.criticalIssues.length > 0)
+    .sort((left, right) => right.quality.criticalIssues.length - left.quality.criticalIssues.length)
+    .slice(0, 5);
+  const recentActivityLogs = propertyActivityLogs.slice(0, 8);
+  const currentPropertySlugs = new Set(properties.map((property) => property.slug));
 
   return (
     <div className="space-y-6">
@@ -716,6 +761,127 @@ function OverviewSection({
         </article>
       </section>
 
+      <section className="grid gap-4 xl:grid-cols-3">
+        <article className="admin-card p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Onaya Hazır</p>
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-[#0f172a]">{readyForApprovalCount}</p>
+          <p className="mt-2 text-sm text-[#64748b]">Kritik alanları tamamlanmış portföy sayısı</p>
+        </article>
+
+        <article className="admin-card p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-rose-700">Kritik Eksik</p>
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-[#0f172a]">{criticalAttentionCount}</p>
+          <p className="mt-2 text-sm text-[#64748b]">Yayına çıkmadan önce müdahale isteyen kayıtlar</p>
+        </article>
+
+        <article className="admin-card p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">İçerik Uyarısı</p>
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-[#0f172a]">{advisoryAttentionCount}</p>
+          <p className="mt-2 text-sm text-[#64748b]">Ek dil, ikon veya içerik tarafında tamamlanabilecek kayıtlar</p>
+        </article>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-3">
+        <article className="admin-card p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-700">Öncelik</p>
+              <h2 className="mt-2 text-lg font-semibold text-[#0f172a]">Onay Kuyruğu</h2>
+            </div>
+            <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
+              {pendingApprovalProperties.length}
+            </span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {pendingApprovalProperties.length > 0 ? (
+              pendingApprovalProperties.map((property) => (
+                <Link
+                  key={`pending-${property.id}`}
+                  href={`/yonetim-ofisi?tab=portfolio-edit&slug=${property.slug}`}
+                  className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-white"
+                >
+                  <p className="text-sm font-semibold text-[#0f172a]">{property.title}</p>
+                  <p className="mt-1 text-xs text-[#64748b]">
+                    {property.listingRef} • {property.city} / {property.district}
+                  </p>
+                </Link>
+              ))
+            ) : (
+              <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-4 text-sm text-[#64748b]">
+                Onay bekleyen kayıt bulunmuyor.
+              </p>
+            )}
+          </div>
+        </article>
+
+        <article className="admin-card p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-rose-700">Müdahale</p>
+              <h2 className="mt-2 text-lg font-semibold text-[#0f172a]">Kritik Eksikler</h2>
+            </div>
+            <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">
+              {criticalAttentionProperties.length}
+            </span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {criticalAttentionProperties.length > 0 ? (
+              criticalAttentionProperties.map(({ property, quality }) => (
+                <Link
+                  key={`critical-${property.id}`}
+                  href={`/yonetim-ofisi?tab=portfolio-edit&slug=${property.slug}`}
+                  className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-white"
+                >
+                  <p className="text-sm font-semibold text-[#0f172a]">{property.title}</p>
+                  <p className="mt-1 text-xs text-[#64748b]">
+                    {quality.criticalIssues.slice(0, 2).map((issue) => issue.label).join(" • ")}
+                  </p>
+                </Link>
+              ))
+            ) : (
+              <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-4 text-sm text-[#64748b]">
+                Kritik eksik görünen portföy yok.
+              </p>
+            )}
+          </div>
+        </article>
+
+        <article className="admin-card p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">Hızlı Akış</p>
+              <h2 className="mt-2 text-lg font-semibold text-[#0f172a]">Son Hareketler</h2>
+            </div>
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+              {recentActivityLogs.slice(0, 5).length}
+            </span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {recentActivityLogs.slice(0, 5).length > 0 ? (
+              recentActivityLogs.slice(0, 5).map((activity) => (
+                <Link
+                  key={`activity-focus-${activity.id}`}
+                  href={`/yonetim-ofisi?tab=portfolio-edit&slug=${activity.propertySlug}`}
+                  className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-white"
+                >
+                  <p className="text-sm font-semibold text-[#0f172a]">{activity.propertyTitle}</p>
+                  <p className="mt-1 text-xs text-[#64748b]">
+                    {activity.actorName} • {propertyActivityActionLabel(activity.actionType)}
+                  </p>
+                </Link>
+              ))
+            ) : (
+              <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-4 text-sm text-[#64748b]">
+                Henüz kayıtlı hareket bulunmuyor.
+              </p>
+            )}
+          </div>
+        </article>
+      </section>
+
       <section className="admin-card overflow-hidden p-0">
         <div className="flex items-center justify-between gap-3 border-b border-[#e2e8f0] px-6 py-5">
           <div>
@@ -730,53 +896,78 @@ function OverviewSection({
               <tr>
                 <th>Kod</th>
                 <th>Tarih</th>
-                <th>Müşteri</th>
-                <th>Tutar</th>
-                <th>Durum</th>
+                <th>Kullanıcı</th>
                 <th>İşlem</th>
+                <th>Portföy</th>
+                <th>Aksiyon</th>
               </tr>
             </thead>
             <tbody>
-              {recentTransactions.map((property) => {
-                const isPublished = (property.publicationStatus ?? "Aktif") === "Aktif";
-                const statusLabel = isPublished ? "Ödenmiş" : "Beklemede";
-
-                return (
-                  <tr key={property.id}>
-                    <td className="font-medium text-[#0f172a]">{property.listingRef}</td>
-                    <td>{formatDateTR(property.publishedAt)}</td>
-                    <td>{advisorMap.get(property.advisorId)?.name ?? property.city}</td>
-                    <td className="font-medium text-[#0f172a]">{formatMetricCurrency(property.price)}</td>
-                    <td>
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          isPublished ? "bg-[#ecfdf3] text-[#15803d]" : "bg-[#fff7ed] text-[#c2410c]"
-                        }`}
-                      >
-                        {statusLabel}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2 text-[#64748b]">
-                        <Link
-                          href={`/yonetim-ofisi?tab=portfolio-edit`}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e2e8f0] bg-white transition hover:bg-[#f8fafc]"
-                          aria-label={`${property.title} düzenle`}
-                        >
-                          <EditActionIcon />
-                        </Link>
-                        <Link
-                          href={`/ilan/${property.slug}`}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e2e8f0] bg-white transition hover:bg-[#f8fafc]"
-                          aria-label={`${property.title} görüntüle`}
-                        >
-                          <MoreActionIcon />
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {recentActivityLogs.length > 0 ? (
+                recentActivityLogs.map((activity) => {
+                  const isExistingProperty = currentPropertySlugs.has(activity.propertySlug);
+                  return (
+                    <tr key={activity.id}>
+                      <td className="font-medium text-[#0f172a]">{activity.listingRef ?? "-"}</td>
+                      <td>{formatDateTimeTR(activity.createdAt)}</td>
+                      <td>
+                        <div>
+                          <p className="font-medium text-[#0f172a]">{activity.actorName}</p>
+                          <p className="mt-1 text-xs text-[#64748b]">{roleLabel(activity.actorRole)}</p>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="space-y-2">
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${propertyActivityActionBadgeClass(
+                              activity.actionType,
+                            )}`}
+                          >
+                            {propertyActivityActionLabel(activity.actionType)}
+                          </span>
+                          <p className="text-xs text-[#475569]">{activity.summary}</p>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <p className="font-medium text-[#0f172a]">{activity.propertyTitle}</p>
+                          <p className="mt-1 text-xs text-[#64748b]">{activity.details[0] ?? "Detay bulunmuyor."}</p>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-2 text-[#64748b]">
+                          {isExistingProperty ? (
+                            <>
+                              <Link
+                                href={`/yonetim-ofisi?tab=portfolio-edit&slug=${activity.propertySlug}`}
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e2e8f0] bg-white transition hover:bg-[#f8fafc]"
+                                aria-label={`${activity.propertyTitle} düzenle`}
+                              >
+                                <EditActionIcon />
+                              </Link>
+                              <Link
+                                href={`/ilan/${activity.propertySlug}`}
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e2e8f0] bg-white transition hover:bg-[#f8fafc]"
+                                aria-label={`${activity.propertyTitle} görüntüle`}
+                              >
+                                <MoreActionIcon />
+                              </Link>
+                            </>
+                          ) : (
+                            <span className="text-xs text-[#94a3b8]">Kayıt artık yayında değil</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-sm text-[#64748b]">
+                    Henüz kaydedilmiş portföy aktivitesi bulunmuyor.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -1076,6 +1267,7 @@ function TabNavigationIcon({ tab }: { tab: PanelTab }) {
         </svg>
       );
     case "portfolio-create":
+    case "portfolio-projects":
     case "portfolio-edit":
     case "portfolio-delete":
       return (

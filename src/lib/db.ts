@@ -69,7 +69,7 @@ db.exec(`
     floor           TEXT NOT NULL,
     heating         TEXT NOT NULL,
     marketStatus    TEXT NOT NULL DEFAULT 'Hazır',
-    publicationStatus TEXT NOT NULL DEFAULT 'Aktif',
+    publicationStatus TEXT NOT NULL DEFAULT 'Onay Bekliyor',
     listingRef      TEXT NOT NULL,
     description     TEXT NOT NULL,
     highlights      TEXT NOT NULL DEFAULT '[]',
@@ -89,6 +89,21 @@ db.exec(`
     imageLabels     TEXT NOT NULL DEFAULT '[]',
     translations    TEXT NOT NULL DEFAULT '{}',
     publishedAt     TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS property_activity_logs (
+    id              TEXT PRIMARY KEY,
+    propertySlug    TEXT NOT NULL,
+    propertyId      TEXT,
+    listingRef      TEXT,
+    propertyTitle   TEXT NOT NULL,
+    actionType      TEXT NOT NULL,
+    actorUserId     TEXT,
+    actorName       TEXT NOT NULL,
+    actorRole       TEXT NOT NULL,
+    summary         TEXT NOT NULL,
+    details         TEXT NOT NULL DEFAULT '[]',
+    createdAt       TEXT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS blog_posts (
@@ -144,11 +159,19 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_property_activity_logs_created_at
+    ON property_activity_logs(createdAt DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_property_activity_logs_property_slug_created_at
+    ON property_activity_logs(propertySlug, createdAt DESC);
+`);
+
 addColumnIfMissing("properties", "priceCurrency", "TEXT NOT NULL DEFAULT 'TRY'");
 addColumnIfMissing("properties", "priceSourceAmount", "REAL");
 addColumnIfMissing("properties", "country", "TEXT NOT NULL DEFAULT 'Türkiye'");
 addColumnIfMissing("properties", "marketStatus", "TEXT NOT NULL DEFAULT 'Hazır'");
-addColumnIfMissing("properties", "publicationStatus", "TEXT NOT NULL DEFAULT 'Aktif'");
+addColumnIfMissing("properties", "publicationStatus", "TEXT NOT NULL DEFAULT 'Onay Bekliyor'");
 addColumnIfMissing("properties", "developerCompany", "TEXT");
 addColumnIfMissing("properties", "staffNotes", "TEXT");
 addColumnIfMissing("properties", "customerFeedbackNotes", "TEXT");

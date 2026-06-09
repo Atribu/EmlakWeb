@@ -1,6 +1,7 @@
 import db from "@/lib/db";
 import { sanitizePropertyTranslations } from "@/lib/property-content";
 import { sanitizePropertyInfoItems } from "@/lib/property-info-items";
+import { isPropertyPublished } from "@/lib/property-panel-options";
 import { pickSampleAdvisorImageForSeed } from "@/lib/sample-advisor-images";
 import { pickSampleImageSet } from "@/lib/sample-images";
 import type {
@@ -10,11 +11,13 @@ import type {
   CreateAdvisorInput,
   CreateBlogPostInput,
   CreateLeadInput,
+  CreatePropertyActivityLogInput,
   CreatePropertyInput,
   CreateSellerLeadInput,
   CreateUserInput,
   LeadStage,
   Property,
+  PropertyActivityLog,
   PropertyFilter,
   SafeUser,
   SellerLead,
@@ -171,6 +174,16 @@ function rowToSellerLead(row: Record<string, unknown>): SellerLead {
   };
 }
 
+function rowToPropertyActivityLog(row: Record<string, unknown>): PropertyActivityLog {
+  return {
+    ...(row as unknown as PropertyActivityLog),
+    propertyId: (row.propertyId as string | null) ?? undefined,
+    listingRef: (row.listingRef as string | null) ?? undefined,
+    actorUserId: (row.actorUserId as string | null) ?? undefined,
+    details: JSON.parse((row.details as string) || "[]"),
+  };
+}
+
 // ─── advisors ────────────────────────────────────────────────────────────────
 
 export function listAdvisors(): Advisor[] {
@@ -259,7 +272,7 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
   const query = filter.query ? normalizeText(filter.query) : "";
 
   return rows.filter((p) => {
-    if (!filter.includeInactive && (p.publicationStatus ?? "Aktif") !== "Aktif") return false;
+    if (!filter.includeInactive && !isPropertyPublished(p.publicationStatus)) return false;
     if (filter.city && p.city !== filter.city) return false;
     if (filter.type && p.type !== filter.type) return false;
     if (filter.publicationStatus && p.publicationStatus !== filter.publicationStatus) return false;
@@ -294,7 +307,7 @@ export function getPropertyBySlugWithOptions(slug: string, options: { includeIna
     return undefined;
   }
 
-  if (!options.includeInactive && (property.publicationStatus ?? "Aktif") !== "Aktif") {
+  if (!options.includeInactive && !isPropertyPublished(property.publicationStatus)) {
     return undefined;
   }
 
@@ -319,7 +332,7 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
     priceSourceAmount: input.priceSourceAmount ?? input.price,
     advisorId: input.advisorId?.trim() ?? "",
     marketStatus: input.marketStatus ?? "Hazır",
-    publicationStatus: input.publicationStatus ?? "Pasif",
+    publicationStatus: input.publicationStatus ?? "Onay Bekliyor",
     infoItems: sanitizePropertyInfoItems(input.infoItems),
     translations: sanitizePropertyTranslations(input.translations),
     developerCompany: cleanOptionalText(input.developerCompany),
@@ -400,7 +413,7 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
     floor: input.floor.trim(),
     heating: input.heating.trim(),
     marketStatus: input.marketStatus ?? property.marketStatus ?? "Hazır",
-    publicationStatus: input.publicationStatus ?? property.publicationStatus ?? "Pasif",
+    publicationStatus: input.publicationStatus ?? property.publicationStatus ?? "Onay Bekliyor",
     description: input.description.trim(),
     highlights: input.highlights,
     features: input.features,
@@ -451,11 +464,181 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
   return updated;
 }
 
+export function updatePropertyOperationalFieldsBySlug(
+  slug: string,
+  input: { publicationStatus?: Property["publicationStatus"]; advisorId?: string },
+): Property {
+  const property = getPropertyBySlugWithOptions(slug, { includeInactive: true });
+  if (!property) throw new Error("Portföy bulunamadı.");
+
+  if (input.advisorId && !getAdvisorById(input.advisorId)) {
+    throw new Error("Seçilen danışman bulunamadı.");
+  }
+
+  const updated: Property = {
+    ...property,
+    publicationStatus: input.publicationStatus ?? property.publicationStatus ?? "Onay Bekliyor",
+    advisorId: input.advisorId?.trim() ?? property.advisorId,
+  };
+
+  db.prepare(`
+    UPDATE properties SET
+      publicationStatus=@publicationStatus,
+      advisorId=@advisorId
+    WHERE slug=@slug
+  `).run({
+    slug,
+    publicationStatus: updated.publicationStatus,
+    advisorId: updated.advisorId,
+  });
+
+  return updated;
+}
+
+export function updatePropertiesOperationalBySlugs(
+  slugs: string[],
+  input: { publicationStatus?: Property["publicationStatus"]; advisorId?: string },
+): Property[] {
+  const uniqueSlugs = Array.from(new Set(slugs.filter(Boolean)));
+
+  if (uniqueSlugs.length === 0) {
+    throw new Error("Güncellenecek portföy seçilmedi.");
+  }
+
+  return db.transaction((batch: string[]) =>
+    batch.map((slug) => updatePropertyOperationalFieldsBySlug(slug, input))
+  )(uniqueSlugs);
+}
+
+type PropertyNoteUpdateInput = {
+  slug: string;
+  staffNotes?: string;
+  customerFeedbackNotes?: string;
+  adminCommissionNotes?: string;
+  adminPrivateNotes?: string;
+};
+
+export function updatePropertyNotesBySlug(
+  slug: string,
+  input: Omit<PropertyNoteUpdateInput, "slug">,
+): Property {
+  const property = getPropertyBySlugWithOptions(slug, { includeInactive: true });
+  if (!property) throw new Error("Portföy bulunamadı.");
+
+  const updated: Property = {
+    ...property,
+    staffNotes: cleanOptionalText(input.staffNotes) ?? property.staffNotes,
+    customerFeedbackNotes: cleanOptionalText(input.customerFeedbackNotes) ?? property.customerFeedbackNotes,
+    adminCommissionNotes: cleanOptionalText(input.adminCommissionNotes) ?? property.adminCommissionNotes,
+    adminPrivateNotes: cleanOptionalText(input.adminPrivateNotes) ?? property.adminPrivateNotes,
+  };
+
+  db.prepare(`
+    UPDATE properties SET
+      staffNotes=@staffNotes,
+      customerFeedbackNotes=@customerFeedbackNotes,
+      adminCommissionNotes=@adminCommissionNotes,
+      adminPrivateNotes=@adminPrivateNotes
+    WHERE slug=@slug
+  `).run({
+    slug,
+    staffNotes: updated.staffNotes ?? null,
+    customerFeedbackNotes: updated.customerFeedbackNotes ?? null,
+    adminCommissionNotes: updated.adminCommissionNotes ?? null,
+    adminPrivateNotes: updated.adminPrivateNotes ?? null,
+  });
+
+  return updated;
+}
+
+export function updatePropertyNotesBySlugs(
+  updates: PropertyNoteUpdateInput[],
+): Property[] {
+  const uniqueUpdates = updates.filter((update, index, current) =>
+    Boolean(update.slug) && current.findIndex((item) => item.slug === update.slug) === index,
+  );
+
+  if (uniqueUpdates.length === 0) {
+    throw new Error("Güncellenecek portföy seçilmedi.");
+  }
+
+  return db.transaction((batch: PropertyNoteUpdateInput[]) =>
+    batch.map((update) => updatePropertyNotesBySlug(update.slug, update))
+  )(uniqueUpdates);
+}
+
 export function deletePropertyBySlug(slug: string): Property {
   const property = getPropertyBySlugWithOptions(slug, { includeInactive: true });
   if (!property) throw new Error("Portföy bulunamadı.");
   db.prepare("DELETE FROM properties WHERE slug = ?").run(slug);
   return property;
+}
+
+export function deletePropertiesBySlugs(slugs: string[]): Property[] {
+  const uniqueSlugs = Array.from(new Set(slugs.filter(Boolean)));
+
+  if (uniqueSlugs.length === 0) {
+    throw new Error("Silinecek portföy seçilmedi.");
+  }
+
+  return db.transaction((batch: string[]) => batch.map((slug) => deletePropertyBySlug(slug)))(uniqueSlugs);
+}
+
+export function createPropertyActivityLog(input: CreatePropertyActivityLogInput): PropertyActivityLog {
+  const activityLog: PropertyActivityLog = {
+    id: `act-${crypto.randomUUID()}`,
+    propertySlug: input.propertySlug.trim(),
+    propertyId: input.propertyId?.trim() || undefined,
+    listingRef: input.listingRef?.trim() || undefined,
+    propertyTitle: input.propertyTitle.trim(),
+    actionType: input.actionType,
+    actorUserId: input.actorUserId?.trim() || undefined,
+    actorName: input.actorName.trim(),
+    actorRole: input.actorRole,
+    summary: input.summary.trim(),
+    details: input.details.map((detail) => detail.trim()).filter(Boolean),
+    createdAt: input.createdAt ?? new Date().toISOString(),
+  };
+
+  db.prepare(`
+    INSERT INTO property_activity_logs
+      (id, propertySlug, propertyId, listingRef, propertyTitle, actionType, actorUserId, actorName, actorRole, summary, details, createdAt)
+    VALUES
+      (@id, @propertySlug, @propertyId, @listingRef, @propertyTitle, @actionType, @actorUserId, @actorName, @actorRole, @summary, @details, @createdAt)
+  `).run({
+    ...activityLog,
+    propertyId: activityLog.propertyId ?? null,
+    listingRef: activityLog.listingRef ?? null,
+    actorUserId: activityLog.actorUserId ?? null,
+    details: JSON.stringify(activityLog.details),
+  });
+
+  return activityLog;
+}
+
+export function listPropertyActivityLogs(filter: { propertySlug?: string; limit?: number } = {}): PropertyActivityLog[] {
+  const clauses: string[] = [];
+  const values: string[] = [];
+
+  if (filter.propertySlug?.trim()) {
+    clauses.push("propertySlug = ?");
+    values.push(filter.propertySlug.trim());
+  }
+
+  const limit = typeof filter.limit === "number"
+    ? Math.max(1, Math.min(500, Math.floor(filter.limit)))
+    : undefined;
+
+  let query = "SELECT * FROM property_activity_logs";
+  if (clauses.length > 0) {
+    query += ` WHERE ${clauses.join(" AND ")}`;
+  }
+  query += " ORDER BY createdAt DESC";
+  if (limit) {
+    query += ` LIMIT ${limit}`;
+  }
+
+  return (db.prepare(query).all(...values) as Record<string, unknown>[]).map(rowToPropertyActivityLog);
 }
 
 export function listCities(): string[] {

@@ -3,7 +3,8 @@ import type { NextRequest } from "next/server";
 
 import { canCreateOrEditPortfolios } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
-import { createProperty, listProperties } from "@/lib/data-store";
+import { createProperty, createPropertyActivityLog, listAdvisors, listProperties } from "@/lib/data-store";
+import { buildPropertyCreatedActivity, createPropertyActivityActor } from "@/lib/property-activity";
 import { PROPERTY_MARKET_STATUS_OPTIONS, PROPERTY_PRICE_CURRENCY_OPTIONS, PROPERTY_TYPE_OPTIONS } from "@/lib/property-panel-options";
 import {
   buildGalleryImageFileName,
@@ -201,7 +202,7 @@ function applyRoleScopedFields(
     ...input,
     country: input.country?.trim() || "Türkiye",
     floor: input.floor?.trim() ?? "",
-    publicationStatus: "Pasif",
+    publicationStatus: "Onay Bekliyor",
     adminCommissionNotes: canSeeAdminFields ? input.adminCommissionNotes : undefined,
     adminPrivateNotes: canSeeAdminFields ? input.adminPrivateNotes : undefined,
   };
@@ -411,9 +412,19 @@ export async function POST(request: NextRequest) {
       ? await parseCreateFormData(await request.formData(), exchangeRates)
       : parseCreateInput(await request.json(), exchangeRates);
     const scopedInput = applyRoleScopedFields(parsed.input, user.role);
+    const actor = createPropertyActivityActor(user);
+    const advisorMap = new Map(listAdvisors().map((advisor) => [advisor.id, advisor.name]));
     const properties = parsed.roomSelections.map((room) =>
       createProperty(createVariantInput(scopedInput, parsed.roomSelections, room), user.id),
     );
+
+    properties.forEach((property) => {
+      createPropertyActivityLog(
+        buildPropertyCreatedActivity(property, actor, {
+          advisorName: advisorMap.get(property.advisorId),
+        }),
+      );
+    });
 
     return NextResponse.json({
       properties,

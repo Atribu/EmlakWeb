@@ -3,7 +3,8 @@ import type { NextRequest } from "next/server";
 
 import { canCreateOrEditPortfolios } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
-import { createProperty, getPropertyBySlugWithOptions } from "@/lib/data-store";
+import { createProperty, createPropertyActivityLog, getPropertyBySlugWithOptions, listAdvisors } from "@/lib/data-store";
+import { buildPropertyDuplicatedActivity, createPropertyActivityActor } from "@/lib/property-activity";
 
 function parseRoomSelections(value: unknown): string[] {
   if (!Array.isArray(value)) {
@@ -65,14 +66,24 @@ export async function POST(
       throw new Error("Mevcut oda tipinden farklı en az bir varyant seçin.");
     }
 
+    const actor = createPropertyActivityActor(user);
+    const advisorMap = new Map(listAdvisors().map((advisor) => [advisor.id, advisor.name]));
     const properties = roomSelections.map((room) =>
       createProperty({
         ...source,
         title: resolveVariantTitle(source.title, source.rooms, room),
         rooms: room,
-        publicationStatus: "Pasif",
+        publicationStatus: "Taslak",
       }, user.id),
     );
+
+    properties.forEach((property) => {
+      createPropertyActivityLog(
+        buildPropertyDuplicatedActivity(source, property, actor, {
+          advisorName: advisorMap.get(property.advisorId),
+        }),
+      );
+    });
 
     return NextResponse.json({ properties, count: properties.length }, { status: 201 });
   } catch (error) {

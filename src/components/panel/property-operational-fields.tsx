@@ -85,7 +85,8 @@ export function PropertyOperationalFields({
 
       {!allowPublicationControl ? (
         <div className="admin-note md:col-span-2 p-4 text-sm text-slate-700">
-          Yeni eklenen portföyler ilk etapta <strong>pasif</strong> kaydedilir. Yönetici onayı sonrası yayına alınır.
+          Yeni eklenen portföyler ilk etapta <strong>Onay Bekliyor</strong> durumunda kaydedilir. Yönetici onayı sonrası
+          yayına alınır veya taslağa/pasife çekilebilir.
         </div>
       ) : null}
 
@@ -102,11 +103,7 @@ export function PropertyOperationalFields({
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {allowPublicationControl ? (
               <PropertyFieldShell label="Yayın Durumu" icon={<PublishFieldIcon />} className="md:col-span-2">
-                <select
-                  name="publicationStatus"
-                  defaultValue={defaults?.publicationStatus ?? "Pasif"}
-                  className="input"
-                >
+                <select name="publicationStatus" defaultValue={defaults?.publicationStatus ?? "Onay Bekliyor"} className="input">
                   {PROPERTY_PUBLICATION_STATUS_OPTIONS.map((option) => (
                     <option key={option} value={option}>
                       {option}

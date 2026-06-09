@@ -181,7 +181,7 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
         <div className="flex flex-wrap gap-2">
           <span className="admin-chip">4 Dil Girişi</span>
           <span className="admin-chip">Tek Galeri Akışı</span>
-          <span className="admin-chip">Yönetici Onaylı Yayın</span>
+          <span className="admin-chip">Onay Kuyruğu</span>
         </div>
       </div>
 
@@ -420,7 +420,7 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
           disabled={status.type === "loading"}
           className="admin-button-primary cursor-pointer px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2"
         >
-          {status.type === "loading" ? "Kaydediliyor..." : "Portföyü Pasif Olarak Kaydet"}
+          {status.type === "loading" ? "Kaydediliyor..." : "Portföyü Onay Kuyruğuna Gönder"}
         </button>
       </form>
 
@@ -429,8 +429,8 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
       {status.type === "success" ? (
         <p className="mt-3 text-sm text-emerald-700">
           {status.count > 1
-            ? `${status.count} adet portföy pasif olarak oluşturuldu. İlk ilan kodu: ${status.listingRef}. Yönetici onayı sonrası yayına alınabilir.`
-            : `${status.listingRef} kodlu portföy pasif olarak eklendi. Yönetici onayı sonrası yayına alınabilir.`}
+            ? `${status.count} adet portföy onay kuyruğuna alındı. İlk ilan kodu: ${status.listingRef}. Yönetici onayı sonrası yayına alınabilir.`
+            : `${status.listingRef} kodlu portföy onay kuyruğuna alındı. Yönetici onayı sonrası yayına alınabilir.`}
         </p>
       ) : null}
     </section>
