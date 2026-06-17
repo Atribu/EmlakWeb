@@ -10,8 +10,8 @@ import { advisorsPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
-  title: "Danışmanlar | PortföySatış",
-  description: "PortföySatış uzman danışman ekibi ve odak bölgeleri.",
+  title: "Danışmanlar | Econi Invest",
+  description: "Econi Invest uzman danışman ekibi ve odak bölgeleri.",
 };
 
 export default async function DanismanlarPage() {
@@ -53,16 +53,16 @@ export default async function DanismanlarPage() {
                     className="h-72 w-full object-cover"
                   />
                 </div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8d7348]">{copy.advisorLabel}</p>
-                <h2 className="mt-2 text-[2rem] leading-none font-semibold text-[#1f1a14]">{advisor.name}</h2>
-                <p className="mt-1 text-sm text-[#5f5548]">{advisor.title}</p>
-                <p className="mt-2 text-sm text-[#6f6456]">{copy.specialty}: {advisor.focusArea}</p>
-                <p className="mt-2 text-sm text-[#6f6456]">{copy.activeListings}: {propertyCount}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--brand-accent-strong)]">{copy.advisorLabel}</p>
+                <h2 className="mt-2 text-[2rem] leading-none font-extrabold text-[var(--brand-ink)]">{advisor.name}</h2>
+                <p className="mt-1 text-sm text-[var(--ink-600)]">{advisor.title}</p>
+                <p className="mt-2 text-sm text-[var(--ink-600)]">{copy.specialty}: {advisor.focusArea}</p>
+                <p className="mt-2 text-sm text-[var(--ink-600)]">{copy.activeListings}: {propertyCount}</p>
 
                 <div className="mt-4 flex flex-wrap gap-2 text-sm">
                   <a
                     href={phoneHref}
-                    className="rounded-full border border-[#d6c5a8] bg-white px-4 py-2 font-semibold text-[#4f4435] transition hover:bg-[#f6edde]"
+                    className="rounded-lg border border-[var(--line-strong)] bg-white px-4 py-2 font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(102,165,87,0.08)]"
                   >
                     {copy.call}
                   </a>
@@ -70,7 +70,7 @@ export default async function DanismanlarPage() {
                     href={whatsappHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-full border border-[#b7dcc5] bg-[#ebf8ef] px-4 py-2 font-semibold text-[#2f7d4b] transition hover:bg-[#def2e5]"
+                    className="rounded-lg border border-[var(--brand-green)] bg-[var(--brand-green)] px-4 py-2 font-semibold text-white transition hover:bg-[#58974b]"
                   >
                     WhatsApp
                   </a>

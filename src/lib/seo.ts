@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { parseBlogContent } from "@/lib/blog-content";
 import type { BlogPost, Property } from "@/lib/types";
 
-const defaultTitle = "PortföySatış | Premium Emlak ve Yatırım Portföyleri";
+const defaultTitle = "Econi Invest | Premium Emlak ve Yatırım Portföyleri";
 const defaultDescription =
   "İstanbul ve çevresinde satış odaklı premium emlak portföyleri. Harita, randevu ve danışman destekli hızlı teklif süreci.";
 
@@ -30,7 +30,7 @@ export function baseMetadata(): Metadata {
       title: defaultTitle,
       description: defaultDescription,
       url: baseUrl,
-      siteName: "PortföySatış",
+      siteName: "Econi Invest",
       locale: "tr_TR",
       type: "website",
     },
@@ -76,7 +76,7 @@ export function homeListingSchema(properties: Property[]) {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "PortföySatış Premium İlanlar",
+    name: "Econi Invest Premium İlanlar",
     itemListElement: properties.slice(0, 12).map((property, index) => ({
       "@type": "ListItem",
       position: index + 1,
@@ -120,7 +120,7 @@ export function propertySchema(property: Property) {
 }
 
 export function blogMetadata(post: BlogPost): Metadata {
-  const title = post.metaTitle || `${post.title} | PortföySatış Blog`;
+  const title = post.metaTitle || `${post.title} | Econi Invest Blog`;
   const description = post.metaDescription || post.excerpt;
 
   return {
@@ -150,7 +150,7 @@ export function blogListSchema(posts: BlogPost[]) {
   return {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "PortföySatış Blog",
+    name: "Econi Invest Blog",
     blogPost: posts.slice(0, 24).map((post) => ({
       "@type": "BlogPosting",
       headline: post.title,
@@ -207,7 +207,7 @@ export function blogPostSchema(post: BlogPost) {
     },
     publisher: {
       "@type": "Organization",
-      name: "PortföySatış",
+      name: "Econi Invest",
       url: baseUrl,
     },
     mainEntityOfPage: `${baseUrl}/blog/${post.slug}`,

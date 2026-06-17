@@ -1,4 +1,4 @@
-# PortföySatış Demo (DB'siz MVP)
+# Econi Invest Demo (DB'siz MVP)
 
 Satış odaklı emlak sitesi için hazırlanmış Next.js demo sürümü.
 

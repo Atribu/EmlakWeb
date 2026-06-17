@@ -180,9 +180,9 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
       aria-label={`${propertyTitle} ${copy.details}`}
       onClick={handleCardClick}
       onKeyDown={handleCardKeyDown}
-      className="group block cursor-pointer overflow-hidden rounded-[1.55rem] border border-[var(--line-strong)] bg-[linear-gradient(180deg,#fffdfa_0%,#fbf7f0_100%)] shadow-[0_24px_46px_-34px_rgba(24,20,14,0.24)] outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_54px_-36px_rgba(18,24,36,0.28)] focus-visible:ring-2 focus-visible:ring-[rgba(201,124,78,0.38)]"
+      className="group block cursor-pointer overflow-hidden rounded-lg border border-[var(--line-strong)] bg-white shadow-[0_24px_46px_-34px_rgba(24,20,14,0.24)] outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_54px_-36px_rgba(18,24,36,0.28)] focus-visible:ring-2 focus-visible:ring-[rgba(102,165,87,0.42)]"
     >
-      <div className="relative aspect-[4/2.55] overflow-hidden bg-[#d8cab5]">
+      <div className="relative aspect-[4/2.55] overflow-hidden bg-[var(--brand-night-blue)]">
         <Image
           src={activeImage}
           alt={propertyTitle}
@@ -194,18 +194,18 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,14,21,0.06)_0%,rgba(9,14,21,0.18)_48%,rgba(9,14,21,0.58)_100%)]" />
 
         <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-          <span className="rounded-full border border-white/26 bg-[rgba(8,14,22,0.54)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
+          <span className="rounded-lg border border-white/26 bg-[rgba(29,38,68,0.58)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
             {translatePropertyType(property.type, language)}
           </span>
         </div>
 
         <div className="absolute right-3 top-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-[rgba(8,14,22,0.42)] text-white backdrop-blur-sm">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/30 bg-[rgba(29,38,68,0.46)] text-white backdrop-blur-sm">
             <HeartIcon />
           </span>
         </div>
 
-        <div className="absolute bottom-3 right-3 rounded-full border border-white/26 bg-[rgba(8,14,22,0.54)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
+        <div className="absolute bottom-3 right-3 rounded-lg border border-white/26 bg-[rgba(29,38,68,0.58)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
           {photoCount} {copy.photos}
         </div>
 
@@ -215,7 +215,7 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
               type="button"
               onClick={() => stepGallery(-1)}
               aria-label={copy.previousImage}
-              className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/34 bg-[#0d1219]/38 text-white backdrop-blur transition hover:bg-[#0d1219]/58"
+              className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg border border-white/34 bg-[rgba(29,38,68,0.38)] text-white backdrop-blur transition hover:bg-[rgba(29,38,68,0.58)]"
             >
               <ArrowIcon direction="left" />
             </button>
@@ -223,7 +223,7 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
               type="button"
               onClick={() => stepGallery(1)}
               aria-label={copy.nextImage}
-              className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/34 bg-[#0d1219]/38 text-white backdrop-blur transition hover:bg-[#0d1219]/58"
+              className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg border border-white/34 bg-[rgba(29,38,68,0.38)] text-white backdrop-blur transition hover:bg-[rgba(29,38,68,0.58)]"
             >
               <ArrowIcon direction="right" />
             </button>
@@ -259,7 +259,7 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
           </div>
         </div>
 
-        <div className="mt-4 flex items-end justify-between gap-3 border-t border-[rgba(220,208,189,0.72)] pt-4">
+        <div className="mt-4 flex items-end justify-between gap-3 border-t border-[var(--line)] pt-4">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
               {copy.startingPrice}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { HeaderMarketControlsInner } from "@/components/header-market-controls";
 import { SiteHeaderAuth } from "@/components/site-header-auth";
 import { useSitePreferences } from "@/components/use-site-preferences";
@@ -77,13 +78,13 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[rgba(220,208,189,0.72)] bg-[rgba(255,251,245,0.92)] backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[rgba(255,255,255,0.94)] backdrop-blur-xl">
         <div className="frame-wide px-2 sm:px-4">
           <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-3 py-3 xl:flex xl:justify-between">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-[var(--line-strong)] bg-white text-[var(--brand-primary)] shadow-[0_18px_36px_-30px_rgba(22,32,48,0.34)] transition hover:border-[var(--brand-accent)] xl:hidden"
+              className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg border border-[var(--line-strong)] bg-white text-[var(--brand-primary)] shadow-[0_18px_36px_-30px_rgba(22,32,48,0.34)] transition hover:border-[var(--brand-accent)] xl:hidden"
               aria-label={navigation.mobileTitle}
             >
               <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" aria-hidden>
@@ -93,20 +94,10 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
 
             <Link
               href="/"
-              className="mx-auto flex items-center gap-3 leading-none text-[var(--brand-primary)] transition hover:opacity-90 xl:mx-0"
-              aria-label="PortföySatış ana sayfa"
+              className="mx-auto flex min-w-[10rem] items-center leading-none transition hover:opacity-90 xl:mx-0"
+              aria-label="Econi Invest ana sayfa"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-[0.95rem] bg-[linear-gradient(135deg,var(--brand-primary)_0%,#315682_100%)] text-base font-semibold text-white shadow-[0_18px_34px_-26px_rgba(29,56,92,0.62)]">
-                PS
-              </span>
-              <span className="block">
-                <span className="block text-[9px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-accent-strong)]">
-                  PortföySatış
-                </span>
-                <span className="text-[1rem] font-semibold tracking-[0.02em] sm:text-[1.12rem]">
-                  Signature Estates
-                </span>
-              </span>
+              <BrandLogo className="text-[1.65rem] sm:text-[1.85rem]" />
             </Link>
 
             <div className="hidden xl:flex xl:items-center xl:gap-4">
@@ -115,15 +106,15 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                   <div key={group.href} className="group relative">
                     <Link
                       href={group.href}
-                      className="flex min-h-10 items-center gap-1 rounded-full px-4 py-2 transition hover:bg-[rgba(29,56,92,0.07)] hover:text-[var(--brand-primary)] focus-visible:bg-[rgba(29,56,92,0.07)] focus-visible:text-[var(--brand-primary)] focus-visible:outline-none"
+                    className="flex min-h-10 items-center gap-1 rounded-lg px-4 py-2 transition hover:bg-[rgba(102,165,87,0.1)] hover:text-[var(--brand-primary)] focus-visible:bg-[rgba(102,165,87,0.1)] focus-visible:text-[var(--brand-primary)] focus-visible:outline-none"
                     >
                       {group.label}
                       <ChevronIcon />
                     </Link>
 
                     <div className="pointer-events-none invisible absolute top-full left-1/2 z-30 w-max -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition duration-200 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                      <div className={`min-w-[32rem] overflow-hidden rounded-[1.15rem] border border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] shadow-[0_30px_64px_-36px_rgba(22,30,42,0.24)] backdrop-blur-xl ${group.panelClassName ?? "w-[34rem]"}`}>
-                        <div className="border-b border-[rgba(220,208,189,0.72)] px-4 py-3">
+                      <div className={`min-w-[32rem] overflow-hidden rounded-lg border border-[var(--line-strong)] bg-[rgba(255,255,255,0.98)] shadow-[0_30px_64px_-36px_rgba(22,30,42,0.24)] backdrop-blur-xl ${group.panelClassName ?? "w-[34rem]"}`}>
+                        <div className="border-b border-[var(--line)] px-4 py-3">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-accent-strong)]">
                             {group.label}
                           </p>
@@ -137,7 +128,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                             <Link
                               key={`${item.href}-${item.label}`}
                               href={item.href}
-                              className="group/item flex items-center justify-between gap-3 rounded-[0.95rem] border border-transparent bg-white px-3.5 py-2.5 transition hover:border-[var(--line-strong)] hover:bg-[rgba(29,56,92,0.03)]"
+                              className="group/item flex items-center justify-between gap-3 rounded-lg border border-transparent bg-white px-3.5 py-2.5 transition hover:border-[var(--line-strong)] hover:bg-[rgba(102,165,87,0.06)]"
                             >
                               <div className="min-w-0">
                                 <p className="text-[0.8rem] font-semibold tracking-[0.01em] text-[var(--brand-primary)]">
@@ -162,7 +153,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="flex min-h-10 items-center rounded-full px-4 py-2 transition hover:bg-[rgba(29,56,92,0.07)] hover:text-[var(--brand-primary)] focus-visible:bg-[rgba(29,56,92,0.07)] focus-visible:text-[var(--brand-primary)] focus-visible:outline-none"
+                    className="flex min-h-10 items-center rounded-lg px-4 py-2 transition hover:bg-[rgba(102,165,87,0.1)] hover:text-[var(--brand-primary)] focus-visible:bg-[rgba(102,165,87,0.1)] focus-visible:text-[var(--brand-primary)] focus-visible:outline-none"
                   >
                     {item.label}
                   </Link>
@@ -187,8 +178,8 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
             className="absolute inset-0 bg-[rgba(12,18,27,0.44)]"
           />
 
-          <aside className="absolute left-0 top-0 flex h-full w-[min(88vw,23rem)] flex-col overflow-hidden border-r border-[var(--line-strong)] bg-[rgba(255,252,247,0.98)] shadow-[0_30px_64px_-30px_rgba(16,23,34,0.34)] backdrop-blur-xl">
-            <div className="flex items-center justify-between border-b border-[rgba(220,208,189,0.72)] px-4 py-4">
+          <aside className="absolute left-0 top-0 flex h-full w-[min(88vw,23rem)] flex-col overflow-hidden border-r border-[var(--line-strong)] bg-[rgba(255,255,255,0.98)] shadow-[0_30px_64px_-30px_rgba(16,23,34,0.34)] backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-[var(--line)] px-4 py-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-accent-strong)]">
                   {navigation.mobileTitle}
@@ -200,7 +191,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
               <button
                 type="button"
                 onClick={closeMobileMenu}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white text-[var(--brand-primary)]"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--line-strong)] bg-white text-[var(--brand-primary)]"
                 aria-label="Menüyü kapat"
               >
                 <svg viewBox="0 0 20 20" fill="none" className="h-4.5 w-4.5" aria-hidden>
@@ -210,7 +201,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
             </div>
 
             <div className="flex-1 space-y-4 overflow-y-auto p-4">
-              <div className="rounded-[1rem] border border-[var(--line-strong)] bg-white p-3">
+              <div className="rounded-lg border border-[var(--line-strong)] bg-white p-3">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
                   {copy.language} / {copy.currency}
                 </p>
@@ -222,7 +213,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                   const isOpen = activeMobileGroup === group.href;
 
                   return (
-                    <div key={group.href} className="overflow-hidden rounded-[1rem] border border-[var(--line-strong)] bg-white">
+                    <div key={group.href} className="overflow-hidden rounded-lg border border-[var(--line-strong)] bg-white">
                       <button
                         type="button"
                         onClick={() => toggleMobileGroup(group.href)}
@@ -233,11 +224,11 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                       </button>
 
                       {isOpen ? (
-                        <div className="border-t border-[rgba(220,208,189,0.72)] px-3 py-3">
+                        <div className="border-t border-[var(--line)] px-3 py-3">
                           <Link
                             href={group.href}
                             onClick={closeMobileMenu}
-                            className="mb-2 block rounded-[0.95rem] bg-[rgba(29,56,92,0.05)] px-3 py-2 text-[13px] font-semibold text-[var(--brand-primary)]"
+                            className="mb-2 block rounded-lg bg-[rgba(102,165,87,0.1)] px-3 py-2 text-[13px] font-semibold text-[var(--brand-primary)]"
                           >
                             {group.label}
                           </Link>
@@ -247,7 +238,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                                 key={`${group.href}-${item.href}-${item.label}`}
                                 href={item.href}
                                 onClick={closeMobileMenu}
-                                className="flex items-center justify-between gap-3 rounded-[0.95rem] px-3 py-2.5 text-[13px] font-medium text-[var(--ink-700)] transition hover:bg-[rgba(29,56,92,0.05)]"
+                                className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-[var(--ink-700)] transition hover:bg-[rgba(102,165,87,0.08)]"
                               >
                                 <span className="min-w-0 truncate">{item.label}</span>
                                 <span className="shrink-0 text-[var(--brand-accent-strong)]">
@@ -269,7 +260,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                     key={`mobile-${item.href}`}
                     href={item.href}
                     onClick={closeMobileMenu}
-                    className="rounded-[1rem] border border-[var(--line-strong)] bg-white px-4 py-3 text-sm font-semibold tracking-[0.03em] text-[var(--brand-primary)] transition hover:bg-[rgba(29,56,92,0.04)]"
+                    className="rounded-lg border border-[var(--line-strong)] bg-white px-4 py-3 text-sm font-semibold tracking-[0.03em] text-[var(--brand-primary)] transition hover:bg-[rgba(102,165,87,0.08)]"
                   >
                     {item.label}
                   </Link>

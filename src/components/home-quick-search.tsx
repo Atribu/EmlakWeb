@@ -207,7 +207,7 @@ export function HomeQuickSearch({
 
   if (isHeroBar) {
     return (
-      <section className="relative overflow-hidden rounded-[1.35rem] border border-[#e5d7c1] bg-[rgba(255,255,255,0.96)] p-4 shadow-[0_28px_56px_-34px_rgba(18,24,36,0.22)] backdrop-blur sm:p-5">
+      <section className="relative overflow-hidden rounded-lg border border-[rgba(102,165,87,0.28)] bg-[rgba(255,255,255,0.97)] p-4 shadow-[0_28px_56px_-34px_rgba(18,24,36,0.22)] backdrop-blur sm:p-5">
         <form
           onSubmit={handleSubmit}
           className="grid gap-3 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.9fr)_minmax(0,1.08fr)_auto] lg:items-end"
@@ -252,7 +252,7 @@ export function HomeQuickSearch({
             <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
               {copy.maxPriceLabel}
             </span>
-            <div className="grid min-h-[3.15rem] grid-cols-2 gap-2 rounded-[1rem] border border-[var(--line-strong)] bg-white px-3 py-2">
+            <div className="grid min-h-[3.15rem] grid-cols-2 gap-2 rounded-lg border border-[var(--line-strong)] bg-white px-3 py-2">
               <input
                 value={form.minPrice}
                 onChange={(event) => updateField("minPrice", event.target.value)}
@@ -269,14 +269,14 @@ export function HomeQuickSearch({
                 min={0}
                 inputMode="numeric"
                 placeholder={copy.maxPricePlaceholder}
-                className="min-w-0 border-0 border-l border-[rgba(220,208,189,0.72)] bg-transparent pl-3 text-[14px] text-[var(--ink-900)] outline-none placeholder:text-[var(--ink-400)]"
+                className="min-w-0 border-0 border-l border-[var(--line)] bg-transparent pl-3 text-[14px] text-[var(--ink-900)] outline-none placeholder:text-[var(--ink-400)]"
               />
             </div>
           </label>
 
           <button
             type="submit"
-            className="inline-flex min-h-[3.15rem] items-center justify-center gap-2 rounded-[1rem] bg-[var(--brand-primary)] px-6 text-[14px] font-semibold text-white shadow-[0_18px_28px_-20px_rgba(29,56,92,0.65)] transition hover:-translate-y-0.5"
+            className="inline-flex min-h-[3.15rem] items-center justify-center gap-2 rounded-lg bg-[var(--brand-green)] px-6 text-[14px] font-semibold text-white shadow-[0_18px_28px_-20px_rgba(102,165,87,0.65)] transition hover:-translate-y-0.5 hover:bg-[#58974b]"
           >
             <SearchIcon />
             {copy.submit}
@@ -296,7 +296,7 @@ export function HomeQuickSearch({
         </div>
 
         {showAdvancedFilters ? (
-          <div className="mt-3 grid gap-3 border-t border-[rgba(220,208,189,0.72)] pt-3 sm:grid-cols-2">
+          <div className="mt-3 grid gap-3 border-t border-[var(--line)] pt-3 sm:grid-cols-2">
             <label className="flex flex-col gap-2">
               <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
                 {copy.keywordLabel}
@@ -333,19 +333,19 @@ export function HomeQuickSearch({
   }
 
   const wrapperClassName = isOverlay
-    ? "relative overflow-hidden rounded-[1.3rem] border border-white/18 bg-[rgba(255,250,244,0.8)] p-2.5 shadow-[0_28px_48px_-34px_rgba(8,14,22,0.48)] backdrop-blur-md sm:p-3 xl:px-4 xl:py-3"
-    : "relative overflow-hidden rounded-[1.55rem] border border-[var(--line-strong)] bg-[rgba(255,253,249,0.98)] p-4 shadow-[0_24px_48px_-38px_rgba(18,24,36,0.24)] backdrop-blur sm:p-5 xl:px-6 xl:py-5";
+    ? "relative overflow-hidden rounded-lg border border-white/18 bg-[rgba(255,255,255,0.82)] p-2.5 shadow-[0_28px_48px_-34px_rgba(8,14,22,0.48)] backdrop-blur-md sm:p-3 xl:px-4 xl:py-3"
+    : "relative overflow-hidden rounded-lg border border-[var(--line-strong)] bg-[rgba(255,255,255,0.98)] p-4 shadow-[0_24px_48px_-38px_rgba(18,24,36,0.24)] backdrop-blur sm:p-5 xl:px-6 xl:py-5";
   const overlayGlowClassName = isOverlay
-    ? "absolute inset-0 bg-[radial-gradient(circle_at_right_center,rgba(255,255,255,0.22),transparent_34%),radial-gradient(circle_at_left_top,rgba(201,124,78,0.12),transparent_28%)]"
-    : "absolute inset-0 bg-[radial-gradient(circle_at_right_center,rgba(29,56,92,0.08),transparent_32%),radial-gradient(circle_at_left_top,rgba(201,124,78,0.08),transparent_28%)]";
+    ? "absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.2)_0%,rgba(102,165,87,0.08)_100%)]"
+    : "absolute inset-0 bg-[linear-gradient(135deg,rgba(102,165,87,0.08)_0%,rgba(29,38,68,0.04)_100%)]";
   const inputClassName = isOverlay ? "input min-h-[2.75rem] px-3 text-[13px]" : "input min-h-14 px-4 text-base";
   const selectClassName = isOverlay ? "input min-h-[2.75rem] px-3 text-[13px]" : "input min-h-[3.25rem] px-4 text-[15px]";
   const actionButtonClassName = isOverlay
-    ? "inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-[0.9rem] border border-[var(--line-strong)] bg-white px-3.5 text-[11px] font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(255,245,235,0.82)]"
-    : "inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-[1rem] border border-[var(--line-strong)] bg-white px-4 text-[13px] font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(255,245,235,0.82)]";
+    ? "inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-lg border border-[var(--line-strong)] bg-white px-3.5 text-[11px] font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(102,165,87,0.08)]"
+    : "inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-lg border border-[var(--line-strong)] bg-white px-4 text-[13px] font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(102,165,87,0.08)]";
   const submitButtonClassName = isOverlay
-    ? "btn-gold inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-[0.9rem] px-4 text-[13px] font-semibold shadow-[0_20px_34px_-24px_rgba(192,118,68,0.55)] transition hover:-translate-y-0.5"
-    : "btn-gold inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-[1rem] px-6 text-[15px] font-semibold shadow-[0_22px_36px_-24px_rgba(192,118,68,0.55)] transition hover:-translate-y-0.5";
+    ? "btn-gold inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-lg px-4 text-[13px] font-semibold shadow-[0_20px_34px_-24px_rgba(102,165,87,0.55)] transition hover:-translate-y-0.5"
+    : "btn-gold inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-lg px-6 text-[15px] font-semibold shadow-[0_22px_36px_-24px_rgba(102,165,87,0.55)] transition hover:-translate-y-0.5";
 
   return (
     <section className={wrapperClassName}>
@@ -355,7 +355,7 @@ export function HomeQuickSearch({
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className={`inline-flex rounded-full px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.22em] ${
-              isOverlay ? "bg-white/72 text-[var(--brand-primary)]" : "bg-[rgba(29,56,92,0.08)] text-[var(--brand-primary)]"
+              isOverlay ? "bg-white/72 text-[var(--brand-primary)]" : "bg-[rgba(102,165,87,0.1)] text-[var(--brand-primary)]"
             }`}>
               {copy.eyebrow}
             </span>
@@ -455,8 +455,8 @@ export function HomeQuickSearch({
           </div>
 
           {showAdvancedFilters ? (
-            <div className={`grid gap-3 rounded-[1.15rem] p-3 sm:grid-cols-2 ${
-              isOverlay ? "border border-white/12 bg-white/12 backdrop-blur-sm" : "border border-[rgba(220,208,189,0.72)] bg-white/82"
+            <div className={`grid gap-3 rounded-lg p-3 sm:grid-cols-2 ${
+              isOverlay ? "border border-white/12 bg-white/12 backdrop-blur-sm" : "border border-[var(--line)] bg-white/82"
             }`}>
               <label className="flex flex-col gap-2">
                 <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${isOverlay ? "text-white/72" : "text-[var(--ink-500)]"}`}>

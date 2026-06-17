@@ -386,7 +386,7 @@ export function footerCopy(language: SiteLanguage) {
 export function homePageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
-      heroKicker: "Signature Real Estate Platform",
+      heroKicker: "Econi Invest Platform",
       heroTitle: "Premium emlak deneyimi artık çok sayfalı kurumsal yapıda",
       heroBody: "Portföyler, harita, danışman ekibi, hizmetler ve iletişim bölümleri ile satışa odaklı tam web sitesi altyapısı.",
       ctaListings: "Portföyleri Gör",
@@ -435,14 +435,14 @@ export function homePageCopy(language: SiteLanguage) {
         },
         "signature-selection": {
           title: "İstanbul & Ege",
-          subtitle: "Signature seçki koleksiyonu",
+          subtitle: "Econi seçki koleksiyonu",
           badge: "Sezonun Seçimi",
           blurb: "Şehir dinamizmi ile sahil yaşamını aynı vitrinde bir araya getiren satış odaklı premium portföy seçkisi.",
         },
       },
     },
     EN: {
-      heroKicker: "Signature Real Estate Platform",
+      heroKicker: "Econi Invest Platform",
       heroTitle: "A premium real estate experience, now in a multi-page corporate format",
       heroBody: "A complete sales-focused website with listings, map, advisors, services, and contact sections.",
       ctaListings: "View Listings",
@@ -491,14 +491,14 @@ export function homePageCopy(language: SiteLanguage) {
         },
         "signature-selection": {
           title: "Istanbul & Aegean",
-          subtitle: "Signature selection",
+          subtitle: "Econi selection",
           badge: "Season Pick",
           blurb: "A curated premium portfolio combining city energy with coastal living in one storefront.",
         },
       },
     },
     RU: {
-      heroKicker: "Signature Real Estate Platform",
+      heroKicker: "Econi Invest Platform",
       heroTitle: "Премиальный опыт в недвижимости теперь представлен в многостраничном корпоративном формате",
       heroBody: "Полноценный сайт для продаж с объектами, картой, консультантами, услугами и контактами.",
       ctaListings: "Смотреть объекты",
@@ -547,14 +547,14 @@ export function homePageCopy(language: SiteLanguage) {
         },
         "signature-selection": {
           title: "Стамбул и Эгейский регион",
-          subtitle: "Коллекция Signature",
+          subtitle: "Коллекция Econi",
           badge: "Выбор сезона",
           blurb: "Кураторская подборка, объединяющая энергию города и прибрежный стиль жизни.",
         },
       },
     },
     AR: {
-      heroKicker: "Signature Real Estate Platform",
+      heroKicker: "Econi Invest Platform",
       heroTitle: "تجربة عقارية مميزة الآن ضمن موقع مؤسسي متعدد الصفحات",
       heroBody: "موقع متكامل يركز على المبيعات ويضم العقارات والخريطة والمستشارين والخدمات والتواصل.",
       ctaListings: "عرض العقارات",
@@ -603,7 +603,7 @@ export function homePageCopy(language: SiteLanguage) {
         },
         "signature-selection": {
           title: "إسطنبول وإيجه",
-          subtitle: "مجموعة Signature",
+          subtitle: "مجموعة Econi",
           badge: "اختيار الموسم",
           blurb: "مجموعة عقارية منسقة تجمع بين حيوية المدينة وهدوء الساحل في واجهة واحدة.",
         },
@@ -716,7 +716,7 @@ export function contactPageCopy(language: SiteLanguage) {
       heroTitle: "İletişim ve Talep Formu",
       heroBody: "İlgi duyduğunuz portföyü seçip talebinizi bırakın; danışman ekibimiz en kısa sürede dönüş sağlasın.",
       infoKicker: "İletişim Bilgileri",
-      infoTitle: "Signature Desk",
+      infoTitle: "Econi Desk",
       infoBody: "Hafta içi 09:00 - 19:00 arasında tüm talepleri operasyon ekibi karşılar.",
       phone: "Telefon",
       email: "E-posta",
@@ -729,7 +729,7 @@ export function contactPageCopy(language: SiteLanguage) {
       heroTitle: "Contact & Inquiry Form",
       heroBody: "Select the listing you are interested in and leave your request so our advisory team can get back to you quickly.",
       infoKicker: "Contact Details",
-      infoTitle: "Signature Desk",
+      infoTitle: "Econi Desk",
       infoBody: "Our operations team handles all inquiries on weekdays between 09:00 and 19:00.",
       phone: "Phone",
       email: "Email",
@@ -742,7 +742,7 @@ export function contactPageCopy(language: SiteLanguage) {
       heroTitle: "Форма связи и запроса",
       heroBody: "Выберите интересующий объект и оставьте запрос, чтобы наша команда быстро с вами связалась.",
       infoKicker: "Контактные данные",
-      infoTitle: "Signature Desk",
+      infoTitle: "Econi Desk",
       infoBody: "Наша операционная команда обрабатывает все запросы по будням с 09:00 до 19:00.",
       phone: "Телефон",
       email: "Эл. почта",
@@ -755,7 +755,7 @@ export function contactPageCopy(language: SiteLanguage) {
       heroTitle: "نموذج التواصل والطلب",
       heroBody: "اختر العقار الذي يهمك واترك طلبك ليعود إليك فريقنا الاستشاري بسرعة.",
       infoKicker: "معلومات التواصل",
-      infoTitle: "Signature Desk",
+      infoTitle: "Econi Desk",
       infoBody: "يتولى فريق العمليات جميع الطلبات في أيام الأسبوع بين 09:00 و19:00.",
       phone: "الهاتف",
       email: "البريد الإلكتروني",
@@ -771,7 +771,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     TR: {
       heroKicker: "Services",
       heroTitle: "Hizmetlerimiz",
-      heroBody: "PortföySatış ekibi, emlak satışını sadece ilan değil bir operasyon olarak yönetir.",
+      heroBody: "Econi Invest ekibi, emlak satışını sadece ilan değil bir operasyon olarak yönetir.",
       serviceLabel: "Hizmet",
       items: [
         {
@@ -803,7 +803,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     EN: {
       heroKicker: "Services",
       heroTitle: "Our Services",
-      heroBody: "The PortfoySatis team manages real estate sales not just as listings, but as an operation.",
+      heroBody: "The Econi Invest team manages real estate sales not just as listings, but as an operation.",
       serviceLabel: "Service",
       items: [
         {
@@ -835,7 +835,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     RU: {
       heroKicker: "Services",
       heroTitle: "Наши услуги",
-      heroBody: "Команда PortfoySatis управляет продажей недвижимости как полноценной операцией, а не просто публикацией объектов.",
+      heroBody: "Команда Econi Invest управляет продажей недвижимости как полноценной операцией, а не просто публикацией объектов.",
       serviceLabel: "Услуга",
       items: [
         {
@@ -867,7 +867,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     AR: {
       heroKicker: "Services",
       heroTitle: "خدماتنا",
-      heroBody: "يدير فريق PortfoySatis مبيعات العقارات كعملية متكاملة وليس مجرد إعلان.",
+      heroBody: "يدير فريق Econi Invest مبيعات العقارات كعملية متكاملة وليس مجرد إعلان.",
       serviceLabel: "خدمة",
       items: [
         {
@@ -902,9 +902,9 @@ export function servicesPageCopy(language: SiteLanguage) {
 export function aboutPageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
-      heroKicker: "About PortföySatış",
+      heroKicker: "About Econi Invest",
       heroTitle: "Satış Odaklı Emlak Operasyonu",
-      heroBody: "PortföySatış, premium portföyleri doğru alıcı ile buluşturan, veri ve danışman odağını birleştiren dijital emlak platformudur.",
+      heroBody: "Econi Invest, premium portföyleri doğru alıcı ile buluşturan, veri ve danışman odağını birleştiren dijital emlak platformudur.",
       metrics: {
         activeListings: "Aktif Portföy",
         advisors: "Danışman",
@@ -919,9 +919,9 @@ export function aboutPageCopy(language: SiteLanguage) {
       approachBody: "Her portföy sisteme ilgili uzman danışman ile yüklenir. Bu model, hem satış hızını artırır hem de alıcı tarafında güveni güçlendirir.",
     },
     EN: {
-      heroKicker: "About PortfoySatis",
+      heroKicker: "About Econi Invest",
       heroTitle: "A Sales-Focused Real Estate Operation",
-      heroBody: "PortfoySatis is a digital property platform that matches premium portfolios with the right buyers through data and advisor expertise.",
+      heroBody: "Econi Invest is a digital property platform that matches premium portfolios with the right buyers through data and advisor expertise.",
       metrics: {
         activeListings: "Active Listings",
         advisors: "Advisors",
@@ -936,9 +936,9 @@ export function aboutPageCopy(language: SiteLanguage) {
       approachBody: "Every listing is uploaded with its specialist advisor. This model improves sales speed while strengthening buyer confidence.",
     },
     RU: {
-      heroKicker: "About PortfoySatis",
+      heroKicker: "About Econi Invest",
       heroTitle: "Операция по продаже недвижимости с фокусом на результат",
-      heroBody: "PortfoySatis — это цифровая платформа, которая соединяет премиальные объекты с нужным покупателем, объединяя данные и экспертизу консультантов.",
+      heroBody: "Econi Invest — это цифровая платформа, которая соединяет премиальные объекты с нужным покупателем, объединяя данные и экспертизу консультантов.",
       metrics: {
         activeListings: "Активные объекты",
         advisors: "Консультанты",
@@ -953,9 +953,9 @@ export function aboutPageCopy(language: SiteLanguage) {
       approachBody: "Каждый объект публикуется вместе с профильным консультантом. Эта модель ускоряет продажи и усиливает доверие со стороны покупателя.",
     },
     AR: {
-      heroKicker: "About PortfoySatis",
+      heroKicker: "About Econi Invest",
       heroTitle: "عملية عقارية تركز على البيع",
-      heroBody: "PortfoySatis منصة عقارية رقمية تربط العقارات المميزة بالمشتري المناسب عبر البيانات وخبرة المستشارين.",
+      heroBody: "Econi Invest منصة عقارية رقمية تربط العقارات المميزة بالمشتري المناسب عبر البيانات وخبرة المستشارين.",
       metrics: {
         activeListings: "عقارات نشطة",
         advisors: "مستشارون",
@@ -1020,7 +1020,7 @@ export function advisorsPageCopy(language: SiteLanguage) {
 export function sellPageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
-      heroKicker: "Sell With Signature",
+      heroKicker: "Sell With Econi",
       heroTitle: "Premium satış operasyonu için ilk adımı şimdi atın",
       heroBody: "Ücretsiz ön değerleme, profesyonel sunum ve doğru alıcı ağıyla mülkünüzü satışa hazır hale getirelim.",
       planKicker: "Satış Planı",
@@ -1040,7 +1040,7 @@ export function sellPageCopy(language: SiteLanguage) {
       advisors: "Danışman Ekibi",
     },
     EN: {
-      heroKicker: "Sell With Signature",
+      heroKicker: "Sell With Econi",
       heroTitle: "Take the first step toward a premium sales operation today",
       heroBody: "Let us prepare your property for sale with a free valuation, professional presentation, and the right buyer network.",
       planKicker: "Sales Plan",
@@ -1060,7 +1060,7 @@ export function sellPageCopy(language: SiteLanguage) {
       advisors: "Advisor Team",
     },
     RU: {
-      heroKicker: "Sell With Signature",
+      heroKicker: "Sell With Econi",
       heroTitle: "Сделайте первый шаг к премиальной продаже уже сейчас",
       heroBody: "Подготовим ваш объект к продаже через бесплатную оценку, профессиональную подачу и нужную сеть покупателей.",
       planKicker: "План продажи",
@@ -1080,7 +1080,7 @@ export function sellPageCopy(language: SiteLanguage) {
       advisors: "Команда консультантов",
     },
     AR: {
-      heroKicker: "Sell With Signature",
+      heroKicker: "Sell With Econi",
       heroTitle: "ابدأ الآن أول خطوة نحو عملية بيع مميزة",
       heroBody: "دعنا نجهز عقارك للبيع من خلال تقييم مجاني وعرض احترافي وشبكة المشترين المناسبة.",
       planKicker: "خطة البيع",
@@ -1232,25 +1232,25 @@ export function blogListPageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "PortföySatış Blog",
+      heroTitle: "Econi Invest Blog",
       heroBody: "Emlak satış operasyonu, yatırım kararları ve lokasyon trendleri üzerine yayınlanan uzman içerikler.",
       read: "Yazıyı Oku",
     },
     EN: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "PortfoySatis Blog",
+      heroTitle: "Econi Invest Blog",
       heroBody: "Expert content on real estate sales operations, investment decisions, and location trends.",
       read: "Read Article",
     },
     RU: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "Блог PortfoySatis",
+      heroTitle: "Блог Econi Invest",
       heroBody: "Экспертные материалы о продажах недвижимости, инвестиционных решениях и трендах локаций.",
       read: "Читать статью",
     },
     AR: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "مدونة PortfoySatis",
+      heroTitle: "مدونة Econi Invest",
       heroBody: "محتوى متخصص حول عمليات بيع العقارات وقرارات الاستثمار واتجاهات المواقع.",
       read: "اقرأ المقال",
     },

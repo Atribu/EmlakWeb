@@ -16,9 +16,9 @@ import { homeListingSchema } from "@/lib/seo";
 import type { Property } from "@/lib/types";
 
 export const metadata: Metadata = {
-  title: "PortföySatış | Signature Estates",
+  title: "Econi Invest | Premium Emlak ve Yatırım Portföyleri",
   description:
-    "Premium emlak portföylerini çok sayfalı kurumsal yapıda keşfedin: portföyler, harita, danışmanlar, hizmetler ve iletişim.",
+    "Econi Invest ile premium emlak portföylerini, yatırım analizini ve danışman destekli satın alma sürecini keşfedin.",
 };
 
 type PopularLocationCard = {
@@ -167,7 +167,7 @@ export default async function HomePage() {
     {
       key: "signature-selection",
       title: "İstanbul & Ege",
-      subtitle: "Signature seçki koleksiyonu",
+      subtitle: "Econi seçki koleksiyonu",
       href: "/portfoyler",
       image:
         signatureProperty?.coverImage ??
@@ -249,68 +249,59 @@ export default async function HomePage() {
       <SiteHeader />
 
       <main className="w-full pb-24">
-        <section className="frame-wide mt-4 fade-up">
-          <div className="rounded-[2.15rem] border border-[#e3d6c3] bg-[linear-gradient(180deg,#fffdfa_0%,#f9f3e9_100%)] px-5 py-6 shadow-[0_32px_64px_-46px_rgba(22,30,42,0.22)] sm:px-7 sm:py-8 xl:px-10 xl:pt-10 xl:pb-14">
-            <div className="grid gap-7 xl:grid-cols-[minmax(0,0.82fr)_minmax(460px,1.18fr)] xl:items-center">
-              <div className="max-w-xl">
-                <div className="flex gap-4">
-                  <span className="hidden w-[4px] rounded-full bg-[linear-gradient(180deg,var(--brand-accent)_0%,#d3ab76_100%)] sm:block" />
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-accent-strong)]">
-                      {copy.heroKicker}
-                    </p>
-                    <h1 className="mt-4 max-w-lg text-[2.05rem] leading-[0.94] font-semibold text-[var(--ink-950)] sm:text-[3rem] xl:text-[3.55rem]">
-                      {copy.heroTitle}
-                    </h1>
-                    <p className="mt-5 max-w-md text-[0.96rem] leading-7 text-[var(--ink-600)]">
-                      {copy.heroBody}
-                    </p>
+        <section className="relative isolate overflow-hidden bg-[var(--brand-night-blue)] fade-up">
+          <Image
+            src={heroImage}
+            alt={heroPropertyTitle}
+            fill
+            priority
+            sizes="100vw"
+            unoptimized={isUnoptimizedImageSrc(heroImage)}
+            className="absolute inset-0 object-cover"
+          />
+          <div className="absolute inset-0 hero-overlay" />
 
-                    <div className="mt-7 flex flex-wrap gap-3">
-                      <Link
-                        href="/portfoyler"
-                        className="inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--brand-primary)] px-6 text-sm font-semibold text-white transition hover:-translate-y-0.5"
-                      >
-                        {copy.ctaListings}
-                      </Link>
-                      <Link
-                        href="/blog"
-                        className="inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white px-6 text-sm font-semibold text-[var(--brand-primary)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)]"
-                      >
-                        {heroGuideLabel}
-                      </Link>
-                    </div>
-                  </div>
-                </div>
+          <div className="frame-wide relative z-10 flex min-h-[68svh] flex-col justify-center py-14 text-white sm:min-h-[72svh] sm:py-20 xl:min-h-[74svh]">
+            <div className="max-w-3xl">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#cfe8c9]">
+                {copy.heroKicker}
+              </p>
+              <h1 className="mt-4 max-w-3xl text-[2.35rem] leading-[0.98] font-black text-white sm:text-[3.4rem] xl:text-[4.45rem]">
+                {copy.heroTitle}
+              </h1>
+              <p className="mt-5 max-w-2xl text-[0.98rem] leading-7 text-[#edf6ea] sm:text-[1.05rem]">
+                {copy.heroBody}
+              </p>
+
+              <div className="mt-7 flex flex-wrap gap-3">
+                <Link
+                  href="/portfoyler"
+                  className="inline-flex min-h-12 items-center justify-center rounded-lg bg-[var(--brand-green)] px-6 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#58974b]"
+                >
+                  {copy.ctaListings}
+                </Link>
+                <Link
+                  href="/blog"
+                  className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/30 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--brand-green)] hover:bg-white/16"
+                >
+                  {heroGuideLabel}
+                </Link>
               </div>
+            </div>
 
-              <div className="relative min-h-[18rem] overflow-hidden rounded-[1.8rem] border border-[#dfd0bd] bg-[#d8cab5] shadow-[0_30px_58px_-42px_rgba(20,24,32,0.3)] sm:min-h-[23rem] xl:min-h-[26.5rem]">
-                <Image
-                  src={heroImage}
-                  alt={heroPropertyTitle}
-                  fill
-                  priority
-                  sizes="(max-width: 1279px) 100vw, 52vw"
-                  unoptimized={isUnoptimizedImageSrc(heroImage)}
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,14,22,0.08)_0%,rgba(8,14,22,0.08)_34%,rgba(8,14,22,0.22)_100%)]" />
-
-                <div className="absolute left-4 top-4 flex flex-wrap gap-2 sm:left-5 sm:top-5">
-                  <span className="inline-flex rounded-full border border-white/26 bg-[rgba(8,14,22,0.42)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
-                    {heroLocationLabel}
-                  </span>
-                  {heroProperty?.listingRef ? (
-                    <span className="inline-flex rounded-full border border-white/20 bg-white/14 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
-                      {heroProperty.listingRef}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
+            <div className="mt-9 flex flex-wrap gap-2">
+              <span className="inline-flex rounded-lg border border-white/24 bg-white/12 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
+                {heroLocationLabel}
+              </span>
+              {heroProperty?.listingRef ? (
+                <span className="inline-flex rounded-lg border border-[rgba(102,165,87,0.46)] bg-[rgba(102,165,87,0.16)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#e9f8e6] backdrop-blur">
+                  {heroProperty.listingRef}
+                </span>
+              ) : null}
             </div>
           </div>
 
-          <div className="relative z-10 mx-auto -mt-8 max-w-6xl px-2 sm:-mt-11">
+          <div className="relative z-10 mx-auto -mt-8 max-w-6xl px-4 pb-4 sm:-mt-11">
             <HomeQuickSearch
               cities={cities}
               types={types}
@@ -324,11 +315,11 @@ export default async function HomePage() {
           <div className="mb-5 flex items-end justify-between gap-3">
             <div>
               <span className="section-kicker">{copy.featuredKicker}</span>
-              <h2 className="mt-3 text-[1.9rem] leading-none font-semibold text-[#1d1812] sm:text-[2.2rem]">
+              <h2 className="mt-3 text-[1.9rem] leading-none font-extrabold text-[var(--brand-ink)] sm:text-[2.2rem]">
                 {copy.featuredTitle}
               </h2>
             </div>
-            <Link href="/portfoyler" className="text-sm font-semibold text-[#6a4f22] underline">
+            <Link href="/portfoyler" className="text-sm font-semibold text-[var(--brand-accent-strong)] underline">
               {copy.viewAll}
             </Link>
           </div>
@@ -339,10 +330,10 @@ export default async function HomePage() {
             ))}
           </div>
 
-          <div className="mt-7 grid gap-4 rounded-[1.6rem] border border-[#e2d7c8] bg-[rgba(255,252,247,0.92)] p-5 shadow-[0_22px_42px_-36px_rgba(18,24,36,0.18)] sm:grid-cols-3 sm:p-6">
+          <div className="mt-7 grid gap-4 rounded-lg border border-[var(--line-strong)] bg-white p-5 shadow-[0_22px_42px_-36px_rgba(18,24,36,0.18)] sm:grid-cols-3 sm:p-6">
             {trustItems.map((item) => (
               <div key={item.key} className="flex items-start gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(201,124,78,0.1)] text-[var(--brand-accent-strong)]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[rgba(102,165,87,0.1)] text-[var(--brand-accent-strong)]">
                   <TrustIcon type={item.icon} />
                 </span>
                 <div>
@@ -358,15 +349,15 @@ export default async function HomePage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <span className="section-kicker">{copy.locationsKicker}</span>
-              <h2 className="mt-3 text-[1.9rem] leading-[0.98] font-semibold text-[#1d1812] sm:text-[2.2rem]">
+              <h2 className="mt-3 text-[1.9rem] leading-[0.98] font-extrabold text-[var(--brand-ink)] sm:text-[2.2rem]">
                 {copy.locationsTitle}
               </h2>
-              <p className="mt-3 text-[0.95rem] leading-7 text-[#62584c]">
+              <p className="mt-3 text-[0.95rem] leading-7 text-[var(--ink-600)]">
                 {copy.locationsBody}
               </p>
             </div>
 
-            <Link href="/portfoyler" className="text-sm font-semibold text-[#6a4f22] underline">
+            <Link href="/portfoyler" className="text-sm font-semibold text-[var(--brand-accent-strong)] underline">
               {copy.allLocations}
             </Link>
           </div>
@@ -376,7 +367,7 @@ export default async function HomePage() {
               <Link
                 key={location.key}
                 href={location.href}
-                className={`group relative isolate overflow-hidden rounded-[1.4rem] border border-[#d7cab7] shadow-[0_28px_58px_-40px_rgba(20,16,10,0.52)] transition duration-300 hover:-translate-y-1 ${location.className}`}
+                className={`group relative isolate overflow-hidden rounded-lg border border-[rgba(102,165,87,0.32)] shadow-[0_28px_58px_-40px_rgba(20,16,10,0.52)] transition duration-300 hover:-translate-y-1 ${location.className}`}
               >
                 <Image
                   src={location.image}
@@ -386,38 +377,37 @@ export default async function HomePage() {
                   unoptimized={isUnoptimizedImageSrc(location.image)}
                   className="object-cover transition duration-700 group-hover:scale-[1.04]"
                 />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,11,18,0.08)_0%,rgba(5,11,18,0.28)_38%,rgba(5,11,18,0.92)_100%)]" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(220,188,138,0.34),transparent_42%)]" />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(29,38,68,0.12)_0%,rgba(29,38,68,0.38)_38%,rgba(18,25,45,0.94)_100%)]" />
 
-                <div className="relative z-10 flex h-full min-h-[15rem] flex-col justify-between p-5 text-[#f6eddc] sm:p-6">
+                <div className="relative z-10 flex h-full min-h-[15rem] flex-col justify-between p-5 text-white sm:p-6">
                   <div className="flex items-start justify-between gap-3">
-                    <span className="rounded-full border border-white/18 bg-white/12 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f5e8cf] backdrop-blur">
+                    <span className="rounded-lg border border-white/18 bg-white/12 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
                       {location.badge}
                     </span>
-                    <span className="rounded-full border border-[#d9c194]/30 bg-[#0f1822]/45 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#d8bc8d] backdrop-blur">
+                    <span className="rounded-lg border border-[rgba(102,165,87,0.34)] bg-[rgba(102,165,87,0.14)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#dcf0d7] backdrop-blur">
                       {location.stat}
                     </span>
                   </div>
 
                   <div className="max-w-[28rem]">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#dfc79d]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#cfe8c9]">
                       {location.subtitle}
                     </p>
-                    <h3 className="mt-3 text-[1.5rem] leading-[1] font-semibold sm:text-[1.9rem]">
+                    <h3 className="mt-3 text-[1.5rem] leading-[1] font-extrabold sm:text-[1.9rem]">
                       {location.title}
                     </h3>
-                    <p className="mt-3 max-w-xl text-[13px] leading-6 text-[#ebe0cc]">{location.blurb}</p>
+                    <p className="mt-3 max-w-xl text-[13px] leading-6 text-[#edf6ea]">{location.blurb}</p>
 
                     <div className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-white/14 pt-4">
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c8b48d]">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#cfe8c9]">
                           {copy.startingBand}
                         </p>
-                        <p className="mt-1 text-lg font-semibold text-[#fff4de]">
+                        <p className="mt-1 text-lg font-semibold text-white">
                           {location.priceValue ? <PriceText amount={location.priceValue} /> : copy.newSelection}
                         </p>
                       </div>
-                      <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#f8edd8]">
+                      <span className="inline-flex items-center gap-2 text-sm font-semibold text-white">
                         {copy.exploreRegion}
                         <span aria-hidden className="transition group-hover:translate-x-1">
                           →

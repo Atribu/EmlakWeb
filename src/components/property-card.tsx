@@ -43,13 +43,13 @@ function truncateText(value: string, limit: number) {
 
 function Metric({ icon, label, value }: MetricProps) {
   return (
-    <div className="flex items-center gap-2 border-r border-dashed border-[#d9d1c5] pr-4 last:border-r-0 last:pr-0">
-      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd0c0] bg-[#f7f2ea] text-[#5b4a36]">
+    <div className="flex items-center gap-2 border-r border-dashed border-[var(--line-strong)] pr-4 last:border-r-0 last:pr-0">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--line-strong)] bg-[rgba(102,165,87,0.1)] text-[var(--brand-accent-strong)]">
         {icon}
       </span>
       <div className="min-w-0">
-        <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#8f8374]">{label}</p>
-        <p className="text-[13px] font-semibold text-[#2a241d]">{value}</p>
+        <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-500)]">{label}</p>
+        <p className="text-[13px] font-semibold text-[var(--brand-ink)]">{value}</p>
       </div>
     </div>
   );
@@ -185,9 +185,9 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
   }
 
   return (
-    <article className="overflow-hidden rounded-[1.5rem] border border-[#dbcfbf] bg-[linear-gradient(180deg,#fffdfa_0%,#fbf7f0_100%)] shadow-[0_30px_60px_-40px_rgba(33,27,19,0.28)]">
+    <article className="overflow-hidden rounded-lg border border-[var(--line-strong)] bg-white shadow-[0_30px_60px_-40px_rgba(33,27,19,0.24)]">
       <div className="grid min-w-0 lg:grid-cols-[minmax(320px,44%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(380px,48%)_minmax(0,1fr)]">
-        <div className="relative min-h-[320px] overflow-hidden bg-[#d8cab5] sm:min-h-[360px] lg:min-h-full">
+        <div className="relative min-h-[320px] overflow-hidden bg-[var(--brand-night-blue)] sm:min-h-[360px] lg:min-h-full">
           <Image
             src={activeImage}
             alt={propertyTitle}
@@ -197,14 +197,14 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             sizes="(max-width: 1024px) 100vw, (max-width: 1536px) 44vw, 48vw"
             className="absolute inset-0 object-cover transition duration-500"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#10161d]/18 via-transparent to-[#10161d]/12" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#11161d]/38 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[rgba(29,38,68,0.18)] via-transparent to-[rgba(29,38,68,0.12)]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(29,38,68,0.42)] to-transparent" />
 
           <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-            <span className="rounded-full border border-white/40 bg-[#0d1117]/56 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
+            <span className="rounded-lg border border-white/40 bg-[rgba(29,38,68,0.56)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
               {translatePropertyType(property.type, language)}
             </span>
-            <span className="rounded-full border border-white/36 bg-white/18 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
+            <span className="rounded-lg border border-white/36 bg-white/18 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
               {property.city}
             </span>
           </div>
@@ -215,7 +215,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
                 type="button"
                 onClick={() => stepGallery(-1)}
                 aria-label={copy.previousImage}
-                className="absolute left-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/42 bg-[#0b0f14]/34 text-white backdrop-blur transition hover:bg-[#0b0f14]/52"
+                className="absolute left-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-lg border border-white/42 bg-[rgba(29,38,68,0.38)] text-white backdrop-blur transition hover:bg-[rgba(29,38,68,0.58)]"
               >
                 <ArrowIcon direction="left" />
               </button>
@@ -223,18 +223,18 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
                 type="button"
                 onClick={() => stepGallery(1)}
                 aria-label={copy.nextImage}
-                className="absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/42 bg-[#0b0f14]/34 text-white backdrop-blur transition hover:bg-[#0b0f14]/52"
+                className="absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-lg border border-white/42 bg-[rgba(29,38,68,0.38)] text-white backdrop-blur transition hover:bg-[rgba(29,38,68,0.58)]"
               >
                 <ArrowIcon direction="right" />
               </button>
             </>
           ) : null}
 
-          <div className="absolute bottom-3 left-3 rounded-full border border-white/30 bg-[#12171d]/60 px-3 py-1 text-xs font-semibold tracking-[0.08em] text-white backdrop-blur-sm">
+          <div className="absolute bottom-3 left-3 rounded-lg border border-white/30 bg-[rgba(29,38,68,0.62)] px-3 py-1 text-xs font-semibold tracking-[0.08em] text-white backdrop-blur-sm">
             {property.listingRef}
           </div>
 
-          <div className="absolute bottom-3 right-3 flex items-center gap-2 rounded-full border border-white/30 bg-[#12171d]/60 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+          <div className="absolute bottom-3 right-3 flex items-center gap-2 rounded-lg border border-white/30 bg-[rgba(29,38,68,0.62)] px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
             <CameraIcon />
             <span>{gallery.length}</span>
           </div>
@@ -246,20 +246,20 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
           aria-label={`${propertyTitle} ${copy.openDetail}`}
           onClick={handleCardClick}
           onKeyDown={handleCardKeyDown}
-          className="flex min-w-0 cursor-pointer flex-col p-5 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d2232d]/45 focus-visible:ring-inset sm:p-6"
+          className="flex min-w-0 cursor-pointer flex-col p-5 outline-none transition focus-visible:ring-2 focus-visible:ring-[rgba(102,165,87,0.45)] focus-visible:ring-inset sm:p-6"
         >
-          <div className="flex flex-col gap-3 border-b border-dashed border-[#d7cebf] pb-4">
+          <div className="flex flex-col gap-3 border-b border-dashed border-[var(--line-strong)] pb-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="text-[1.2rem] leading-[1.15] font-semibold text-[#1e293b] sm:text-[1.35rem]">
+                <h3 className="text-[1.2rem] leading-[1.15] font-bold text-[var(--brand-ink)] sm:text-[1.35rem]">
                   {propertyTitle}
                 </h3>
-                <p className="mt-1.5 text-[11px] font-medium tracking-[0.08em] text-[#6d655b]">
+                <p className="mt-1.5 text-[11px] font-medium tracking-[0.08em] text-[var(--ink-500)]">
                   {property.neighborhood} / {property.district}
                 </p>
               </div>
 
-              <div className="rounded-full border border-[#e3d7c8] bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a7452]">
+              <div className="rounded-lg border border-[var(--line-strong)] bg-[rgba(102,165,87,0.08)] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent-strong)]">
                 {copy.saleBadge}
               </div>
             </div>
@@ -271,47 +271,47 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             </div>
           </div>
 
-          <div className="border-b border-dashed border-[#d7cebf] py-4">
-            <p className="text-[13px] leading-6 text-[#5f5548]">{truncateText(propertyDescription, 118)}</p>
+          <div className="border-b border-dashed border-[var(--line-strong)] py-4">
+            <p className="text-[13px] leading-6 text-[var(--ink-600)]">{truncateText(propertyDescription, 118)}</p>
           </div>
 
           {propertyInfoItems.length > 0 ? (
-            <div className="border-b border-dashed border-[#d7cebf] py-4">
+            <div className="border-b border-dashed border-[var(--line-strong)] py-4">
               <div className="grid gap-2 sm:grid-cols-3">
                 {propertyInfoItems.map((item, index) => (
                   <div
                     key={`${item.icon}-${item.value}-${index}`}
-                    className="flex min-w-0 items-center gap-3 rounded-[1rem] border border-[#e4d8c8] bg-white px-3 py-3"
+                    className="flex min-w-0 items-center gap-3 rounded-lg border border-[var(--line-strong)] bg-white px-3 py-3"
                     title={item.value}
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#ddd0c0] bg-[#f7f2ea] text-[#5b4a36]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--line-strong)] bg-[rgba(102,165,87,0.1)] text-[var(--brand-accent-strong)]">
                       <PropertyInfoIcon icon={item.icon} />
                     </span>
-                    <p className="truncate text-sm font-semibold text-[#2f281f]">{item.value}</p>
+                    <p className="truncate text-sm font-semibold text-[var(--brand-ink)]">{item.value}</p>
                   </div>
                 ))}
               </div>
             </div>
           ) : null}
 
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-dashed border-[#d7cebf] py-4">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-dashed border-[var(--line-strong)] py-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-[#eadfce] bg-white px-3 py-2 text-[11px] font-semibold text-[#5f5548]">
+              <span className="rounded-lg border border-[var(--line-strong)] bg-white px-3 py-2 text-[11px] font-semibold text-[var(--ink-600)]">
                 {translatePropertyType(property.type, language)}
               </span>
               {advisor ? (
-                <span className="rounded-full border border-[#eadfce] bg-white px-3 py-2 text-[11px] font-semibold text-[#5f5548]">
+                <span className="rounded-lg border border-[var(--line-strong)] bg-white px-3 py-2 text-[11px] font-semibold text-[var(--ink-600)]">
                   {advisor.name}
                 </span>
               ) : null}
-              <span className="rounded-full border border-[#f1d3d5] bg-[#fff5f6] px-3 py-2 text-[11px] font-semibold text-[#8f262d]">
+              <span className="rounded-lg border border-[rgba(102,165,87,0.22)] bg-[rgba(102,165,87,0.08)] px-3 py-2 text-[11px] font-semibold text-[var(--brand-accent-strong)]">
                 {translateHeatingLabel(property.heating, language)}
               </span>
             </div>
 
-            <div className="rounded-[1.1rem] border border-[#eadfce] bg-white px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7f6d5d]">{copy.startingPrice}</p>
-              <p className="mt-1 break-words text-[1.45rem] leading-none font-semibold text-[#d2232d]">
+            <div className="rounded-lg border border-[var(--line-strong)] bg-white px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">{copy.startingPrice}</p>
+              <p className="mt-1 break-words text-[1.45rem] leading-none font-semibold text-[var(--brand-accent-strong)]">
                 <PriceText amount={property.price} />
               </p>
             </div>
@@ -323,7 +323,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
                 href={quickHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-[1rem] border border-[#cfd6df] bg-white px-5 py-3 text-sm font-semibold text-[#344256] transition hover:border-[#a9b5c4] hover:bg-[#f6f8fb]"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--line-strong)] bg-white px-5 py-3 text-sm font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(102,165,87,0.08)]"
               >
                 <ContactIcon />
                 {copy.quickContact}
@@ -331,7 +331,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             ) : phoneHref ? (
               <a
                 href={phoneHref}
-                className="inline-flex items-center justify-center gap-2 rounded-[1rem] border border-[#cfd6df] bg-white px-5 py-3 text-sm font-semibold text-[#344256] transition hover:border-[#a9b5c4] hover:bg-[#f6f8fb]"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--line-strong)] bg-white px-5 py-3 text-sm font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(102,165,87,0.08)]"
               >
                 <ContactIcon />
                 {copy.callNow}
@@ -339,7 +339,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             ) : (
               <Link
                 href={`/ilan/${property.slug}`}
-                className="inline-flex items-center justify-center gap-2 rounded-[1rem] border border-[#cfd6df] bg-white px-5 py-3 text-sm font-semibold text-[#344256] transition hover:border-[#a9b5c4] hover:bg-[#f6f8fb]"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--line-strong)] bg-white px-5 py-3 text-sm font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(102,165,87,0.08)]"
               >
                 <ContactIcon />
                 {copy.quickContact}
@@ -348,7 +348,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
 
             <Link
               href={`/ilan/${property.slug}`}
-              className="inline-flex items-center justify-center rounded-[1rem] border border-[#e04f56] bg-white px-5 py-3 text-sm font-semibold tracking-[0.02em] text-[#cf1f2b] transition hover:bg-[#fff5f5]"
+              className="inline-flex items-center justify-center rounded-lg border border-[var(--brand-green)] bg-[var(--brand-green)] px-5 py-3 text-sm font-semibold tracking-[0.02em] text-white transition hover:bg-[#58974b]"
             >
               {copy.detailedInfo}
             </Link>
