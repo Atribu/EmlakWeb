@@ -6,7 +6,7 @@ import { servicesPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
-  title: "Hizmetler | PortföySatış",
+  title: "Hizmetler | Econi Invest",
   description: "Satış, yatırım ve portföy yönetimi hizmet detayları.",
 };
 

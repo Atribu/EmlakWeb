@@ -10,8 +10,8 @@ import { contactPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
-  title: "İletişim | PortföySatış",
-  description: "PortföySatış danışman ekibiyle iletişim kurun, talebinizi iletin.",
+  title: "İletişim | Econi Invest",
+  description: "Econi Invest danışman ekibiyle iletişim kurun, talebinizi iletin.",
 };
 
 export default async function IletisimPage() {
@@ -42,27 +42,27 @@ export default async function IletisimPage() {
 
           <aside className="luxury-card p-6 sm:p-7">
             <span className="section-kicker">{copy.infoKicker}</span>
-            <h2 className="mt-3 text-[2rem] leading-none font-semibold text-[#1f1a14]">{copy.infoTitle}</h2>
-            <p className="mt-3 text-sm leading-7 text-[#665c4f]">
+            <h2 className="mt-3 text-[2rem] leading-none font-extrabold text-[var(--brand-ink)]">{copy.infoTitle}</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--ink-600)]">
               {copy.infoBody}
             </p>
 
-            <div className="mt-4 space-y-2 text-sm text-[#5f5548]">
+            <div className="mt-4 space-y-2 text-sm text-[var(--ink-600)]">
               <p><span className="font-semibold">{copy.phone}:</span> +90 212 900 00 01</p>
-              <p><span className="font-semibold">{copy.email}:</span> info@portfoysatis.com</p>
+              <p><span className="font-semibold">{copy.email}:</span> info@econiinvest.com</p>
               <p><span className="font-semibold">{copy.address}:</span> Levent, İstanbul</p>
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2 text-sm">
               <a
                 href="tel:+902129000001"
-                className="rounded-full border border-[#d6c5a8] bg-white px-4 py-2 font-semibold text-[#4f4435] transition hover:bg-[#f6edde]"
+                className="rounded-lg border border-[var(--line-strong)] bg-white px-4 py-2 font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(102,165,87,0.08)]"
               >
                 {copy.call}
               </a>
               <Link
                 href="/danismanlar"
-                className="rounded-full border border-[#ccb795] bg-[#faf6ee] px-4 py-2 font-semibold text-[#6d593b] transition hover:bg-[#f1e8db]"
+                className="rounded-lg border border-[var(--brand-green)] bg-[var(--brand-green)] px-4 py-2 font-semibold text-white transition hover:bg-[#58974b]"
               >
                 {copy.advisors}
               </Link>

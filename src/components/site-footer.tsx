@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 
+
 import { BrandLogoMark } from "@/components/brand-logo-mark";
+
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { footerCopy } from "@/lib/site-copy";
 
 const SOCIAL_LINKS = [
-  { href: "https://instagram.com/portfoysatis", label: "Instagram", icon: "instagram" as const },
-  { href: "https://t.me/portfoysatis", label: "Telegram", icon: "telegram" as const },
+  { href: "https://instagram.com/econiinvest", label: "Instagram", icon: "instagram" as const },
+  { href: "https://t.me/econiinvest", label: "Telegram", icon: "telegram" as const },
   { href: "https://wa.me/905321112233", label: "WhatsApp", icon: "whatsapp" as const },
 ];
 
@@ -76,14 +78,16 @@ export function SiteFooter() {
   ];
 
   return (
-    <footer className="frame mt-[4.5rem] overflow-hidden rounded-[2rem] border border-[var(--line-strong)] bg-[linear-gradient(180deg,rgba(255,253,248,0.98)_0%,rgba(248,243,235,0.96)_100%)] px-5 py-6 text-[var(--ink-600)] shadow-[0_34px_70px_-56px_rgba(23,31,44,0.28)] sm:px-7 sm:py-7 lg:px-8 lg:py-8">
+    <footer className="frame mt-[4.5rem] overflow-hidden rounded-lg border border-[var(--line-strong)] bg-white px-5 py-6 text-[var(--ink-600)] shadow-[0_34px_70px_-56px_rgba(23,31,44,0.22)] sm:px-7 sm:py-7 lg:px-8 lg:py-8">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <div>
+
           <div className="flex items-center gap-3">
             <BrandLogoMark className="h-12 w-12 rounded-[1rem]" />
             <p className="text-[1.25rem] font-semibold tracking-[0.02em] text-[var(--brand-primary)]">
               Signature Estates
             </p>
+
           </div>
 
           <p className="mt-4 max-w-xl text-[1rem] leading-8 text-[var(--ink-600)]">{copy.tagline}</p>
@@ -95,9 +99,9 @@ export function SiteFooter() {
                 href={item.href}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex min-h-12 items-center gap-3 rounded-full border border-[var(--line-strong)] bg-white px-4 text-sm font-semibold text-[var(--brand-primary)] shadow-[0_20px_34px_-28px_rgba(22,32,48,0.28)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)] hover:bg-[rgba(29,56,92,0.04)]"
+                className="inline-flex min-h-12 items-center gap-3 rounded-lg border border-[var(--line-strong)] bg-white px-4 text-sm font-semibold text-[var(--brand-primary)] shadow-[0_20px_34px_-28px_rgba(22,32,48,0.28)] transition hover:-translate-y-0.5 hover:border-[var(--brand-accent)] hover:bg-[rgba(102,165,87,0.08)]"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(29,56,92,0.08)] text-[var(--brand-accent-strong)]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[rgba(102,165,87,0.1)] text-[var(--brand-accent-strong)]">
                   <SocialIcon type={item.icon} />
                 </span>
                 {item.label}
@@ -115,21 +119,21 @@ export function SiteFooter() {
             ))}
           </nav>
 
-          <div className="rounded-[1.5rem] border border-[var(--line-strong)] bg-white/92 p-4 shadow-[0_20px_34px_-28px_rgba(22,32,48,0.28)]">
+          <div className="rounded-lg border border-[var(--line-strong)] bg-white p-4 shadow-[0_20px_34px_-28px_rgba(22,32,48,0.28)]">
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-accent-strong)]">{metaCopy.directLine}</p>
             <a href="tel:+905321234567" className="mt-3 block text-lg font-semibold text-[var(--brand-primary)]">
               +90 532 123 45 67
             </a>
-            <a href="mailto:hello@portfoysatis.com" className="mt-2 block text-sm text-[var(--ink-600)]">
-              hello@portfoysatis.com
+            <a href="mailto:hello@econiinvest.com" className="mt-2 block text-sm text-[var(--ink-600)]">
+              hello@econiinvest.com
             </a>
           </div>
         </div>
       </div>
 
-      <div className="mt-6 border-t border-[rgba(220,208,189,0.72)] pt-4 text-sm">
+      <div className="mt-6 border-t border-[var(--line)] pt-4 text-sm">
         <p suppressHydrationWarning>
-          © {new Date().getFullYear()} PortföySatış. {copy.copyright}
+          © {new Date().getFullYear()} Econi Invest. {copy.copyright}
         </p>
       </div>
     </footer>

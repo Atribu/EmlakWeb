@@ -12,7 +12,7 @@ import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 import { blogListSchema } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Blog | PortföySatış",
+  title: "Blog | Econi Invest",
   description: "Emlak yatırımı, satış stratejisi ve premium konut trendleri üzerine SEO odaklı içerikler.",
   alternates: {
     canonical: "/blog",

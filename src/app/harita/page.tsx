@@ -12,7 +12,7 @@ import { mapPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
-  title: "Harita | PortföySatış",
+  title: "Harita | Econi Invest",
   description: "Portföy lokasyonlarını harita üzerinde görün, konum arayın ve ilana geçin.",
 };
 

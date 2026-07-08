@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { AdvisorEditor } from "@/components/panel/advisor-editor";
 import { AdvisorManagement } from "@/components/panel/advisor-management";
 import { AdminNotificationCenter } from "@/components/panel/admin-notification-center";
@@ -38,6 +40,7 @@ import {
   listProperties,
   listUsers,
 } from "@/lib/data-store";
+
 import { formatDateTimeTR, roleLabel } from "@/lib/format";
 import {
   propertyActivityActionBadgeClass,
@@ -45,6 +48,7 @@ import {
 } from "@/lib/property-activity";
 import { isPropertyPublished, normalizePropertyPublicationStatus } from "@/lib/property-panel-options";
 import { summarizePropertyQuality } from "@/lib/property-quality";
+
 import type { LeadStage } from "@/lib/types";
 
 type PanelTab =
@@ -65,6 +69,7 @@ type PanelTab =
 type AdminOfficePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
 
 const portfolioGroupTabs: PanelTab[] = [
   "portfolio-create",
@@ -89,6 +94,7 @@ const panelTabs: Array<{ id: PanelTab; label: string; hint: string }> = [
   { id: "advisor-edit", label: "Danışman Düzenle", hint: "Bilgileri güncelle" },
   { id: "leads", label: "Analitik", hint: "Lead ve CRM takibi" },
   { id: "user-manage", label: "Kullanıcılar", hint: "Rol ve hesap yönetimi" },
+
 ];
 
 const defaultTab: PanelTab = "overview";
@@ -255,6 +261,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
   const allowedTabs = visibleTabsForRole(currentUser.role);
   const activeTab = resolveTab(requestedTab, allowedTabs);
   const visibleTabs = panelTabs.filter((tab) => allowedTabs.includes(tab.id));
+
   const activeTabMeta = visibleTabs.find((tab) => tab.id === activeTab) ?? panelTabs[0];
   const standaloneTabs = visibleTabs.filter(
     (tab) => !portfolioGroupTabs.includes(tab.id) && !blogGroupTabs.includes(tab.id),
@@ -263,6 +270,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
   const secondaryStandaloneTabs = standaloneTabs.filter((tab) => tab.id !== "overview");
   const visiblePortfolioTabs = visibleTabs.filter((tab) => portfolioGroupTabs.includes(tab.id));
   const visibleBlogTabs = visibleTabs.filter((tab) => blogGroupTabs.includes(tab.id));
+
 
   const advisors = listAdvisors();
   const properties = listProperties({ includeInactive: true });
@@ -294,6 +302,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
     propertyCount: properties.filter((property) => property.advisorId === advisor.id).length,
     linkedUserCount: allUsers.filter((user) => user.advisorId === advisor.id).length,
   }));
+
   const primaryAction = primaryActionForTabs(allowedTabs);
 
   const toolbarTitle = activeTab === "overview" ? "Yönetim Paneline Genel Bakış" : activeTabMeta.label;
@@ -382,10 +391,12 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                       {visiblePortfolioTabs.map((tab) => {
                         const tabBadgeCount = tab.id === "portfolio-approval" ? pendingApprovalCount : 0;
 
+
                         return (
                           <Link
                             key={tab.id}
                             href={`/yonetim-ofisi?tab=${tab.id}`}
+
                             data-active={tab.id === activeTab}
                             aria-current={tab.id === activeTab ? "page" : undefined}
                             className="admin-nav-child-link"
@@ -401,10 +412,12 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                                   {tabBadgeCount > 99 ? "99+" : tabBadgeCount}
                                 </span>
                               ) : null}
+
                             </span>
                           </Link>
                         );
                       })}
+
                     </div>
                   </details>
                 ) : null}
@@ -553,11 +566,13 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                 </div>
               </header>
 
+
               {activeTab === "overview" ? (
                 <OverviewSection
                   summary={summary}
                   stageSummary={stageSummary}
                   appointmentLeadCount={appointmentLeadCount}
+
                   contactLeadCount={contactLeadCount}
                   activePropertyCount={activePropertyCount}
                   passivePropertyCount={passivePropertyCount}
@@ -598,6 +613,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                   recentActivityLogs={propertyActivityLogs}
                 />
               ) : null}
+
               {activeTab === "portfolio-delete" ? (
                 <PortfolioDelete
                   initialProperties={properties}
@@ -608,7 +624,9 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
               {activeTab === "blog-create" ? <BlogForm defaultAuthorName={currentUser.name} /> : null}
               {activeTab === "blog-edit" ? <BlogEditor initialPosts={blogPosts} /> : null}
               {activeTab === "blog-delete" ? (
+ 
                 <BlogDelete initialPosts={blogPosts} canManage={canManageBlogs(currentUser.role)} />
+
               ) : null}
               {activeTab === "advisor-manage" ? (
                 <AdvisorManagement
@@ -617,6 +635,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                 />
               ) : null}
               {activeTab === "advisor-edit" ? (
+
                 <AdvisorEditor initialAdvisors={advisors} canManage={canManageAdvisors(currentUser.role)} />
               ) : null}
               {activeTab === "leads" ? (
@@ -630,6 +649,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                 ) : (
                   <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
                     CRM Pipeline sadece admin ve danışman rolünde kullanılabilir.
+
                   </section>
                 )
               ) : null}
@@ -641,8 +661,10 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                   advisors={advisors}
                 />
               ) : null}
+
             </section>
           </div>
+
         </div>
       </main>
     </div>
@@ -681,6 +703,7 @@ function OverviewSection({
   blogPosts,
 }: OverviewSectionProps) {
   const totalPortfolioValue = properties.reduce((total, property) => total + property.price, 0);
+
   const offerAnalyticsValue = stageSummary.offer_submitted + stageSummary.called + stageSummary.appointment_scheduled;
   const totalChangeValue = activePropertyCount - passivePropertyCount;
   const otherLeadCount = Math.max(summary.leadCount - appointmentLeadCount - contactLeadCount, 0);
@@ -790,9 +813,11 @@ function OverviewSection({
                 <span>{segment.label}</span>
               </div>
             ))}
+
           </div>
         </article>
       </section>
+
 
       <section className="grid gap-4 xl:grid-cols-3">
         <article className="admin-card p-5">
@@ -911,9 +936,11 @@ function OverviewSection({
                 Henüz kayıtlı hareket bulunmuyor.
               </p>
             )}
+
           </div>
         </article>
       </section>
+
 
       <section className="admin-card overflow-hidden p-0">
         <div className="flex items-center justify-between gap-3 border-b border-[#e2e8f0] px-6 py-5">
@@ -999,15 +1026,17 @@ function OverviewSection({
                   <td colSpan={6} className="py-8 text-center text-sm text-[#64748b]">
                     Henüz kaydedilmiş portföy aktivitesi bulunmuyor.
                   </td>
+
                 </tr>
               )}
             </tbody>
           </table>
-        </div>
+        </PanelTableShell>
       </section>
     </div>
   );
 }
+
 
 type MetricOverviewCardProps = {
   label: string;
@@ -1140,9 +1169,11 @@ function DashboardLineChart({
           </text>
         ))}
       </svg>
+
     </div>
   );
 }
+
 
 function DashboardDonut({ segments }: { segments: Array<{ label: string; value: number; color: string }> }) {
   const totalValue = segments.reduce((total, segment) => total + segment.value, 0);
@@ -1263,9 +1294,11 @@ function EditActionIcon() {
     <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
       <path d="M4.5 13.75V15.5h1.75L14 7.75 12.25 6 4.5 13.75Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
       <path d="m11.5 6.75 1.75 1.75" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+
     </svg>
   );
 }
+
 
 function MoreActionIcon() {
   return (
@@ -1328,4 +1361,5 @@ function TabNavigationIcon({ tab }: { tab: PanelTab }) {
         </svg>
       );
   }
+
 }
