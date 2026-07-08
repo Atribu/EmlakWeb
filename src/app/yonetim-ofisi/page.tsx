@@ -392,10 +392,12 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                         const tabBadgeCount = tab.id === "portfolio-approval" ? pendingApprovalCount : 0;
 
 
+
                         return (
                           <Link
                             key={tab.id}
                             href={`/yonetim-ofisi?tab=${tab.id}`}
+
 
                             data-active={tab.id === activeTab}
                             aria-current={tab.id === activeTab ? "page" : undefined}
