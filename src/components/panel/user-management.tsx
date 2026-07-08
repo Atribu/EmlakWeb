@@ -125,8 +125,8 @@ export function UserManagement({
 
         <div className="admin-note mt-4 px-4 py-3 text-sm text-slate-600">
           {currentUser.role === "portal_admin"
-            ? "Portal admin tüm rolleri, danışman hesapları dahil atayabilir."
-            : "Admin yeni admin, portföy yetkilisi, danışman ve içerik yükleyici hesapları oluşturabilir. Portal admin hesaplarını göremez."}
+            ? "Admin tüm rolleri ve danışman hesaplarını yönetebilir."
+            : "Admin yeni admin, portföy yetkilisi, danışman ve içerik yükleyici hesapları oluşturabilir."}
         </div>
 
         <form onSubmit={handleCreate} className="mt-5 grid gap-3 md:grid-cols-2">

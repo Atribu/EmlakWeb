@@ -214,9 +214,11 @@ export type ContactLead = {
   phone: string;
   message: string;
   stage: LeadStage;
+  priority?: LeadPriority;
   source: LeadSource;
   preferredDate?: string;
   preferredTime?: string;
+  followUpDate?: string;
   appointmentNote?: string;
   assignedAdvisorId?: string;
   pipelineNote?: string;
@@ -232,6 +234,8 @@ export type LeadStage =
   | "won"
   | "lost";
 
+export type LeadPriority = "low" | "normal" | "high";
+
 export type LeadSource = "contact_form" | "appointment_form";
 
 export type CreateLeadInput = {
@@ -243,6 +247,8 @@ export type CreateLeadInput = {
   source?: LeadSource;
   preferredDate?: string;
   preferredTime?: string;
+  followUpDate?: string;
+  priority?: LeadPriority;
   appointmentNote?: string;
   assignedAdvisorId?: string;
   stage?: LeadStage;

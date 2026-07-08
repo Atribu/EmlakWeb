@@ -25,7 +25,13 @@ function hasColumn(tableName: string, columnName: string) {
 
 function addColumnIfMissing(tableName: string, columnName: string, definition: string) {
   if (!hasColumn(tableName, columnName)) {
-    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+    try {
+      db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.toLowerCase().includes("duplicate column")) {
+        throw error;
+      }
+    }
   }
 }
 
@@ -177,6 +183,8 @@ addColumnIfMissing("properties", "staffNotes", "TEXT");
 addColumnIfMissing("properties", "customerFeedbackNotes", "TEXT");
 addColumnIfMissing("properties", "adminCommissionNotes", "TEXT");
 addColumnIfMissing("properties", "adminPrivateNotes", "TEXT");
+addColumnIfMissing("leads", "followUpDate", "TEXT");
+addColumnIfMissing("leads", "priority", "TEXT NOT NULL DEFAULT 'normal'");
 
 function seedIfEmpty() {
   const advisorCount = (db.prepare("SELECT COUNT(*) as c FROM advisors").get() as { c: number }).c;
@@ -222,12 +230,12 @@ function seedIfEmpty() {
     const insertProp = db.prepare(`
       INSERT OR IGNORE INTO properties
         (id, slug, title, city, district, neighborhood, type, price, rooms, areaM2,
-         floor, heating, listingRef, description, highlights, features, infoItems,
+         floor, heating, publicationStatus, listingRef, description, highlights, features, infoItems,
          advisorId, latitude, longitude, coverColor, coverImage, galleryImages,
          imageLabels, translations, publishedAt)
       VALUES
         (@id, @slug, @title, @city, @district, @neighborhood, @type, @price, @rooms, @areaM2,
-         @floor, @heating, @listingRef, @description, @highlights, @features, @infoItems,
+         @floor, @heating, @publicationStatus, @listingRef, @description, @highlights, @features, @infoItems,
          @advisorId, @latitude, @longitude, @coverColor, @coverImage, @galleryImages,
          @imageLabels, @translations, @publishedAt)
     `);
@@ -241,6 +249,7 @@ function seedIfEmpty() {
         galleryImages: JSON.stringify(p.galleryImages ?? sampleSet.gallery),
         imageLabels: JSON.stringify(p.imageLabels ?? []),
         translations: JSON.stringify(p.translations ?? {}),
+        publicationStatus: p.publicationStatus ?? "Aktif",
         coverImage: p.coverImage || sampleSet.cover,
         latitude: p.latitude ?? 41.0082,
         longitude: p.longitude ?? 28.9784,
@@ -263,5 +272,20 @@ function seedIfEmpty() {
 }
 
 seedIfEmpty();
+
+function publishInitialPropertiesIfDemoIsEmpty() {
+  const activeCount = (db.prepare("SELECT COUNT(*) as c FROM properties WHERE publicationStatus = 'Aktif'").get() as { c: number }).c;
+
+  if (activeCount > 0) {
+    return;
+  }
+
+  const update = db.prepare("UPDATE properties SET publicationStatus = 'Aktif' WHERE slug = ? AND publicationStatus = 'Onay Bekliyor'");
+  for (const property of initialProperties) {
+    update.run(property.slug);
+  }
+}
+
+publishInitialPropertiesIfDemoIsEmpty();
 
 export default db;

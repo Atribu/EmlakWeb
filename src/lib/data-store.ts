@@ -15,6 +15,7 @@ import type {
   CreatePropertyInput,
   CreateSellerLeadInput,
   CreateUserInput,
+  LeadPriority,
   LeadStage,
   Property,
   PropertyActivityLog,
@@ -43,6 +44,8 @@ const cityCenterLookup: Record<string, [number, number]> = {
 const validLeadStages: LeadStage[] = [
   "new", "called", "appointment_scheduled", "offer_submitted", "won", "lost",
 ];
+
+const validLeadPriorities: LeadPriority[] = ["low", "normal", "high"];
 
 function normalizeText(value: string): string {
   return value
@@ -164,7 +167,18 @@ function rowToBlogPost(row: Record<string, unknown>): BlogPost {
 }
 
 function rowToLead(row: Record<string, unknown>): ContactLead {
-  return row as unknown as ContactLead;
+  return {
+    ...(row as unknown as ContactLead),
+    priority: validLeadPriorities.includes(row.priority as LeadPriority)
+      ? (row.priority as LeadPriority)
+      : "normal",
+    preferredDate: (row.preferredDate as string | null) ?? undefined,
+    preferredTime: (row.preferredTime as string | null) ?? undefined,
+    followUpDate: (row.followUpDate as string | null) ?? undefined,
+    appointmentNote: (row.appointmentNote as string | null) ?? undefined,
+    assignedAdvisorId: (row.assignedAdvisorId as string | null) ?? undefined,
+    pipelineNote: (row.pipelineNote as string | null) ?? undefined,
+  };
 }
 
 function rowToSellerLead(row: Record<string, unknown>): SellerLead {
@@ -334,7 +348,7 @@ export function createProperty(input: CreatePropertyInput, actorId: string): Pro
     marketStatus: input.marketStatus ?? "Hazır",
     publicationStatus: input.publicationStatus ?? "Onay Bekliyor",
     infoItems: sanitizePropertyInfoItems(input.infoItems),
-    translations: sanitizePropertyTranslations(input.translations),
+    translations: sanitizePropertyTranslations(input.translations) ?? {},
     developerCompany: cleanOptionalText(input.developerCompany),
     staffNotes: cleanOptionalText(input.staffNotes),
     customerFeedbackNotes: cleanOptionalText(input.customerFeedbackNotes),
@@ -430,7 +444,7 @@ export function updatePropertyBySlug(slug: string, input: CreatePropertyInput): 
     coverImage: input.coverImage || property.coverImage,
     galleryImages: input.galleryImages.length > 0 ? input.galleryImages : property.galleryImages,
     imageLabels: input.imageLabels.length > 0 ? input.imageLabels : property.imageLabels,
-    translations: sanitizePropertyTranslations(input.translations),
+    translations: sanitizePropertyTranslations(input.translations) ?? {},
   };
 
   db.prepare(`
@@ -739,7 +753,7 @@ export function deleteUserById(userId: string): SafeUser {
 
   if (user.role === "portal_admin") {
     const adminCount = (db.prepare("SELECT COUNT(*) as c FROM users WHERE role = 'portal_admin'").get() as { c: number }).c;
-    if (adminCount <= 1) throw new Error("Sistemde en az bir portal admin hesabı kalmalıdır.");
+    if (adminCount <= 1) throw new Error("Sistemde en az bir ana yönetici hesabı kalmalıdır.");
   }
 
   db.prepare("DELETE FROM users WHERE id = ?").run(userId);
@@ -751,12 +765,15 @@ export function deleteUserById(userId: string): SafeUser {
 export function createLead(input: CreateLeadInput): ContactLead {
   const stage = input.stage ?? "new";
   if (!validLeadStages.includes(stage)) throw new Error("Geçersiz lead aşaması.");
+  const priority = input.priority ?? "normal";
+  if (!validLeadPriorities.includes(priority)) throw new Error("Geçersiz lead önceliği.");
   const now = new Date().toISOString();
 
   const lead: ContactLead = {
     ...input,
     source: input.source ?? "contact_form",
     stage,
+    priority,
     id: `lead-${crypto.randomUUID()}`,
     createdAt: now,
     updatedAt: now,
@@ -765,14 +782,16 @@ export function createLead(input: CreateLeadInput): ContactLead {
   db.prepare(`
     INSERT INTO leads
       (id, propertySlug, name, email, phone, message, stage, source,
-       preferredDate, preferredTime, appointmentNote, assignedAdvisorId, pipelineNote, createdAt, updatedAt)
+       preferredDate, preferredTime, followUpDate, priority, appointmentNote, assignedAdvisorId, pipelineNote, createdAt, updatedAt)
     VALUES
       (@id, @propertySlug, @name, @email, @phone, @message, @stage, @source,
-       @preferredDate, @preferredTime, @appointmentNote, @assignedAdvisorId, @pipelineNote, @createdAt, @updatedAt)
+       @preferredDate, @preferredTime, @followUpDate, @priority, @appointmentNote, @assignedAdvisorId, @pipelineNote, @createdAt, @updatedAt)
   `).run({
     ...lead,
     preferredDate: lead.preferredDate ?? null,
     preferredTime: lead.preferredTime ?? null,
+    followUpDate: lead.followUpDate ?? null,
+    priority: lead.priority ?? "normal",
     appointmentNote: lead.appointmentNote ?? null,
     assignedAdvisorId: lead.assignedAdvisorId ?? null,
     pipelineNote: lead.pipelineNote ?? null,
@@ -790,8 +809,16 @@ export function getLeadById(leadId: string): ContactLead | undefined {
   return row ? rowToLead(row) : undefined;
 }
 
-export function updateLeadStage(input: { leadId: string; stage: LeadStage; pipelineNote?: string }): ContactLead {
+export function updateLeadStage(input: {
+  leadId: string;
+  stage: LeadStage;
+  pipelineNote?: string;
+  followUpDate?: string | null;
+  priority?: LeadPriority;
+  assignedAdvisorId?: string | null;
+}): ContactLead {
   if (!validLeadStages.includes(input.stage)) throw new Error("Geçersiz lead aşaması.");
+  if (input.priority && !validLeadPriorities.includes(input.priority)) throw new Error("Geçersiz lead önceliği.");
   const lead = getLeadById(input.leadId);
   if (!lead) throw new Error("Lead bulunamadı.");
 
@@ -799,12 +826,46 @@ export function updateLeadStage(input: { leadId: string; stage: LeadStage; pipel
   const pipelineNote = typeof input.pipelineNote === "string"
     ? (input.pipelineNote.trim() || null)
     : (lead.pipelineNote ?? null);
+  const followUpDate = input.followUpDate !== undefined
+    ? (typeof input.followUpDate === "string" ? (input.followUpDate.trim() || null) : null)
+    : (lead.followUpDate ?? null);
+  const priority = input.priority ?? lead.priority ?? "normal";
+  const assignedAdvisorId = input.assignedAdvisorId !== undefined
+    ? (typeof input.assignedAdvisorId === "string" ? (input.assignedAdvisorId.trim() || null) : null)
+    : (lead.assignedAdvisorId ?? null);
+
+  if (assignedAdvisorId && !getAdvisorById(assignedAdvisorId)) {
+    throw new Error("Seçilen danışman bulunamadı.");
+  }
 
   db.prepare(`
-    UPDATE leads SET stage = @stage, pipelineNote = @pipelineNote, updatedAt = @updatedAt WHERE id = @id
-  `).run({ stage: input.stage, pipelineNote, updatedAt, id: input.leadId });
+    UPDATE leads SET
+      stage = @stage,
+      pipelineNote = @pipelineNote,
+      followUpDate = @followUpDate,
+      priority = @priority,
+      assignedAdvisorId = @assignedAdvisorId,
+      updatedAt = @updatedAt
+    WHERE id = @id
+  `).run({
+    stage: input.stage,
+    pipelineNote,
+    followUpDate,
+    priority,
+    assignedAdvisorId,
+    updatedAt,
+    id: input.leadId,
+  });
 
-  return { ...lead, stage: input.stage, pipelineNote: pipelineNote ?? undefined, updatedAt };
+  return {
+    ...lead,
+    stage: input.stage,
+    pipelineNote: pipelineNote ?? undefined,
+    followUpDate: followUpDate ?? undefined,
+    priority,
+    assignedAdvisorId: assignedAdvisorId ?? undefined,
+    updatedAt,
+  };
 }
 
 export function leadStageSummary() {

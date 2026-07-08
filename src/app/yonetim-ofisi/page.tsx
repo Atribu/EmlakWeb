@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { AdvisorEditor } from "@/components/panel/advisor-editor";
 import { AdvisorManagement } from "@/components/panel/advisor-management";
+import { AdminNotificationCenter } from "@/components/panel/admin-notification-center";
 import { BlogDelete } from "@/components/panel/blog-delete";
 import { BlogEditor } from "@/components/panel/blog-editor";
 import { BlogForm } from "@/components/panel/blog-form";
@@ -25,6 +26,7 @@ import {
   filterLeadsForActor,
   filterUsersForActor,
 } from "@/lib/access-control";
+import { buildAdminNotifications } from "@/lib/admin-notifications";
 import { getCurrentUser } from "@/lib/auth";
 import {
   dashboardSummary,
@@ -48,6 +50,7 @@ import type { LeadStage } from "@/lib/types";
 type PanelTab =
   | "overview"
   | "portfolio-create"
+  | "portfolio-approval"
   | "portfolio-projects"
   | "portfolio-edit"
   | "portfolio-delete"
@@ -65,6 +68,7 @@ type AdminOfficePageProps = {
 
 const portfolioGroupTabs: PanelTab[] = [
   "portfolio-create",
+  "portfolio-approval",
   "portfolio-projects",
   "portfolio-edit",
   "portfolio-delete",
@@ -74,6 +78,7 @@ const blogGroupTabs: PanelTab[] = ["blog-create", "blog-edit", "blog-delete"];
 const panelTabs: Array<{ id: PanelTab; label: string; hint: string }> = [
   { id: "overview", label: "Genel Bakış", hint: "Metrikler ve genel görünüm" },
   { id: "portfolio-create", label: "Portföy Ekle", hint: "Yeni ilan oluştur" },
+  { id: "portfolio-approval", label: "Onay Bekleyenler", hint: "Yayın onayı bekleyen ilanlar" },
   { id: "portfolio-projects", label: "Proje / Firma Merkezi", hint: "Firmaya göre ilanları grupla" },
   { id: "portfolio-edit", label: "Portföy Düzenle", hint: "Mevcut ilanı güncelle" },
   { id: "portfolio-delete", label: "Portföy Sil", hint: "Yayındaki ilanı kaldır" },
@@ -100,7 +105,7 @@ function visibleTabsForRole(role: string): PanelTab[] {
   }
 
   if (canDeletePortfolios(role)) {
-    output.push("portfolio-delete");
+    output.push("portfolio-approval", "portfolio-delete");
   }
 
   if (canManageBlogs(role)) {
@@ -268,11 +273,22 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
   const allLeads = listLeads();
   const propertyActivityLogs = listPropertyActivityLogs({ limit: 160 });
   const leads = filterLeadsForActor(currentUser, allLeads);
+  const adminNotifications = buildAdminNotifications({
+    properties,
+    leads,
+    propertyActivityLogs,
+    canViewApprovals: allowedTabs.includes("portfolio-approval"),
+    canViewPortfolioQuality: allowedTabs.includes("portfolio-projects") || allowedTabs.includes("portfolio-edit"),
+    canViewLeads: allowedTabs.includes("leads"),
+  });
   const stageSummary = leadStageSummary();
   const appointmentLeadCount = allLeads.filter((lead) => lead.source === "appointment_form").length;
   const contactLeadCount = allLeads.filter((lead) => lead.source === "contact_form").length;
   const activePropertyCount = properties.filter((property) => isPropertyPublished(property.publicationStatus)).length;
   const passivePropertyCount = properties.length - activePropertyCount;
+  const pendingApprovalCount = properties.filter(
+    (property) => normalizePropertyPublicationStatus(property.publicationStatus) === "Onay Bekliyor",
+  ).length;
   const advisorStats = advisors.map((advisor) => ({
     ...advisor,
     propertyCount: properties.filter((property) => property.advisorId === advisor.id).length,
@@ -363,21 +379,32 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                     </summary>
 
                     <div className="admin-nav-children">
-                      {visiblePortfolioTabs.map((tab) => (
-                        <Link
-                          key={tab.id}
-                          href={`/yonetim-ofisi?tab=${tab.id}`}
-                          data-active={tab.id === activeTab}
-                          aria-current={tab.id === activeTab ? "page" : undefined}
-                          className="admin-nav-child-link"
-                        >
-                          <span className="admin-nav-child-dot" />
-                          <span className="min-w-0">
-                            <span className="block text-sm font-medium">{tab.label}</span>
-                            <span className="mt-0.5 block text-xs opacity-80">{tab.hint}</span>
-                          </span>
-                        </Link>
-                      ))}
+                      {visiblePortfolioTabs.map((tab) => {
+                        const tabBadgeCount = tab.id === "portfolio-approval" ? pendingApprovalCount : 0;
+
+                        return (
+                          <Link
+                            key={tab.id}
+                            href={`/yonetim-ofisi?tab=${tab.id}`}
+                            data-active={tab.id === activeTab}
+                            aria-current={tab.id === activeTab ? "page" : undefined}
+                            className="admin-nav-child-link"
+                          >
+                            <span className="admin-nav-child-dot" />
+                            <span className="flex min-w-0 flex-1 items-start justify-between gap-2">
+                              <span className="min-w-0">
+                                <span className="block text-sm font-medium">{tab.label}</span>
+                                <span className="mt-0.5 block text-xs opacity-80">{tab.hint}</span>
+                              </span>
+                              {tabBadgeCount > 0 ? (
+                                <span className="shrink-0 rounded-full bg-[#fb7185] px-2 py-0.5 text-[0.68rem] font-bold leading-5 text-white">
+                                  {tabBadgeCount > 99 ? "99+" : tabBadgeCount}
+                                </span>
+                              ) : null}
+                            </span>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </details>
                 ) : null}
@@ -511,10 +538,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                     </label>
 
                     <div className="flex items-center gap-3">
-                      <div className="relative flex h-11 w-11 items-center justify-center rounded-[1rem] border border-[#e2e8f0] bg-white text-[#475569] shadow-[0_10px_20px_-18px_rgba(15,23,42,0.35)]">
-                        <BellIcon />
-                        <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-[#fb7185]" />
-                      </div>
+                      <AdminNotificationCenter notifications={adminNotifications} />
 
                       {primaryAction ? (
                         <Link
@@ -550,6 +574,15 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
               {activeTab === "portfolio-projects" ? (
                 <PortfolioProjectCenter
                   initialCompanyFilter={requestedCompany}
+                  initialProperties={properties}
+                  advisors={advisors}
+                  canDelete={canDeletePortfolios(currentUser.role)}
+                  recentActivityLogs={propertyActivityLogs}
+                />
+              ) : null}
+              {activeTab === "portfolio-approval" ? (
+                <PortfolioProjectCenter
+                  initialPublicationFilter="Onay Bekliyor"
                   initialProperties={properties}
                   advisors={advisors}
                   canDelete={canDeletePortfolios(currentUser.role)}
@@ -596,7 +629,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
                   />
                 ) : (
                   <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-                    CRM Pipeline sadece portal admin, admin ve danışman rolünde kullanılabilir.
+                    CRM Pipeline sadece admin ve danışman rolünde kullanılabilir.
                   </section>
                 )
               ) : null}
@@ -1190,20 +1223,6 @@ function SearchIcon() {
   );
 }
 
-function BellIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-4.5 w-4.5" aria-hidden>
-      <path
-        d="M10 3.75a3.25 3.25 0 0 0-3.25 3.25v1.05c0 .78-.23 1.54-.66 2.2l-.92 1.4a1 1 0 0 0 .84 1.55h8a1 1 0 0 0 .84-1.55l-.92-1.4a4 4 0 0 1-.66-2.2V7A3.25 3.25 0 0 0 10 3.75Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <path d="M8.5 15a1.75 1.75 0 0 0 3 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function RevenueMetricIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" aria-hidden>
@@ -1267,6 +1286,7 @@ function TabNavigationIcon({ tab }: { tab: PanelTab }) {
         </svg>
       );
     case "portfolio-create":
+    case "portfolio-approval":
     case "portfolio-projects":
     case "portfolio-edit":
     case "portfolio-delete":

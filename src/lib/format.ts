@@ -41,7 +41,7 @@ export function formatPhoneForHref(value: string): string {
 }
 
 export function roleLabel(role: string, language: SiteLanguage = DEFAULT_SITE_LANGUAGE): string {
-  if (role === "portal_admin") return "Portal Admin";
+  if (role === "portal_admin") return "Admin";
   if (role === "admin") return "Admin";
 
   if (role === "portfolio_manager") {

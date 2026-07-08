@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
   if (!canManageAdvisors(user.role)) {
     return NextResponse.json(
-      { message: "Danışman yönetimi sadece portal admin ve admin yetkisindedir." },
+      { message: "Danışman yönetimi sadece admin yetkisindedir." },
       { status: 403 },
     );
   }

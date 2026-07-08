@@ -30,10 +30,11 @@ import {
 import { buildPropertyNoteSummaries } from "@/lib/property-notes";
 import { exportPropertiesToCsv } from "@/lib/property-export";
 import { summarizePropertyQuality } from "@/lib/property-quality";
-import type { Advisor, Property, PropertyActivityLog } from "@/lib/types";
+import type { Advisor, Property, PropertyActivityLog, PropertyPublicationStatus } from "@/lib/types";
 
 type PortfolioProjectCenterProps = {
   initialCompanyFilter?: string;
+  initialPublicationFilter?: PropertyPublicationStatus;
   initialProperties: Property[];
   advisors: Advisor[];
   canDelete: boolean;
@@ -148,6 +149,7 @@ function buildCompanyGroups(properties: Property[]): CompanyGroup[] {
 
 export function PortfolioProjectCenter({
   initialCompanyFilter = "",
+  initialPublicationFilter,
   initialProperties,
   advisors,
   canDelete,
@@ -158,6 +160,7 @@ export function PortfolioProjectCenter({
   const [filters, setFilters] = useState<PropertyPanelFilterState>(() => ({
     ...defaultPropertyPanelFilters,
     companyFilter: initialCompanyFilter,
+    publicationFilter: initialPublicationFilter ?? "all",
   }));
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
   const [workingKey, setWorkingKey] = useState<string | null>(null);
