@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: PropertyDetailProps): Promise
   const property = getPropertyBySlug(resolvedParams.slug);
 
   if (!property) {
-    return { title: "İlan Bulunamadı | Econi Invest" };
+    return { title: "İlan Bulunamadı | Signature Estates" };
   }
 
   return listingMetadata(property);

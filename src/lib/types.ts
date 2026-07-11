@@ -317,3 +317,55 @@ export type CreateBlogPostInput = {
   metaTitle: string;
   metaDescription: string;
 };
+
+export type HomeLocationSpotlightLayout = "hero" | "compact" | "wide" | "standard";
+
+export type HomeLocationSpotlightTranslationFields = {
+  title?: string;
+  subtitle?: string;
+  badge?: string;
+  blurb?: string;
+  statText?: string;
+};
+
+export type HomeLocationSpotlightTranslations = Partial<
+  Record<Exclude<SiteLanguage, "TR">, HomeLocationSpotlightTranslationFields>
+>;
+
+export type HomeLocationSpotlight = {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  blurb: string;
+  statText?: string;
+  href: string;
+  image: string;
+  priceAmount?: number;
+  priceCurrency?: PropertyPriceCurrency;
+  layoutVariant: HomeLocationSpotlightLayout;
+  sortOrder: number;
+  isActive: boolean;
+  translations?: HomeLocationSpotlightTranslations;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateHomeLocationSpotlightInput = {
+  title: string;
+  subtitle: string;
+  badge: string;
+  blurb: string;
+  statText?: string;
+  href: string;
+  image: string;
+  priceAmount?: number;
+  priceCurrency?: PropertyPriceCurrency;
+  layoutVariant?: HomeLocationSpotlightLayout;
+  sortOrder?: number;
+  isActive?: boolean;
+  translations?: HomeLocationSpotlightTranslations;
+};
+
+export type UpdateHomeLocationSpotlightInput = Partial<CreateHomeLocationSpotlightInput>;

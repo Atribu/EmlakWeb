@@ -9,7 +9,7 @@ import { sellPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
-  title: "Emlak Sat | Econi Invest",
+  title: "Emlak Sat | Signature Estates",
   description: "Mülkünüzü satışa çıkarmak için detayları paylaşın; değerleme ve premium satış operasyonu için ekibimiz sizinle iletişime geçsin.",
 };
 

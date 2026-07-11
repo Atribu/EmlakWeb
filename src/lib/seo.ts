@@ -4,7 +4,7 @@ import { parseBlogContent } from "@/lib/blog-content";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import type { BlogPost, Property } from "@/lib/types";
 
-const defaultTitle = "Econi Invest | Premium Emlak ve Yatırım Portföyleri";
+const defaultTitle = "PortföySatış | Signature Estates";
 const defaultDescription =
   "İstanbul ve çevresinde satış odaklı premium emlak portföyleri. Harita, randevu ve danışman destekli hızlı teklif süreci.";
 
@@ -31,7 +31,7 @@ export function baseMetadata(): Metadata {
       title: defaultTitle,
       description: defaultDescription,
       url: baseUrl,
-      siteName: "Econi Invest",
+      siteName: "PortföySatış",
       locale: "tr_TR",
       type: "website",
     },
@@ -77,7 +77,7 @@ export function homeListingSchema(properties: Property[]) {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Econi Invest Premium İlanlar",
+    name: "PortföySatış Premium İlanlar",
     itemListElement: properties.slice(0, 12).map((property, index) => ({
       "@type": "ListItem",
       position: index + 1,
@@ -121,7 +121,7 @@ export function propertySchema(property: Property) {
 }
 
 export function blogMetadata(post: BlogPost): Metadata {
-  const title = post.metaTitle || `${post.title} | Econi Invest Blog`;
+  const title = post.metaTitle || `${post.title} | Signature Estates Blog`;
   const description = post.metaDescription || post.excerpt;
 
   return {
@@ -151,7 +151,7 @@ export function blogListSchema(posts: BlogPost[]) {
   return {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "Econi Invest Blog",
+    name: "Signature Estates Blog",
     blogPost: posts.slice(0, 24).map((post) => ({
       "@type": "BlogPosting",
       headline: post.title,
@@ -208,7 +208,7 @@ export function blogPostSchema(post: BlogPost) {
     },
     publisher: {
       "@type": "Organization",
-      name: "Econi Invest",
+      name: "Signature Estates",
       url: baseUrl,
     },
     mainEntityOfPage: `${baseUrl}/blog/${post.slug}`,

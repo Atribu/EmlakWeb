@@ -12,7 +12,7 @@ import { mapPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
-  title: "Harita | Econi Invest",
+  title: "Harita | Signature Estates",
   description: "Portföy lokasyonlarını harita üzerinde görün, konum arayın ve ilana geçin.",
 };
 

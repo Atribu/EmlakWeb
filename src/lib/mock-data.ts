@@ -307,7 +307,7 @@ IMG: https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=c
 
 CTA|accent: Danismanla Premium Portfoy Stratejisi Planla | /iletisim`,
     coverImage: imageSet1.cover,
-    authorName: "Econi Invest Icerik Ekibi",
+    authorName: "Signature Estates Icerik Ekibi",
     tags: ["Premium Emlak", "SEO", "Satis Stratejisi", "Icerik Pazarlamasi", "Istanbul"],
     metaTitle: "Premium Emlak Ilaninda SEO ve Satis Stratejisi Rehberi",
     metaDescription:
@@ -326,9 +326,9 @@ Levent, Nişantaşı ve sahil hattında yeni portföylerde concierge, güvenlik 
 
 Yatırımcı tarafında ise kısa vadeli al-sat yaklaşımı yerine, kira getirisi ve çıkış likiditesi birlikte analiz ediliyor. Bu nedenle ilan incelerken teslim tarihi, proje ölçeği ve çevre gelişim planı mutlaka birlikte okunmalı.`,
     coverImage: imageSet1.cover,
-    authorName: "Econi Invest Araştırma Ekibi",
+    authorName: "Signature Estates Araştırma Ekibi",
     tags: ["İstanbul", "Lüks Konut", "Yatırım", "2026"],
-    metaTitle: "İstanbul Lüks Konut Yatırımı 2026 Trendleri | Econi Invest Blog",
+    metaTitle: "İstanbul Lüks Konut Yatırımı 2026 Trendleri | Signature Estates Blog",
     metaDescription:
       "İstanbul'da lüks konut yatırımı yaparken 2026 trendlerini, kira getirisi ve lokasyon analiziyle birlikte inceleyin.",
     publishedAt: "2026-03-12T09:10:00.000Z",
@@ -343,11 +343,11 @@ Yatırımcı tarafında ise kısa vadeli al-sat yaklaşımı yerine, kira getiri
 
 Doğru fiyatlandırma için benzer portföy karşılaştırması, bölge arz-talep dengesi ve ilan performans metrikleri birlikte değerlendirilmelidir.
 
-Econi Invest modelinde danışmanlar, fiyat aralığını tek bir rakamdan çok stratejik bant olarak belirler. Bu yöntem, hem daha hızlı teklif almayı hem de müzakere alanını korumayı sağlar.`,
+Signature Estates modelinde danışmanlar, fiyat aralığını tek bir rakamdan çok stratejik bant olarak belirler. Bu yöntem, hem daha hızlı teklif almayı hem de müzakere alanını korumayı sağlar.`,
     coverImage: imageSet5.cover,
     authorName: "Selin Yıldız",
     tags: ["Satış", "Fiyatlandırma", "Portföy Yönetimi"],
-    metaTitle: "Emlakta Doğru Fiyatlandırma Stratejisi | Econi Invest Blog",
+    metaTitle: "Emlakta Doğru Fiyatlandırma Stratejisi | Signature Estates Blog",
     metaDescription:
       "Emlak portföylerinde doğru fiyatlandırma nasıl yapılır? Satış süresini kısaltan temel stratejileri öğrenin.",
     publishedAt: "2026-03-10T11:40:00.000Z",

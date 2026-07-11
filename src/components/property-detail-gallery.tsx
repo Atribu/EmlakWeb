@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
+import { ImageLightbox } from "@/components/image-lightbox";
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { propertyDetailGalleryCopy } from "@/lib/site-copy";
@@ -45,6 +46,7 @@ export function PropertyDetailGallery({
     return Array.from(new Set(images));
   }, [coverImage, galleryImages]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const activeImage = gallery[activeImageIndex] ?? coverImage;
   const activeLabel =
@@ -72,7 +74,19 @@ export function PropertyDetailGallery({
 
   return (
     <div className="relative overflow-hidden">
-      <div className="relative h-[320px] sm:h-[430px]">
+      <div
+        className="relative h-[320px] cursor-zoom-in sm:h-[430px]"
+        role="button"
+        tabIndex={0}
+        aria-label={`${title} ${copy.open}`}
+        onClick={() => setIsLightboxOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setIsLightboxOpen(true);
+          }
+        }}
+      >
         <Image
           src={activeImage}
           alt={`${title} - ${activeLabel}`}
@@ -88,7 +102,10 @@ export function PropertyDetailGallery({
           <>
             <button
               type="button"
-              onClick={() => stepGallery(-1)}
+              onClick={(event) => {
+                event.stopPropagation();
+                stepGallery(-1);
+              }}
               aria-label={copy.previous}
               className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/42 bg-[#0b0f14]/34 text-white backdrop-blur transition hover:bg-[#0b0f14]/52"
             >
@@ -96,7 +113,10 @@ export function PropertyDetailGallery({
             </button>
             <button
               type="button"
-              onClick={() => stepGallery(1)}
+              onClick={(event) => {
+                event.stopPropagation();
+                stepGallery(1);
+              }}
               aria-label={copy.next}
               className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/42 bg-[#0b0f14]/34 text-white backdrop-blur transition hover:bg-[#0b0f14]/52"
             >
@@ -126,7 +146,10 @@ export function PropertyDetailGallery({
               <button
                 key={`${image}-${index}`}
                 type="button"
-                onClick={() => setActiveImageIndex(index)}
+                onClick={() => {
+                  setActiveImageIndex(index);
+                  setIsLightboxOpen(true);
+                }}
                 className={`overflow-hidden rounded-[1rem] border text-left transition ${
                   index === activeImageIndex
                     ? "border-[#d5b27b] bg-white shadow-[0_20px_36px_-28px_rgba(24,18,12,0.55)]"
@@ -148,6 +171,16 @@ export function PropertyDetailGallery({
             );
           })}
         </div>
+      ) : null}
+
+      {isLightboxOpen ? (
+        <ImageLightbox
+          images={gallery}
+          imageLabels={imageLabels}
+          title={title}
+          initialIndex={activeImageIndex}
+          onClose={() => setIsLightboxOpen(false)}
+        />
       ) : null}
     </div>
   );

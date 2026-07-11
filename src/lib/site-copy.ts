@@ -386,7 +386,7 @@ export function footerCopy(language: SiteLanguage) {
 export function homePageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
-      heroKicker: "Econi Invest Platform",
+      heroKicker: "Signature Estates Platform",
       heroTitle: "Premium emlak deneyimi artık çok sayfalı kurumsal yapıda",
       heroBody: "Portföyler, harita, danışman ekibi, hizmetler ve iletişim bölümleri ile satışa odaklı tam web sitesi altyapısı.",
       ctaListings: "Portföyleri Gör",
@@ -442,7 +442,7 @@ export function homePageCopy(language: SiteLanguage) {
       },
     },
     EN: {
-      heroKicker: "Econi Invest Platform",
+      heroKicker: "Signature Estates Platform",
       heroTitle: "A premium real estate experience, now in a multi-page corporate format",
       heroBody: "A complete sales-focused website with listings, map, advisors, services, and contact sections.",
       ctaListings: "View Listings",
@@ -498,7 +498,7 @@ export function homePageCopy(language: SiteLanguage) {
       },
     },
     RU: {
-      heroKicker: "Econi Invest Platform",
+      heroKicker: "Signature Estates Platform",
       heroTitle: "Премиальный опыт в недвижимости теперь представлен в многостраничном корпоративном формате",
       heroBody: "Полноценный сайт для продаж с объектами, картой, консультантами, услугами и контактами.",
       ctaListings: "Смотреть объекты",
@@ -554,7 +554,7 @@ export function homePageCopy(language: SiteLanguage) {
       },
     },
     AR: {
-      heroKicker: "Econi Invest Platform",
+      heroKicker: "Signature Estates Platform",
       heroTitle: "تجربة عقارية مميزة الآن ضمن موقع مؤسسي متعدد الصفحات",
       heroBody: "موقع متكامل يركز على المبيعات ويضم العقارات والخريطة والمستشارين والخدمات والتواصل.",
       ctaListings: "عرض العقارات",
@@ -771,7 +771,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     TR: {
       heroKicker: "Services",
       heroTitle: "Hizmetlerimiz",
-      heroBody: "Econi Invest ekibi, emlak satışını sadece ilan değil bir operasyon olarak yönetir.",
+      heroBody: "Signature Estates ekibi, emlak satışını sadece ilan değil bir operasyon olarak yönetir.",
       serviceLabel: "Hizmet",
       items: [
         {
@@ -803,7 +803,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     EN: {
       heroKicker: "Services",
       heroTitle: "Our Services",
-      heroBody: "The Econi Invest team manages real estate sales not just as listings, but as an operation.",
+      heroBody: "The Signature Estates team manages real estate sales not just as listings, but as an operation.",
       serviceLabel: "Service",
       items: [
         {
@@ -835,7 +835,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     RU: {
       heroKicker: "Services",
       heroTitle: "Наши услуги",
-      heroBody: "Команда Econi Invest управляет продажей недвижимости как полноценной операцией, а не просто публикацией объектов.",
+      heroBody: "Команда Signature Estates управляет продажей недвижимости как полноценной операцией, а не просто публикацией объектов.",
       serviceLabel: "Услуга",
       items: [
         {
@@ -867,7 +867,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     AR: {
       heroKicker: "Services",
       heroTitle: "خدماتنا",
-      heroBody: "يدير فريق Econi Invest مبيعات العقارات كعملية متكاملة وليس مجرد إعلان.",
+      heroBody: "يدير فريق Signature Estates مبيعات العقارات كعملية متكاملة وليس مجرد إعلان.",
       serviceLabel: "خدمة",
       items: [
         {
@@ -902,9 +902,9 @@ export function servicesPageCopy(language: SiteLanguage) {
 export function aboutPageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
-      heroKicker: "About Econi Invest",
+      heroKicker: "About Signature Estates",
       heroTitle: "Satış Odaklı Emlak Operasyonu",
-      heroBody: "Econi Invest, premium portföyleri doğru alıcı ile buluşturan, veri ve danışman odağını birleştiren dijital emlak platformudur.",
+      heroBody: "Signature Estates, premium portföyleri doğru alıcı ile buluşturan, veri ve danışman odağını birleştiren dijital emlak platformudur.",
       metrics: {
         activeListings: "Aktif Portföy",
         advisors: "Danışman",
@@ -919,9 +919,9 @@ export function aboutPageCopy(language: SiteLanguage) {
       approachBody: "Her portföy sisteme ilgili uzman danışman ile yüklenir. Bu model, hem satış hızını artırır hem de alıcı tarafında güveni güçlendirir.",
     },
     EN: {
-      heroKicker: "About Econi Invest",
+      heroKicker: "About Signature Estates",
       heroTitle: "A Sales-Focused Real Estate Operation",
-      heroBody: "Econi Invest is a digital property platform that matches premium portfolios with the right buyers through data and advisor expertise.",
+      heroBody: "Signature Estates is a digital property platform that matches premium portfolios with the right buyers through data and advisor expertise.",
       metrics: {
         activeListings: "Active Listings",
         advisors: "Advisors",
@@ -936,9 +936,9 @@ export function aboutPageCopy(language: SiteLanguage) {
       approachBody: "Every listing is uploaded with its specialist advisor. This model improves sales speed while strengthening buyer confidence.",
     },
     RU: {
-      heroKicker: "About Econi Invest",
+      heroKicker: "About Signature Estates",
       heroTitle: "Операция по продаже недвижимости с фокусом на результат",
-      heroBody: "Econi Invest — это цифровая платформа, которая соединяет премиальные объекты с нужным покупателем, объединяя данные и экспертизу консультантов.",
+      heroBody: "Signature Estates — это цифровая платформа, которая соединяет премиальные объекты с нужным покупателем, объединяя данные и экспертизу консультантов.",
       metrics: {
         activeListings: "Активные объекты",
         advisors: "Консультанты",
@@ -953,9 +953,9 @@ export function aboutPageCopy(language: SiteLanguage) {
       approachBody: "Каждый объект публикуется вместе с профильным консультантом. Эта модель ускоряет продажи и усиливает доверие со стороны покупателя.",
     },
     AR: {
-      heroKicker: "About Econi Invest",
+      heroKicker: "About Signature Estates",
       heroTitle: "عملية عقارية تركز على البيع",
-      heroBody: "Econi Invest منصة عقارية رقمية تربط العقارات المميزة بالمشتري المناسب عبر البيانات وخبرة المستشارين.",
+      heroBody: "Signature Estates منصة عقارية رقمية تربط العقارات المميزة بالمشتري المناسب عبر البيانات وخبرة المستشارين.",
       metrics: {
         activeListings: "عقارات نشطة",
         advisors: "مستشارون",
@@ -1232,25 +1232,25 @@ export function blogListPageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "Econi Invest Blog",
+      heroTitle: "Signature Estates Blog",
       heroBody: "Emlak satış operasyonu, yatırım kararları ve lokasyon trendleri üzerine yayınlanan uzman içerikler.",
       read: "Yazıyı Oku",
     },
     EN: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "Econi Invest Blog",
+      heroTitle: "Signature Estates Blog",
       heroBody: "Expert content on real estate sales operations, investment decisions, and location trends.",
       read: "Read Article",
     },
     RU: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "Блог Econi Invest",
+      heroTitle: "Блог Signature Estates",
       heroBody: "Экспертные материалы о продажах недвижимости, инвестиционных решениях и трендах локаций.",
       read: "Читать статью",
     },
     AR: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "مدونة Econi Invest",
+      heroTitle: "مدونة Signature Estates",
       heroBody: "محتوى متخصص حول عمليات بيع العقارات وقرارات الاستثمار واتجاهات المواقع.",
       read: "اقرأ المقال",
     },
@@ -1685,6 +1685,8 @@ export function propertyDetailGalleryCopy(language: SiteLanguage) {
       previous: "Önceki görsel",
       next: "Sonraki görsel",
       thumbAlt: "küçük galeri",
+      close: "Görsel penceresini kapat",
+      open: "Görseli büyüt",
     },
     EN: {
       cover: "Cover Image",
@@ -1692,6 +1694,8 @@ export function propertyDetailGalleryCopy(language: SiteLanguage) {
       previous: "Previous image",
       next: "Next image",
       thumbAlt: "thumbnail gallery",
+      close: "Close image viewer",
+      open: "Open full image",
     },
     RU: {
       cover: "Обложка",
@@ -1699,6 +1703,8 @@ export function propertyDetailGalleryCopy(language: SiteLanguage) {
       previous: "Предыдущее фото",
       next: "Следующее фото",
       thumbAlt: "мини-галерея",
+      close: "Закрыть просмотр изображения",
+      open: "Открыть изображение",
     },
     AR: {
       cover: "صورة الغلاف",
@@ -1706,6 +1712,8 @@ export function propertyDetailGalleryCopy(language: SiteLanguage) {
       previous: "الصورة السابقة",
       next: "الصورة التالية",
       thumbAlt: "معرض مصغر",
+      close: "إغلاق عارض الصور",
+      open: "فتح الصورة",
     },
   });
 }

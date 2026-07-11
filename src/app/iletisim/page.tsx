@@ -10,8 +10,8 @@ import { contactPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
-  title: "İletişim | Econi Invest",
-  description: "Econi Invest danışman ekibiyle iletişim kurun, talebinizi iletin.",
+  title: "İletişim | Signature Estates",
+  description: "Signature Estates danışman ekibiyle iletişim kurun, talebinizi iletin.",
 };
 
 export default async function IletisimPage() {

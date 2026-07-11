@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { HOME_LOCATION_SPOTLIGHT_LAYOUT_OPTIONS } from "@/lib/home-location-spotlights";
 import { sanitizePropertyTranslations } from "@/lib/property-content";
 import { sanitizePropertyInfoItems } from "@/lib/property-info-items";
 import { isPropertyPublished } from "@/lib/property-panel-options";
@@ -10,11 +11,16 @@ import type {
   ContactLead,
   CreateAdvisorInput,
   CreateBlogPostInput,
+  CreateHomeLocationSpotlightInput,
   CreateLeadInput,
   CreatePropertyActivityLogInput,
   CreatePropertyInput,
   CreateSellerLeadInput,
   CreateUserInput,
+  HomeLocationSpotlight,
+  HomeLocationSpotlightLayout,
+  HomeLocationSpotlightTranslationFields,
+  HomeLocationSpotlightTranslations,
   LeadPriority,
   LeadStage,
   Property,
@@ -46,6 +52,9 @@ const validLeadStages: LeadStage[] = [
 ];
 
 const validLeadPriorities: LeadPriority[] = ["low", "normal", "high"];
+const validHomeLocationSpotlightLayouts = HOME_LOCATION_SPOTLIGHT_LAYOUT_OPTIONS.map(
+  (option) => option.value,
+) as HomeLocationSpotlightLayout[];
 
 function normalizeText(value: string): string {
   return value
@@ -74,6 +83,18 @@ function uniqueSlug(base: string): string {
 function uniqueBlogSlug(base: string): string {
   const rows = db.prepare("SELECT slug FROM blog_posts WHERE slug = ? OR slug LIKE ?").all(base, `${base}-%`) as { slug: string }[];
   const existing = new Set(rows.map((r) => r.slug));
+  if (!existing.has(base)) return base;
+  let cursor = 2;
+  while (existing.has(`${base}-${cursor}`)) cursor += 1;
+  return `${base}-${cursor}`;
+}
+
+function uniqueHomeLocationSpotlightSlug(base: string): string {
+  const rows = db.prepare("SELECT slug FROM home_location_spotlights WHERE slug = ? OR slug LIKE ?").all(
+    base,
+    `${base}-%`,
+  ) as { slug: string }[];
+  const existing = new Set(rows.map((row) => row.slug));
   if (!existing.has(base)) return base;
   let cursor = 2;
   while (existing.has(`${base}-${cursor}`)) cursor += 1;
@@ -120,6 +141,48 @@ function cleanOptionalText(value: string | undefined): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function sanitizeHomeLocationSpotlightTranslationFields(
+  value: HomeLocationSpotlightTranslationFields | undefined,
+): HomeLocationSpotlightTranslationFields | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const nextValue: HomeLocationSpotlightTranslationFields = {
+    title: cleanOptionalText(value.title),
+    subtitle: cleanOptionalText(value.subtitle),
+    badge: cleanOptionalText(value.badge),
+    blurb: cleanOptionalText(value.blurb),
+    statText: cleanOptionalText(value.statText),
+  };
+
+  if (!Object.values(nextValue).some(Boolean)) {
+    return undefined;
+  }
+
+  return nextValue;
+}
+
+function sanitizeHomeLocationSpotlightTranslations(
+  value: HomeLocationSpotlightTranslations | undefined,
+): HomeLocationSpotlightTranslations {
+  if (!value) {
+    return {};
+  }
+
+  const output: HomeLocationSpotlightTranslations = {};
+
+  for (const language of ["EN", "RU", "AR"] as const) {
+    const sanitizedFields = sanitizeHomeLocationSpotlightTranslationFields(value[language]);
+
+    if (sanitizedFields) {
+      output[language] = sanitizedFields;
+    }
+  }
+
+  return output;
+}
+
 // ─── row mappers ─────────────────────────────────────────────────────────────
 
 function rowToProperty(row: Record<string, unknown>): Property {
@@ -163,6 +226,23 @@ function rowToBlogPost(row: Record<string, unknown>): BlogPost {
   return {
     ...(row as unknown as BlogPost),
     tags: JSON.parse(row.tags as string),
+  };
+}
+
+function rowToHomeLocationSpotlight(row: Record<string, unknown>): HomeLocationSpotlight {
+  return {
+    ...(row as unknown as HomeLocationSpotlight),
+    statText: cleanOptionalText(row.statText as string | undefined),
+    priceAmount: row.priceAmount != null ? Number(row.priceAmount) : undefined,
+    priceCurrency: cleanOptionalText(row.priceCurrency as string | undefined) as HomeLocationSpotlight["priceCurrency"],
+    layoutVariant: validHomeLocationSpotlightLayouts.includes(row.layoutVariant as HomeLocationSpotlightLayout)
+      ? (row.layoutVariant as HomeLocationSpotlightLayout)
+      : "wide",
+    sortOrder: Number(row.sortOrder),
+    isActive: Number(row.isActive) === 1,
+    translations: sanitizeHomeLocationSpotlightTranslations(
+      JSON.parse((row.translations as string) || "{}") as HomeLocationSpotlightTranslations,
+    ),
   };
 }
 
@@ -1001,6 +1081,182 @@ export function deleteBlogPostBySlug(slug: string): BlogPost {
   if (!post) throw new Error("Blog yazısı bulunamadı.");
   db.prepare("DELETE FROM blog_posts WHERE slug = ?").run(slug);
   return post;
+}
+
+// ─── home location spotlights ───────────────────────────────────────────────
+
+export function listHomeLocationSpotlights(options: { activeOnly?: boolean } = {}): HomeLocationSpotlight[] {
+  const rows = db.prepare(`
+    SELECT * FROM home_location_spotlights
+    ${options.activeOnly ? "WHERE isActive = 1" : ""}
+    ORDER BY sortOrder ASC, createdAt DESC
+  `).all() as Record<string, unknown>[];
+
+  return rows.map(rowToHomeLocationSpotlight);
+}
+
+export function getHomeLocationSpotlightById(spotlightId: string): HomeLocationSpotlight | undefined {
+  const row = db.prepare("SELECT * FROM home_location_spotlights WHERE id = ?").get(spotlightId) as
+    | Record<string, unknown>
+    | undefined;
+
+  return row ? rowToHomeLocationSpotlight(row) : undefined;
+}
+
+export function createHomeLocationSpotlight(input: CreateHomeLocationSpotlightInput): HomeLocationSpotlight {
+  const title = input.title.trim();
+  const subtitle = input.subtitle.trim();
+  const badge = input.badge.trim();
+  const blurb = input.blurb.trim();
+  const href = input.href.trim();
+  const image = input.image.trim();
+  const statText = cleanOptionalText(input.statText);
+  const priceAmount = input.priceAmount;
+
+  if (!title || !subtitle || !badge || !blurb || !href || !image) {
+    throw new Error("Popüler lokasyon alanları eksik.");
+  }
+
+  if (priceAmount !== undefined && (!Number.isFinite(priceAmount) || priceAmount <= 0)) {
+    throw new Error("Başlangıç fiyatı geçerli bir sayı olmalıdır.");
+  }
+
+  const priceCurrency = priceAmount !== undefined ? input.priceCurrency ?? "TRY" : undefined;
+  const layoutVariant = input.layoutVariant && validHomeLocationSpotlightLayouts.includes(input.layoutVariant)
+    ? input.layoutVariant
+    : "wide";
+  const sortOrder = Number.isFinite(input.sortOrder) ? Math.trunc(input.sortOrder ?? 0) : 0;
+  const isActive = input.isActive ?? true;
+  const translations = sanitizeHomeLocationSpotlightTranslations(input.translations);
+  const now = new Date().toISOString();
+  const spotlight: HomeLocationSpotlight = {
+    id: `loc-${crypto.randomUUID()}`,
+    slug: uniqueHomeLocationSpotlightSlug(createSlug(title)),
+    title,
+    subtitle,
+    badge,
+    blurb,
+    statText,
+    href,
+    image,
+    priceAmount,
+    priceCurrency,
+    layoutVariant,
+    sortOrder,
+    isActive,
+    translations,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  db.prepare(`
+    INSERT INTO home_location_spotlights
+      (id, slug, title, subtitle, badge, blurb, statText, href, image, priceAmount, priceCurrency,
+       layoutVariant, sortOrder, isActive, translations, createdAt, updatedAt)
+    VALUES
+      (@id, @slug, @title, @subtitle, @badge, @blurb, @statText, @href, @image, @priceAmount, @priceCurrency,
+       @layoutVariant, @sortOrder, @isActive, @translations, @createdAt, @updatedAt)
+  `).run({
+    ...spotlight,
+    statText: spotlight.statText ?? null,
+    priceAmount: spotlight.priceAmount ?? null,
+    priceCurrency: spotlight.priceCurrency ?? null,
+    isActive: spotlight.isActive ? 1 : 0,
+    translations: JSON.stringify(spotlight.translations ?? {}),
+  });
+
+  return spotlight;
+}
+
+export function updateHomeLocationSpotlightById(
+  spotlightId: string,
+  input: CreateHomeLocationSpotlightInput,
+): HomeLocationSpotlight {
+  const existing = getHomeLocationSpotlightById(spotlightId);
+
+  if (!existing) {
+    throw new Error("Popüler lokasyon kaydı bulunamadı.");
+  }
+
+  const title = input.title.trim();
+  const subtitle = input.subtitle.trim();
+  const badge = input.badge.trim();
+  const blurb = input.blurb.trim();
+  const href = input.href.trim();
+  const image = input.image.trim();
+  const statText = cleanOptionalText(input.statText);
+  const priceAmount = input.priceAmount;
+
+  if (!title || !subtitle || !badge || !blurb || !href || !image) {
+    throw new Error("Popüler lokasyon alanları eksik.");
+  }
+
+  if (priceAmount !== undefined && (!Number.isFinite(priceAmount) || priceAmount <= 0)) {
+    throw new Error("Başlangıç fiyatı geçerli bir sayı olmalıdır.");
+  }
+
+  const layoutVariant = input.layoutVariant && validHomeLocationSpotlightLayouts.includes(input.layoutVariant)
+    ? input.layoutVariant
+    : existing.layoutVariant;
+  const sortOrder = Number.isFinite(input.sortOrder) ? Math.trunc(input.sortOrder ?? 0) : existing.sortOrder;
+  const isActive = input.isActive ?? existing.isActive;
+  const translations = sanitizeHomeLocationSpotlightTranslations(input.translations);
+  const updated: HomeLocationSpotlight = {
+    ...existing,
+    title,
+    subtitle,
+    badge,
+    blurb,
+    statText,
+    href,
+    image,
+    priceAmount,
+    priceCurrency: priceAmount !== undefined ? input.priceCurrency ?? "TRY" : undefined,
+    layoutVariant,
+    sortOrder,
+    isActive,
+    translations,
+    updatedAt: new Date().toISOString(),
+  };
+
+  db.prepare(`
+    UPDATE home_location_spotlights
+    SET title=@title,
+        subtitle=@subtitle,
+        badge=@badge,
+        blurb=@blurb,
+        statText=@statText,
+        href=@href,
+        image=@image,
+        priceAmount=@priceAmount,
+        priceCurrency=@priceCurrency,
+        layoutVariant=@layoutVariant,
+        sortOrder=@sortOrder,
+        isActive=@isActive,
+        translations=@translations,
+        updatedAt=@updatedAt
+    WHERE id=@id
+  `).run({
+    ...updated,
+    statText: updated.statText ?? null,
+    priceAmount: updated.priceAmount ?? null,
+    priceCurrency: updated.priceCurrency ?? null,
+    isActive: updated.isActive ? 1 : 0,
+    translations: JSON.stringify(updated.translations ?? {}),
+  });
+
+  return updated;
+}
+
+export function deleteHomeLocationSpotlightById(spotlightId: string): HomeLocationSpotlight {
+  const existing = getHomeLocationSpotlightById(spotlightId);
+
+  if (!existing) {
+    throw new Error("Popüler lokasyon kaydı bulunamadı.");
+  }
+
+  db.prepare("DELETE FROM home_location_spotlights WHERE id = ?").run(spotlightId);
+  return existing;
 }
 
 // ─── dashboard ───────────────────────────────────────────────────────────────

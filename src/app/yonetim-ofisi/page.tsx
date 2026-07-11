@@ -1,15 +1,13 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { ReactNode } from "react";
-
-import { BrandLogo } from "@/components/brand-logo";
 import { AdvisorEditor } from "@/components/panel/advisor-editor";
 import { AdvisorManagement } from "@/components/panel/advisor-management";
 import { AdminNotificationCenter } from "@/components/panel/admin-notification-center";
 import { BlogDelete } from "@/components/panel/blog-delete";
 import { BlogEditor } from "@/components/panel/blog-editor";
 import { BlogForm } from "@/components/panel/blog-form";
+import { HomeLocationSpotlightManager } from "@/components/panel/home-location-spotlight-manager";
 import { LeadPipelineBoard } from "@/components/panel/lead-pipeline-board";
 import { PortfolioDelete } from "@/components/panel/portfolio-delete";
 import { PortfolioEditor } from "@/components/panel/portfolio-editor";
@@ -35,6 +33,7 @@ import {
   leadStageSummary,
   listAdvisors,
   listBlogPosts,
+  listHomeLocationSpotlights,
   listLeads,
   listPropertyActivityLogs,
   listProperties,
@@ -54,6 +53,7 @@ import type { LeadStage } from "@/lib/types";
 type PanelTab =
   | "overview"
   | "portfolio-create"
+  | "portfolio-locations"
   | "portfolio-approval"
   | "portfolio-projects"
   | "portfolio-edit"
@@ -73,6 +73,7 @@ type AdminOfficePageProps = {
 
 const portfolioGroupTabs: PanelTab[] = [
   "portfolio-create",
+  "portfolio-locations",
   "portfolio-approval",
   "portfolio-projects",
   "portfolio-edit",
@@ -83,6 +84,7 @@ const blogGroupTabs: PanelTab[] = ["blog-create", "blog-edit", "blog-delete"];
 const panelTabs: Array<{ id: PanelTab; label: string; hint: string }> = [
   { id: "overview", label: "Genel Bakış", hint: "Metrikler ve genel görünüm" },
   { id: "portfolio-create", label: "Portföy Ekle", hint: "Yeni ilan oluştur" },
+  { id: "portfolio-locations", label: "Popüler Lokasyonlar", hint: "Ana sayfa lokasyon kartlarını yönet" },
   { id: "portfolio-approval", label: "Onay Bekleyenler", hint: "Yayın onayı bekleyen ilanlar" },
   { id: "portfolio-projects", label: "Proje / Firma Merkezi", hint: "Firmaya göre ilanları grupla" },
   { id: "portfolio-edit", label: "Portföy Düzenle", hint: "Mevcut ilanı güncelle" },
@@ -107,7 +109,7 @@ function visibleTabsForRole(role: string): PanelTab[] {
   }
 
   if (canCreateOrEditPortfolios(role)) {
-    output.push("portfolio-create", "portfolio-projects", "portfolio-edit");
+    output.push("portfolio-create", "portfolio-locations", "portfolio-projects", "portfolio-edit");
   }
 
   if (canDeletePortfolios(role)) {
@@ -278,6 +280,7 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
   const users = filterUsersForActor(currentUser, allUsers);
   const summary = dashboardSummary();
   const blogPosts = listBlogPosts();
+  const homeLocationSpotlights = listHomeLocationSpotlights();
   const allLeads = listLeads();
   const propertyActivityLogs = listPropertyActivityLogs({ limit: 160 });
   const leads = filterLeadsForActor(currentUser, allLeads);
@@ -587,6 +590,12 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
 
               {activeTab === "portfolio-create" ? (
                 <PortfolioForm advisors={advisors} currentUserRole={currentUser.role} />
+              ) : null}
+              {activeTab === "portfolio-locations" ? (
+                <HomeLocationSpotlightManager
+                  initialSpotlights={homeLocationSpotlights}
+                  canManage={canCreateOrEditPortfolios(currentUser.role)}
+                />
               ) : null}
               {activeTab === "portfolio-projects" ? (
                 <PortfolioProjectCenter
@@ -1033,7 +1042,7 @@ function OverviewSection({
               )}
             </tbody>
           </table>
-        </PanelTableShell>
+        </div>
       </section>
     </div>
   );
@@ -1321,6 +1330,7 @@ function TabNavigationIcon({ tab }: { tab: PanelTab }) {
         </svg>
       );
     case "portfolio-create":
+    case "portfolio-locations":
     case "portfolio-approval":
     case "portfolio-projects":
     case "portfolio-edit":

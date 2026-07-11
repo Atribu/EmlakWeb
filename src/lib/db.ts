@@ -126,6 +126,26 @@ db.exec(`
     publishedAt     TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS home_location_spotlights (
+    id              TEXT PRIMARY KEY,
+    slug            TEXT NOT NULL UNIQUE,
+    title           TEXT NOT NULL,
+    subtitle        TEXT NOT NULL,
+    badge           TEXT NOT NULL,
+    blurb           TEXT NOT NULL,
+    statText        TEXT,
+    href            TEXT NOT NULL,
+    image           TEXT NOT NULL,
+    priceAmount     REAL,
+    priceCurrency   TEXT,
+    layoutVariant   TEXT NOT NULL DEFAULT 'wide',
+    sortOrder       INTEGER NOT NULL DEFAULT 0,
+    isActive        INTEGER NOT NULL DEFAULT 1,
+    translations    TEXT NOT NULL DEFAULT '{}',
+    createdAt       TEXT NOT NULL,
+    updatedAt       TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS leads (
     id                TEXT PRIMARY KEY,
     propertySlug      TEXT NOT NULL,
@@ -171,6 +191,12 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_property_activity_logs_property_slug_created_at
     ON property_activity_logs(propertySlug, createdAt DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_home_location_spotlights_sort_order
+    ON home_location_spotlights(sortOrder ASC, createdAt DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_home_location_spotlights_is_active
+    ON home_location_spotlights(isActive, sortOrder ASC);
 `);
 
 addColumnIfMissing("properties", "priceCurrency", "TEXT NOT NULL DEFAULT 'TRY'");

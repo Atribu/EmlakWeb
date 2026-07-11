@@ -11,7 +11,7 @@ import { portfolioPageCopy, translatePropertyType, translateRoomLabel } from "@/
 import { getServerSiteLanguage, getServerSitePreferences } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
-  title: "Portföyler | Econi Invest",
+  title: "Portföyler | Signature Estates",
   description: "Filtrelenebilir satılık portföyleri tek sayfada inceleyin.",
 };
 

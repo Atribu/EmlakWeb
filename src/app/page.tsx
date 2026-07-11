@@ -7,19 +7,23 @@ import { HomeQuickSearch } from "@/components/home-quick-search";
 import { PriceText } from "@/components/price-text";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
+import { listCities, listHomeLocationSpotlights, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
+import {
+  getHomeLocationSpotlightClassName,
+  getHomeLocationSpotlightField,
+} from "@/lib/home-location-spotlights";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { propertyTitleForLanguage } from "@/lib/property-content";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import { homePageCopy, summarizeLocationStockLabel } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 import { homeListingSchema } from "@/lib/seo";
-import type { Property } from "@/lib/types";
+import type { HomeLocationSpotlight, Property } from "@/lib/types";
 
 export const metadata: Metadata = {
-  title: "Econi Invest | Premium Emlak ve Yatırım Portföyleri",
+  title: "PortföySatış | Signature Estates",
   description:
-    "Econi Invest ile premium emlak portföylerini, yatırım analizini ve danışman destekli satın alma sürecini keşfedin.",
+    "Premium emlak portföylerini çok sayfalı kurumsal yapıda keşfedin: portföyler, harita, danışmanlar, hizmetler ve iletişim.",
 };
 
 type PopularLocationCard = {
@@ -101,10 +105,33 @@ function summarizeLocationPrice(properties: Property[]) {
   };
 }
 
+function buildManagedPopularLocationCards(
+  spotlights: HomeLocationSpotlight[],
+  language: Awaited<ReturnType<typeof getServerSiteLanguage>>,
+  fallbackStat: string,
+): PopularLocationCard[] {
+  return spotlights.map((spotlight) => ({
+    key: spotlight.slug,
+    title: getHomeLocationSpotlightField(spotlight, language, "title") ?? spotlight.title,
+    subtitle: getHomeLocationSpotlightField(spotlight, language, "subtitle") ?? spotlight.subtitle,
+    href: spotlight.href,
+    image: spotlight.image,
+    badge: getHomeLocationSpotlightField(spotlight, language, "badge") ?? spotlight.badge,
+    blurb: getHomeLocationSpotlightField(spotlight, language, "blurb") ?? spotlight.blurb,
+    stat: getHomeLocationSpotlightField(spotlight, language, "statText") ?? fallbackStat,
+    priceValue:
+      spotlight.priceAmount && spotlight.priceCurrency
+        ? { amount: spotlight.priceAmount, currency: spotlight.priceCurrency }
+        : null,
+    className: getHomeLocationSpotlightClassName(spotlight.layoutVariant),
+  }));
+}
+
 export default async function HomePage() {
   const language = await getServerSiteLanguage();
   const copy = homePageCopy(language);
   const properties = listProperties();
+  const managedSpotlights = listHomeLocationSpotlights({ activeOnly: true });
   const cities = listCities();
   const types = listTypes();
   const roomOptions = listRoomOptions();
@@ -126,7 +153,7 @@ export default async function HomePage() {
   const urlaProperty = urlaCollection[0];
   const signatureProperty = signatureCollection[signatureCollection.length - 1] ?? heroProperty;
 
-  const popularLocations: PopularLocationCard[] = [
+  const fallbackPopularLocations: PopularLocationCard[] = [
     {
       key: "zekeriyakoy",
       title: copy.locationCards.zekeriyakoy.title,
@@ -199,32 +226,36 @@ export default async function HomePage() {
     },
   ];
 
-  popularLocations[0] = {
-    ...popularLocations[0],
+  fallbackPopularLocations[0] = {
+    ...fallbackPopularLocations[0],
     title: copy.locationCards.zekeriyakoy.title,
     subtitle: copy.locationCards.zekeriyakoy.subtitle,
     badge: copy.locationCards.zekeriyakoy.badge,
   };
-  popularLocations[1] = {
-    ...popularLocations[1],
+  fallbackPopularLocations[1] = {
+    ...fallbackPopularLocations[1],
     title: copy.locationCards.nisantasi.title,
     subtitle: copy.locationCards.nisantasi.subtitle,
   };
-  popularLocations[2] = {
-    ...popularLocations[2],
+  fallbackPopularLocations[2] = {
+    ...fallbackPopularLocations[2],
     title: copy.locationCards["istanbul-prime"].title,
     subtitle: copy.locationCards["istanbul-prime"].subtitle,
   };
-  popularLocations[3] = {
-    ...popularLocations[3],
+  fallbackPopularLocations[3] = {
+    ...fallbackPopularLocations[3],
     title: copy.locationCards.urla.title,
     subtitle: copy.locationCards.urla.subtitle,
   };
-  popularLocations[4] = {
-    ...popularLocations[4],
+  fallbackPopularLocations[4] = {
+    ...fallbackPopularLocations[4],
     title: copy.locationCards["signature-selection"].title,
     subtitle: copy.locationCards["signature-selection"].subtitle,
   };
+  const popularLocations =
+    managedSpotlights.length > 0
+      ? buildManagedPopularLocationCards(managedSpotlights, language, copy.newSelection)
+      : fallbackPopularLocations;
 
   const heroLocationLabel = heroProperty
     ? `${heroProperty.city}${heroProperty.district ? ` • ${heroProperty.district}` : ""}`

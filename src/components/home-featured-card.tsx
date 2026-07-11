@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type KeyboardEvent, type MouseEvent } from "react";
 
+import { ImageLightbox } from "@/components/image-lightbox";
 import { PriceText } from "@/components/price-text";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { propertyTitleForLanguage } from "@/lib/property-content";
@@ -125,6 +126,7 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
     return Array.from(new Set(images));
   }, [property.coverImage, property.galleryImages]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const activeImage = gallery[activeImageIndex] ?? property.coverImage ?? "/next.svg";
   const photoCount = Math.max(1, gallery.length);
   const locationLine =
@@ -187,7 +189,27 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
       onKeyDown={handleCardKeyDown}
       className="group block cursor-pointer overflow-hidden rounded-lg border border-[var(--line-strong)] bg-white shadow-[0_24px_46px_-34px_rgba(24,20,14,0.24)] outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_54px_-36px_rgba(18,24,36,0.28)] focus-visible:ring-2 focus-visible:ring-[rgba(102,165,87,0.42)]"
     >
-      <div className="relative aspect-[4/2.55] overflow-hidden bg-[var(--brand-night-blue)]">
+      <div
+        className="relative aspect-[4/2.55] cursor-zoom-in overflow-hidden bg-[var(--brand-night-blue)]"
+        role="button"
+        tabIndex={0}
+        aria-label={`${propertyTitle} ${copy.details}`}
+        onClick={(event) => {
+          if (shouldIgnoreCardNavigation(event.target)) {
+            return;
+          }
+
+          event.stopPropagation();
+          setIsLightboxOpen(true);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsLightboxOpen(true);
+          }
+        }}
+      >
         <Image
           src={activeImage}
           alt={propertyTitle}
@@ -218,7 +240,10 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
           <>
             <button
               type="button"
-              onClick={() => stepGallery(-1)}
+              onClick={(event) => {
+                event.stopPropagation();
+                stepGallery(-1);
+              }}
               aria-label={copy.previousImage}
               className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg border border-white/34 bg-[rgba(29,38,68,0.38)] text-white backdrop-blur transition hover:bg-[rgba(29,38,68,0.58)]"
             >
@@ -226,7 +251,10 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
             </button>
             <button
               type="button"
-              onClick={() => stepGallery(1)}
+              onClick={(event) => {
+                event.stopPropagation();
+                stepGallery(1);
+              }}
               aria-label={copy.nextImage}
               className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg border border-white/34 bg-[rgba(29,38,68,0.38)] text-white backdrop-blur transition hover:bg-[rgba(29,38,68,0.58)]"
             >
@@ -285,6 +313,16 @@ export function HomeFeaturedCard({ property, language }: HomeFeaturedCardProps) 
           </span>
         </div>
       </div>
+
+      {isLightboxOpen ? (
+        <ImageLightbox
+          images={gallery}
+          imageLabels={property.imageLabels}
+          title={propertyTitle}
+          initialIndex={activeImageIndex}
+          onClose={() => setIsLightboxOpen(false)}
+        />
+      ) : null}
     </article>
   );
 }

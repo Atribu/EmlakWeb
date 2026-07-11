@@ -8,9 +8,9 @@ export function BrandLogo({ inverse = false, compact = false, className = "" }: 
   return (
     <span
       className={`inline-flex items-center gap-[0.32em] leading-none ${inverse ? "text-white" : "text-[var(--brand-ink)]"} ${className}`}
-      aria-label="Econi Invest"
+      aria-label="Signature Estates"
     >
-      <span className="font-normal tracking-normal">Econi.</span>
+      <span className="font-normal tracking-normal">Signature</span>
       <span
         className="relative inline-block shrink-0"
         style={{
@@ -30,7 +30,7 @@ export function BrandLogo({ inverse = false, compact = false, className = "" }: 
           }}
         />
       </span>
-      <span className="font-normal tracking-normal">Invest</span>
+      <span className="font-normal tracking-normal">Estates</span>
     </span>
   );
 }

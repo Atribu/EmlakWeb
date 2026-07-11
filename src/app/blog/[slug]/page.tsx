@@ -81,7 +81,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
   const post = getBlogPostBySlug(resolvedParams.slug);
 
   if (!post) {
-    return { title: "Blog Yazısı Bulunamadı | Econi Invest" };
+    return { title: "Blog Yazısı Bulunamadı | Signature Estates" };
   }
 
   return blogMetadata(post);

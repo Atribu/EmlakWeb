@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
+import { ImageLightbox } from "@/components/image-lightbox";
 import { PriceText } from "@/components/price-text";
 import { PropertyInfoIcon } from "@/components/property-info-icon";
 import { useSitePreferences } from "@/components/use-site-preferences";
@@ -128,6 +129,7 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
   }, [property.coverImage, property.galleryImages]);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const activeImage = gallery[activeImageIndex] ?? property.coverImage;
   const quickHref =
@@ -194,7 +196,27 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
   return (
     <article className="overflow-hidden rounded-lg border border-[var(--line-strong)] bg-white shadow-[0_30px_60px_-40px_rgba(33,27,19,0.24)]">
       <div className="grid min-w-0 lg:grid-cols-[minmax(320px,44%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(380px,48%)_minmax(0,1fr)]">
-        <div className="relative min-h-[320px] overflow-hidden bg-[var(--brand-night-blue)] sm:min-h-[360px] lg:min-h-full">
+        <div
+          className="relative min-h-[320px] cursor-zoom-in overflow-hidden bg-[var(--brand-night-blue)] sm:min-h-[360px] lg:min-h-full"
+          role="button"
+          tabIndex={0}
+          aria-label={`${propertyTitle} ${copy.openDetail}`}
+          onClick={(event) => {
+            if (shouldIgnoreCardNavigation(event.target)) {
+              return;
+            }
+
+            event.stopPropagation();
+            setIsLightboxOpen(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              event.stopPropagation();
+              setIsLightboxOpen(true);
+            }
+          }}
+        >
           <Image
             src={activeImage}
             alt={propertyTitle}
@@ -222,7 +244,10 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
             <>
               <button
                 type="button"
-                onClick={() => stepGallery(-1)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  stepGallery(-1);
+                }}
                 aria-label={copy.previousImage}
                 className="absolute left-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-lg border border-white/42 bg-[rgba(29,38,68,0.38)] text-white backdrop-blur transition hover:bg-[rgba(29,38,68,0.58)]"
               >
@@ -230,7 +255,10 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
               </button>
               <button
                 type="button"
-                onClick={() => stepGallery(1)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  stepGallery(1);
+                }}
                 aria-label={copy.nextImage}
                 className="absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-lg border border-white/42 bg-[rgba(29,38,68,0.38)] text-white backdrop-blur transition hover:bg-[rgba(29,38,68,0.58)]"
               >
@@ -373,6 +401,16 @@ export function PropertyCard({ property, advisor }: PropertyCardProps) {
           </div>
         </div>
       </div>
+
+      {isLightboxOpen ? (
+        <ImageLightbox
+          images={gallery}
+          imageLabels={property.imageLabels}
+          title={propertyTitle}
+          initialIndex={activeImageIndex}
+          onClose={() => setIsLightboxOpen(false)}
+        />
+      ) : null}
     </article>
   );
 }

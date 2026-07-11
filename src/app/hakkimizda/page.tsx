@@ -7,8 +7,8 @@ import { aboutPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
-  title: "Hakkımızda | Econi Invest",
-  description: "Econi Invest vizyonu, yaklaşımı ve satış odaklı ekip yapısı.",
+  title: "Hakkımızda | Signature Estates",
+  description: "Signature Estates vizyonu, yaklaşımı ve satış odaklı ekip yapısı.",
 };
 
 export default async function HakkimizdaPage() {

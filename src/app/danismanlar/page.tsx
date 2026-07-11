@@ -10,8 +10,8 @@ import { advisorsPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
 export const metadata: Metadata = {
-  title: "Danışmanlar | Econi Invest",
-  description: "Econi Invest uzman danışman ekibi ve odak bölgeleri.",
+  title: "Danışmanlar | Signature Estates",
+  description: "Signature Estates uzman danışman ekibi ve odak bölgeleri.",
 };
 
 export default async function DanismanlarPage() {
