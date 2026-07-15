@@ -1,5 +1,6 @@
 import db from "@/lib/db";
 import { HOME_LOCATION_SPOTLIGHT_LAYOUT_OPTIONS } from "@/lib/home-location-spotlights";
+import { hashPassword, isHashedPassword, verifyPassword } from "@/lib/passwords";
 import { sanitizePropertyTranslations } from "@/lib/property-content";
 import { sanitizePropertyInfoItems } from "@/lib/property-info-items";
 import { isPropertyPublished } from "@/lib/property-panel-options";
@@ -367,8 +368,10 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
 
   return rows.filter((p) => {
     if (!filter.includeInactive && !isPropertyPublished(p.publicationStatus)) return false;
+    if (filter.country && (p.country ?? "Türkiye") !== filter.country) return false;
     if (filter.city && p.city !== filter.city) return false;
     if (filter.type && p.type !== filter.type) return false;
+    if (filter.marketStatus && p.marketStatus !== filter.marketStatus) return false;
     if (filter.publicationStatus && p.publicationStatus !== filter.publicationStatus) return false;
     if (typeof filter.minPrice === "number" && p.price < filter.minPrice) return false;
     if (typeof filter.maxPrice === "number" && p.price > filter.maxPrice) return false;
@@ -741,6 +744,12 @@ export function listCities(): string[] {
   );
 }
 
+export function listCountries(): string[] {
+  return Array.from(new Set(listProperties().map((property) => property.country?.trim() || "Türkiye"))).sort(
+    (left, right) => left.localeCompare(right, "tr"),
+  );
+}
+
 export function listTypes(): string[] {
   return Array.from(new Set(listProperties().map((property) => property.type))).sort((left, right) =>
     left.localeCompare(right, "tr"),
@@ -764,9 +773,24 @@ export function countPropertiesReferencingImagePath(imagePath: string): number {
 export function authenticateUser(identifier: string, password: string): SafeUser | null {
   const normalized = identifier.toLocaleLowerCase("tr");
   const row = db.prepare(`
-    SELECT * FROM users WHERE (LOWER(username) = ? OR LOWER(email) = ?) AND password = ?
-  `).get(normalized, normalized, password) as Record<string, unknown> | undefined;
-  return row ? toSafeUser(rowToUser(row)) : null;
+    SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?
+  `).get(normalized, normalized) as Record<string, unknown> | undefined;
+
+  if (!row) {
+    return null;
+  }
+
+  const user = rowToUser(row);
+
+  if (!verifyPassword(password, user.password)) {
+    return null;
+  }
+
+  if (!isHashedPassword(user.password)) {
+    db.prepare("UPDATE users SET password = ? WHERE id = ?").run(hashPassword(password), user.id);
+  }
+
+  return toSafeUser(user);
 }
 
 export function getUserById(userId: string): SafeUser | null {
@@ -815,7 +839,7 @@ export function createUser(input: CreateUserInput): SafeUser {
   const user: User = {
     id: `usr-${crypto.randomUUID()}`,
     name, role: role as UserRole, email, phone,
-    username: email, password, advisorId,
+    username: email, password: hashPassword(password), advisorId,
   };
 
   db.prepare(`

@@ -27,6 +27,14 @@ npm install
 npm run dev
 ```
 
+Kontrol komutları:
+
+```bash
+npm run test
+npm run lint
+npm run build
+```
+
 ## Demo Hesaplar
 
 - Admin: `admin@admin / admin`
@@ -50,9 +58,14 @@ Canlı sunucuda kullanacağımız yollar:
 ```bash
 EMLAK_DB_PATH=/home/dgtl/EmlakWeb/.demo-data/emlak.db
 EMLAK_UPLOAD_DIR=/home/dgtl/EmlakWeb/.demo-data/uploads
+EMLAK_SESSION_SECRET=uzun-rastgele-bir-production-secret
 ```
 
 Deploy işlemi `/home/dgtl/EmlakWeb/.demo-data` klasörünü silmezse panelden girilen veriler ve görseller korunur.
+Şifreler veritabanında hash'li tutulur; eski düz metin şifreler başarılı giriş sonrası otomatik olarak hash'li formata taşınır.
+
+Portföy görselleri yüklenirken otomatik optimize edilir, WebP formatında kaydedilir ve görselin ortasına filigran eklenir.
+Filigran metni canlı sunucuda `EMLAK_WATERMARK_TEXT` ve `EMLAK_WATERMARK_SUBTEXT` ile değiştirilebilir.
 
 ## Mail Akışı
 

@@ -161,8 +161,10 @@ export type CreatePropertyActivityLogInput = {
 
 export type PropertyFilter = {
   query?: string;
+  country?: string;
   city?: string;
   type?: string;
+  marketStatus?: PropertyMarketStatus;
   minPrice?: number;
   maxPrice?: number;
   rooms?: string;

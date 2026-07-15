@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { PanelFormProgress, PanelFormStepHeader, PanelFormSummary } from "@/components/panel/panel-form-ui";
 import { PortfolioFilterToolbar } from "@/components/panel/portfolio-filter-toolbar";
 import { PropertyDescriptionFields } from "@/components/panel/property-description-fields";
 import { PropertyOperationalFields } from "@/components/panel/property-operational-fields";
@@ -78,6 +79,13 @@ const coverOptions = [
   { label: "Yeşil", value: "linear-gradient(120deg, #166534, #4ade80)" },
 ];
 
+const editorProgressSteps = [
+  { label: "Seçim", helper: "Filtrele ve portföy seç" },
+  { label: "İçerik", helper: "Dil ve temel alanlar" },
+  { label: "Görseller", helper: "Sıralama ve galeri" },
+  { label: "Yayın", helper: "Durum ve iç notlar" },
+];
+
 function formatFileSize(bytes: number) {
   if (bytes >= 1024 * 1024) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -117,6 +125,7 @@ export function PortfolioEditor({
   const [status, setStatus] = useState<SubmitState>({ type: "idle" });
   const [coverFileName, setCoverFileName] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryOrder, setGalleryOrder] = useState<string[]>([]);
   const [removedGalleryImages, setRemovedGalleryImages] = useState<string[]>([]);
   const [filters, setFilters] = useState<PropertyPanelFilterState>(defaultPropertyPanelFilters);
   const [duplicateRoomSelections, setDuplicateRoomSelections] = useState<string[]>([]);
@@ -174,9 +183,10 @@ export function PortfolioEditor({
     setStatus({ type: "idle" });
     setCoverFileName("");
     setGalleryFiles([]);
+    setGalleryOrder(selectedProperty?.galleryImages ?? []);
     setRemovedGalleryImages([]);
     syncFileInput(galleryInputRef.current, []);
-  }, [selectedSlug]);
+  }, [selectedProperty, selectedSlug]);
 
   useEffect(() => {
     setDuplicateRoomSelections([]);
@@ -226,6 +236,29 @@ export function PortfolioEditor({
     setRemovedGalleryImages((current) =>
       current.includes(image) ? current.filter((item) => item !== image) : [...current, image],
     );
+  }
+
+  function moveExistingGalleryImage(image: string, direction: -1 | 1) {
+    setGalleryOrder((current) => {
+      const baseOrder = current.length > 0 ? current : selectedProperty?.galleryImages ?? [];
+      const nextOrder = [...baseOrder];
+      const currentIndex = nextOrder.indexOf(image);
+      const nextIndex = currentIndex + direction;
+
+      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= nextOrder.length) {
+        return current;
+      }
+
+      const targetImage = nextOrder[nextIndex];
+      if (!targetImage) {
+        return current;
+      }
+
+      nextOrder[nextIndex] = image;
+      nextOrder[currentIndex] = targetImage;
+
+      return nextOrder;
+    });
   }
 
   function toggleDuplicateRoom(room: string) {
@@ -350,6 +383,7 @@ export function PortfolioEditor({
       );
       setRemovedGalleryImages([]);
       setGalleryFiles([]);
+      setGalleryOrder(payload.property.galleryImages);
       setCoverFileName("");
       syncFileInput(galleryInputRef.current, []);
       setStatus({
@@ -617,16 +651,33 @@ export function PortfolioEditor({
         {duplicateStatus.type === "success" ? <p className="mt-3 text-sm text-emerald-700">{duplicateStatus.message}</p> : null}
       </div>
 
+      <div className="mt-6">
+        <PanelFormProgress steps={editorProgressSteps} />
+      </div>
+
       <form
         key={`${selectedProperty.slug}-${selectedProperty.title}-${selectedProperty.coverImage}-${selectedProperty.galleryImages.length}`}
         onSubmit={handleSubmit}
-        className="mt-5 grid gap-3 md:grid-cols-2"
+        className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_310px]"
       >
-        <PropertyDescriptionFields
-          defaultTitle={selectedProperty.title}
-          defaultDescription={selectedProperty.description}
-          defaultTranslations={selectedProperty.translations}
-        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <PanelFormStepHeader
+            step="01"
+            title="İlan İçeriği"
+            description="Başlık ve açıklamayı güncellerken ek dillerin manuel içerik mantığını koruyun."
+          />
+
+          <PropertyDescriptionFields
+            defaultTitle={selectedProperty.title}
+            defaultDescription={selectedProperty.description}
+            defaultTranslations={selectedProperty.translations}
+          />
+
+          <PanelFormStepHeader
+            step="02"
+            title="Konum, Fiyat ve Temel Bilgiler"
+            description="Portföyün listeleme ve detay sayfasındaki ana bilgi kartları bu alanlardan beslenir."
+          />
 
         <PropertyFieldShell label="Ülke" icon={<LocationFieldIcon />}>
           <>
@@ -787,7 +838,13 @@ export function PortfolioEditor({
           </select>
         </PropertyFieldShell>
 
-        <label className="md:col-span-2">
+          <PanelFormStepHeader
+            step="03"
+            title="Kapak ve Galeri"
+            description="Mevcut görselleri sıralayın, hatalı olanları kaldırın ve yeni görselleri tek galeri akışından ekleyin."
+          />
+
+        <label className="admin-upload-panel md:col-span-2">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
             Kapak Görselini Değiştir
           </span>
@@ -811,7 +868,7 @@ export function PortfolioEditor({
           <p className="px-3 py-2 text-xs text-slate-600">Mevcut kapak görseli</p>
         </div>
 
-        <label className="md:col-span-2">
+        <label className="admin-upload-panel md:col-span-2">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
             Galeriye Yeni Görseller Ekle
           </span>
@@ -840,8 +897,9 @@ export function PortfolioEditor({
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {selectedProperty.galleryImages.map((image, index) => {
+            {(galleryOrder.length > 0 ? galleryOrder : selectedProperty.galleryImages).map((image, index) => {
               const isRemoved = removedGalleryImages.includes(image);
+              const originalIndex = selectedProperty.galleryImages.indexOf(image);
 
               return (
                 <article
@@ -856,24 +914,46 @@ export function PortfolioEditor({
                   />
                   <div className="space-y-2 px-3 py-3">
                     <p className="text-sm font-medium text-slate-900">
-                      {selectedProperty.imageLabels[index] ?? `Görsel ${index + 1}`}
+                      {selectedProperty.imageLabels[originalIndex] ?? `Görsel ${index + 1}`}
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => toggleExistingGalleryImage(image)}
-                      className={`cursor-pointer rounded-full px-3 py-1 text-xs font-semibold transition ${
-                        isRemoved
-                          ? "border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                          : "border border-rose-200 text-rose-700 hover:bg-rose-50"
-                      }`}
-                    >
-                      {isRemoved ? "Geri al" : "Galeriden kaldır"}
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => moveExistingGalleryImage(image, -1)}
+                        disabled={index === 0}
+                        className="cursor-pointer rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Yukarı
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveExistingGalleryImage(image, 1)}
+                        disabled={index === selectedProperty.galleryImages.length - 1}
+                        className="cursor-pointer rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Aşağı
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleExistingGalleryImage(image)}
+                        className={`cursor-pointer rounded-full px-3 py-1 text-xs font-semibold transition ${
+                          isRemoved
+                            ? "border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                            : "border border-rose-200 text-rose-700 hover:bg-rose-50"
+                        }`}
+                      >
+                        {isRemoved ? "Geri al" : "Galeriden kaldır"}
+                      </button>
+                    </div>
                   </div>
                 </article>
               );
             })}
           </div>
+
+          {(galleryOrder.length > 0 ? galleryOrder : selectedProperty.galleryImages).map((image) => (
+            <input key={`order-${image}`} type="hidden" name="galleryOrder" value={image} />
+          ))}
 
           {removedGalleryImages.map((image) => (
             <input key={image} type="hidden" name="removeGalleryImages" value={image} />
@@ -912,6 +992,12 @@ export function PortfolioEditor({
           Sistem jpg, jpeg, png ve webp dosyalarını kabul eder; yükleme sırasında otomatik optimize eder. Dosya başına
           en fazla {MAX_WEBP_UPLOAD_MB} MB, toplam yükleme en fazla {MAX_PORTFOLIO_REQUEST_MB} MB.
         </p>
+
+          <PanelFormStepHeader
+            step="04"
+            title="Öne Çıkanlar, İkonlar ve Operasyon"
+            description="Müşteriye görünecek özetleri, ikonlu ekstra bilgileri ve ekip içi notları son kontrolden geçirin."
+          />
 
         <label className="md:col-span-2">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
@@ -953,6 +1039,46 @@ export function PortfolioEditor({
         >
           {status.type === "loading" ? "Güncelleniyor..." : "Portföyü Güncelle"}
         </button>
+        </div>
+
+        <PanelFormSummary
+          title={selectedProperty.listingRef}
+          description={selectedProperty.title}
+          items={[
+            {
+              label: "Yayın",
+              value: normalizePropertyPublicationStatus(selectedProperty.publicationStatus),
+              tone:
+                normalizePropertyPublicationStatus(selectedProperty.publicationStatus) === "Aktif"
+                  ? "success"
+                  : normalizePropertyPublicationStatus(selectedProperty.publicationStatus) === "Onay Bekliyor"
+                    ? "warning"
+                    : "default",
+            },
+            { label: "Galeri", value: `${visibleGalleryCount} görsel` },
+            {
+              label: "Kalite",
+              value:
+                selectedPropertyQuality?.criticalIssues.length
+                  ? `${selectedPropertyQuality.criticalIssues.length} kritik`
+                  : selectedPropertyQuality?.advisoryIssues.length
+                    ? `${selectedPropertyQuality.advisoryIssues.length} uyarı`
+                    : "Hazır",
+              tone:
+                selectedPropertyQuality?.criticalIssues.length
+                  ? "danger"
+                  : selectedPropertyQuality?.advisoryIssues.length
+                    ? "warning"
+                    : "success",
+            },
+            { label: "Firma", value: selectedProperty.developerCompany || "Yok" },
+          ]}
+          action={
+            <Link href={`/ilan/${selectedProperty.slug}`} className="admin-button-secondary block px-4 py-3 text-center text-sm font-semibold">
+              İlanı Önizle
+            </Link>
+          }
+        />
       </form>
 
       {status.type === "error" ? <p className="mt-3 text-sm text-rose-700">{status.message}</p> : null}

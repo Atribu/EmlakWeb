@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
 import { initialAdvisors, initialBlogPosts, initialProperties, initialUsers } from "@/lib/mock-data";
+import { hashPassword } from "@/lib/passwords";
 import { getDatabasePath } from "@/lib/persistent-storage";
 import { pickSampleAdvisorImageForSeed } from "@/lib/sample-advisor-images";
 import { pickSampleImageSet } from "@/lib/sample-images";
@@ -240,13 +241,13 @@ function seedIfEmpty() {
       email: "admin@admin",
       phone: "+90 555 111 11 11",
       username: "admin@admin",
-      password: "admin",
+      password: hashPassword("admin"),
       advisorId: null,
     };
     insertUser.run(adminUser);
     for (const u of initialUsers) {
       if (u.email !== adminUser.email) {
-        insertUser.run({ ...u, advisorId: u.advisorId ?? null });
+        insertUser.run({ ...u, password: hashPassword(u.password), advisorId: u.advisorId ?? null });
       }
     }
   }

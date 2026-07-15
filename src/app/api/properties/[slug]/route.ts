@@ -288,6 +288,21 @@ async function parseFormDataInput(
   const galleryEntries = galleryEntriesFromProperty(existing).filter((entry) => !removedGalleryImages.has(entry.image));
   orphanedImages.push(...Array.from(removedGalleryImages));
 
+  const galleryOrder = formData
+    .getAll("galleryOrder")
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter(Boolean);
+
+  if (galleryOrder.length > 0) {
+    const orderMap = new Map(galleryOrder.map((image, index) => [image, index]));
+    galleryEntries.sort((left, right) => {
+      const leftIndex = orderMap.get(left.image) ?? Number.MAX_SAFE_INTEGER;
+      const rightIndex = orderMap.get(right.image) ?? Number.MAX_SAFE_INTEGER;
+
+      return leftIndex - rightIndex;
+    });
+  }
+
   const galleryFiles = getFilesFromFormData(formData, "galleryImageFiles");
 
   if (galleryEntries.length + galleryFiles.length > MAX_GALLERY_IMAGE_COUNT) {

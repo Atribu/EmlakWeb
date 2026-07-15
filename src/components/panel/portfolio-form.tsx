@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PropertyDescriptionFields } from "@/components/panel/property-description-fields";
+import { PanelFormProgress, PanelFormStepHeader, PanelFormSummary } from "@/components/panel/panel-form-ui";
 import { PropertyOperationalFields } from "@/components/panel/property-operational-fields";
 import {
   AdvisorFieldIcon,
@@ -54,6 +55,13 @@ const coverOptions = [
   { label: "Turuncu", value: "linear-gradient(120deg, #7c2d12, #fb923c)" },
   { label: "Mor", value: "linear-gradient(120deg, #7e22ce, #c084fc)" },
   { label: "Yeşil", value: "linear-gradient(120deg, #166534, #4ade80)" },
+];
+
+const formProgressSteps = [
+  { label: "İçerik", helper: "4 dil başlık ve açıklama" },
+  { label: "Temel Bilgiler", helper: "Konum, fiyat, oda" },
+  { label: "Görseller", helper: "Kapak ve tek galeri" },
+  { label: "Yayın", helper: "Notlar ve onay akışı" },
 ];
 
 function formatFileSize(bytes: number) {
@@ -185,26 +193,43 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-5 grid gap-3 md:grid-cols-2">
-        <PropertyDescriptionFields />
+      <div className="mt-6">
+        <PanelFormProgress steps={formProgressSteps} />
+      </div>
 
-        <PropertyFieldShell label="Ülke" icon={<LocationFieldIcon />}>
-          <>
-            <input
-              required
-              name="country"
-              list="portfolio-country-options"
-              defaultValue="Türkiye"
-              placeholder="Ülke"
-              className="input"
-            />
-            <datalist id="portfolio-country-options">
-              {PROPERTY_COUNTRY_OPTIONS.map((option) => (
-                <option key={option} value={option} />
-              ))}
-            </datalist>
-          </>
-        </PropertyFieldShell>
+      <form onSubmit={handleSubmit} className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_310px]">
+        <div className="grid gap-4 md:grid-cols-2">
+          <PanelFormStepHeader
+            step="01"
+            title="İlan İçeriği"
+            description="Başlık ve açıklamayı önce netleştirin; ek diller boş kalırsa Türkçe içerik yedek olarak kullanılır."
+          />
+
+          <PropertyDescriptionFields />
+
+          <PanelFormStepHeader
+            step="02"
+            title="Konum ve Temel Bilgiler"
+            description="Müşterinin ilk kararını etkileyen şehir, tip, fiyat, oda ve metrekare bilgilerini sade şekilde girin."
+          />
+
+          <PropertyFieldShell label="Ülke" icon={<LocationFieldIcon />}>
+            <>
+              <input
+                required
+                name="country"
+                list="portfolio-country-options"
+                defaultValue="Türkiye"
+                placeholder="Ülke"
+                className="input"
+              />
+              <datalist id="portfolio-country-options">
+                {PROPERTY_COUNTRY_OPTIONS.map((option) => (
+                  <option key={option} value={option} />
+                ))}
+              </datalist>
+            </>
+          </PropertyFieldShell>
 
         <PropertyFieldShell label="Şehir" icon={<LocationFieldIcon />}>
           <input required name="city" placeholder="Şehir" className="input" />
@@ -299,7 +324,7 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
           </select>
         </PropertyFieldShell>
 
-        <PropertyFieldShell label="Vurgu Rengi" icon={<PaletteFieldIcon />} className="md:col-span-2">
+          <PropertyFieldShell label="Vurgu Rengi" icon={<PaletteFieldIcon />} className="md:col-span-2">
           <select required name="coverColor" className="input">
             {coverOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -309,7 +334,13 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
           </select>
         </PropertyFieldShell>
 
-        <label className="md:col-span-2">
+          <PanelFormStepHeader
+            step="03"
+            title="Görsel Akışı"
+            description="Kapak görseli ayrı kalır; salon, oda, banyo ve balkon gibi tüm diğer görseller tek galeriden yönetilir."
+          />
+
+        <label className="admin-upload-panel md:col-span-2">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
             Kapak Görseli
           </span>
@@ -329,7 +360,7 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
           </p>
         </label>
 
-        <label className="md:col-span-2">
+        <label className="admin-upload-panel md:col-span-2">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
             Galeri Görselleri
           </span>
@@ -388,6 +419,12 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
           Dosya başına en fazla {MAX_WEBP_UPLOAD_MB} MB, toplam yükleme en fazla {MAX_PORTFOLIO_REQUEST_MB} MB.
         </p>
 
+          <PanelFormStepHeader
+            step="04"
+            title="Öne Çıkanlar ve İç Notlar"
+            description="Müşteriye görünecek kısa özellikleri ve ekip/yönetici notlarını ayrı tutarak daha kontrollü bir kayıt oluşturun."
+          />
+
         <label className="md:col-span-2">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
             Öne Çıkanlar
@@ -422,6 +459,18 @@ export function PortfolioForm({ advisors, currentUserRole }: PortfolioFormProps)
         >
           {status.type === "loading" ? "Kaydediliyor..." : "Portföyü Onay Kuyruğuna Gönder"}
         </button>
+        </div>
+
+        <PanelFormSummary
+          title="Yeni portföy akışı"
+          description="Bu kayıt önce onay kuyruğuna düşer. Yönetici onayından sonra yayına alınabilir."
+          items={[
+            { label: "Dil", value: "4 dil" },
+            { label: "Yayın", value: "Onay Bekliyor", tone: "warning" },
+            { label: "Görsel", value: `${galleryFiles.length} galeri` },
+            { label: "Format", value: "JPG / PNG / WebP" },
+          ]}
+        />
       </form>
 
       {status.type === "error" ? <p className="mt-3 text-sm text-rose-700">{status.message}</p> : null}
