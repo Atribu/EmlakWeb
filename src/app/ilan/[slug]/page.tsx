@@ -42,7 +42,7 @@ import {
 } from "@/lib/site-copy";
 import type { SiteLanguage } from "@/lib/site-preferences";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
-import { listingMetadata, missingPageMetadata, propertySchema } from "@/lib/seo";
+import { breadcrumbSchema, listingMetadata, missingPageMetadata, organizationSchema, propertySchema } from "@/lib/seo";
 import type { PropertyInfoIconKey, PropertyInfoItem } from "@/lib/types";
 
 type PropertyDetailProps = {
@@ -73,8 +73,16 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
 
   const advisor = getAdvisorById(property.advisorId);
   const projectMeta = getProjectMeta(property);
-  const listingSchema = propertySchema(property);
   const propertyTitle = propertyTitleForLanguage(property, language);
+  const structuredData = [
+    organizationSchema(),
+    propertySchema(property),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Portföyler", path: "/portfoyler" },
+      { name: propertyTitle, path: `/ilan/${property.slug}` },
+    ]),
+  ];
   const propertyDescription = propertyDescriptionForLanguage(property, language);
   const propertyHighlights = propertyHighlightsForLanguage(property, language);
   const propertyFeatures = propertyFeaturesForLanguage(property, language);
@@ -208,7 +216,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
         </section>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(listingSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </main>
     </div>

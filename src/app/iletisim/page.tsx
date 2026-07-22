@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listProperties } from "@/lib/data-store";
 import { propertyTitleForLanguage } from "@/lib/property-content";
-import { publicPageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { contactPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
@@ -20,6 +20,13 @@ export default async function IletisimPage() {
   const language = await getServerSiteLanguage();
   const copy = contactPageCopy(language);
   const properties = listProperties();
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "İletişim", path: "/iletisim" },
+    ]),
+  ];
 
   const propertyOptions = properties.slice(0, 16).map((property) => ({
     slug: property.slug,
@@ -73,6 +80,8 @@ export default async function IletisimPage() {
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

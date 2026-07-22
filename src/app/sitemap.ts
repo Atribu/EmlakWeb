@@ -1,16 +1,21 @@
 import type { MetadataRoute } from "next";
 
 import { listBlogPosts, listProperties } from "@/lib/data-store";
-import { getBaseUrl } from "@/lib/seo";
+import { absoluteUrl, BRAND_LOGO_PATH, getBaseUrlString } from "@/lib/seo";
+
+function sitemapImages(images: string[]): string[] {
+  return Array.from(new Set(images.filter(Boolean).map(absoluteUrl)));
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = getBaseUrl().toString().replace(/\/$/, "");
+  const baseUrl = getBaseUrlString();
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
       changeFrequency: "daily",
       priority: 1,
+      images: sitemapImages([BRAND_LOGO_PATH]),
     },
     {
       url: `${baseUrl}/portfoyler`,
@@ -59,6 +64,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(property.publishedAt),
     changeFrequency: "weekly",
     priority: 0.8,
+    images: sitemapImages([property.coverImage, ...property.galleryImages]).slice(0, 10),
   }));
 
   const blogRoutes: MetadataRoute.Sitemap = listBlogPosts().map((post) => ({
@@ -66,6 +72,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(post.publishedAt),
     changeFrequency: "weekly",
     priority: 0.75,
+    images: sitemapImages([post.coverImage]),
   }));
 
   return [...staticRoutes, ...listingRoutes, ...blogRoutes];

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { dashboardSummary } from "@/lib/data-store";
-import { publicPageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { aboutPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
@@ -17,6 +17,13 @@ export default async function HakkimizdaPage() {
   const language = await getServerSiteLanguage();
   const copy = aboutPageCopy(language);
   const summary = dashboardSummary();
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Hakkımızda", path: "/hakkimizda" },
+    ]),
+  ];
 
   return (
     <div className="min-h-screen">
@@ -64,6 +71,8 @@ export default async function HakkimizdaPage() {
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

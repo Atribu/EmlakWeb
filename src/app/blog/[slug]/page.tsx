@@ -11,7 +11,7 @@ import { blogDetailPageCopy } from "@/lib/site-copy";
 import { formatDate } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
-import { blogMetadata, blogPostSchema, missingPageMetadata } from "@/lib/seo";
+import { blogMetadata, blogPostSchema, breadcrumbSchema, missingPageMetadata, organizationSchema } from "@/lib/seo";
 
 type BlogDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -97,7 +97,15 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     notFound();
   }
 
-  const schema = blogPostSchema(post);
+  const structuredData = [
+    organizationSchema(),
+    blogPostSchema(post),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Blog", path: "/blog" },
+      { name: post.title, path: `/blog/${post.slug}` },
+    ]),
+  ];
   const contentBlocks = parseBlogContent(post.content);
   const tableOfContents = contentBlocks
     .map((block, index) => {
@@ -319,7 +327,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
         <SiteFooter />
 
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

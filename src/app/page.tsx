@@ -17,7 +17,7 @@ import { propertyTitleForLanguage } from "@/lib/property-content";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import { homePageCopy, summarizeLocationStockLabel } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
-import { homeListingSchema, publicPageMetadata } from "@/lib/seo";
+import { homeListingSchema, organizationSchema, publicPageMetadata, websiteSchema } from "@/lib/seo";
 import type { HomeLocationSpotlight, Property } from "@/lib/types";
 
 export const metadata: Metadata = publicPageMetadata({
@@ -140,7 +140,7 @@ export default async function HomePage() {
   const featuredPreview = featured.slice(0, 3);
   const heroProperty = featured[0];
   const heroImage = heroProperty?.coverImage ?? "/next.svg";
-  const listingSchema = homeListingSchema(properties);
+  const structuredData = [organizationSchema(), websiteSchema(), homeListingSchema(properties)];
   const showcaseProperties = properties.filter((property) => !isPlaceholderProperty(property));
   const istanbulCollection = showcaseProperties.filter((property) => property.city === "İstanbul");
   const sariyerCollection = showcaseProperties.filter((property) => property.district === "Sarıyer");
@@ -483,7 +483,7 @@ export default async function HomePage() {
 
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(listingSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </main>
     </div>

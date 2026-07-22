@@ -8,7 +8,7 @@ import { SiteHeader } from "@/components/site-header";
 import { listAdvisors, listProperties } from "@/lib/data-store";
 import { propertyTitleForLanguage } from "@/lib/property-content";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
-import { publicPageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { mapPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
@@ -24,6 +24,13 @@ export default async function HaritaPage() {
   const properties = listProperties();
   const advisors = listAdvisors();
   const advisorMap = new Map(advisors.map((advisor) => [advisor.id, advisor]));
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Harita", path: "/harita" },
+    ]),
+  ];
 
   const mapPortfolios = properties.map((property) => ({
     id: property.id,
@@ -88,6 +95,8 @@ export default async function HaritaPage() {
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

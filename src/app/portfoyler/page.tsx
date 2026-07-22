@@ -8,7 +8,7 @@ import { listAdvisors, listCities, listCountries, listProperties, listRoomOption
 import { getExchangeRateSnapshot } from "@/lib/exchange-rates";
 import { convertAmountBetweenCurrencies } from "@/lib/exchange-rates-shared";
 import { PROPERTY_MARKET_STATUS_OPTIONS } from "@/lib/property-panel-options";
-import { publicPageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { portfolioPageCopy, translatePropertyType, translateRoomLabel } from "@/lib/site-copy";
 import { getServerSiteLanguage, getServerSitePreferences } from "@/lib/site-preferences-server";
 import type { PropertyMarketStatus } from "@/lib/types";
@@ -157,6 +157,13 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
   const cities = listCities();
   const types = listTypes();
   const roomOptions = listRoomOptions();
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Portföyler", path: "/portfoyler" },
+    ]),
+  ];
 
   return (
     <div className="min-h-screen">
@@ -286,6 +293,8 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

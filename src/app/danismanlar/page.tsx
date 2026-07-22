@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { listAdvisors, listProperties } from "@/lib/data-store";
 import { formatPhoneForHref } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
-import { publicPageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { advisorsPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
@@ -21,6 +21,13 @@ export default async function DanismanlarPage() {
   const copy = advisorsPageCopy(language);
   const advisors = listAdvisors();
   const properties = listProperties();
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Danışmanlar", path: "/danismanlar" },
+    ]),
+  ];
 
   return (
     <div className="min-h-screen">
@@ -89,6 +96,8 @@ export default async function DanismanlarPage() {
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

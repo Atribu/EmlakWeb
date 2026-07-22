@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { publicPageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { servicesPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
@@ -15,6 +15,13 @@ export const metadata: Metadata = publicPageMetadata({
 export default async function HizmetlerPage() {
   const language = await getServerSiteLanguage();
   const copy = servicesPageCopy(language);
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Hizmetler", path: "/hizmetler" },
+    ]),
+  ];
 
   return (
     <div className="min-h-screen">
@@ -40,6 +47,8 @@ export default async function HizmetlerPage() {
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

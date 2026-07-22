@@ -5,7 +5,7 @@ import { SellPropertyForm } from "@/components/sell-property-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listProperties } from "@/lib/data-store";
-import { publicPageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { sellPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
@@ -35,6 +35,13 @@ export default async function EmlakSatPage({ searchParams }: EmlakSatPageProps) 
   const params = await searchParams;
   const intent = readString(params.intent).trim();
   const properties = listProperties();
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Emlak Sat", path: "/emlak-sat" },
+    ]),
+  ];
 
   const cityDistrictMap = properties.reduce<Record<string, string[]>>((accumulator, property) => {
     const districts = accumulator[property.city] ?? [];
@@ -113,6 +120,8 @@ export default async function EmlakSatPage({ searchParams }: EmlakSatPageProps) 
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );
