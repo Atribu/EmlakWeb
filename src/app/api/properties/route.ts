@@ -15,6 +15,7 @@ import {
   createGalleryImageLabel,
   getFilesFromFormData,
   MAX_GALLERY_IMAGE_COUNT,
+  validateTotalUploadSize,
 } from "@/lib/portfolio-images";
 import {
   readPropertyInfoItemsFromFormData,
@@ -288,6 +289,7 @@ async function parseCreateFormData(formData: FormData, exchangeRates: ExchangeRa
   });
 
   const galleryFiles = getFilesFromFormData(formData, "galleryImageFiles");
+  validateTotalUploadSize([coverFile, ...galleryFiles]);
 
   if (galleryFiles.length === 0) {
     throw new Error("Kapak hariç en az bir galeri görseli yükleyin.");

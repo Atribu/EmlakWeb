@@ -11,6 +11,7 @@ import {
   isLoginRateLimited,
   recordFailedLoginAttempt,
 } from "@/lib/login-rate-limit";
+import { getClientIpFromHeaders, isUnsafeDefaultAdminCredential, isProductionRuntime } from "@/lib/security";
 import { readSitePreferencesFromCookieHeader } from "@/lib/site-preferences";
 
 export async function POST(request: Request) {
@@ -56,11 +57,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: copy.missing }, { status: 400 });
   }
 
-  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const rateLimitKey = `${forwardedFor || "local"}:${identifier.toLocaleLowerCase("tr")}`;
+  const rateLimitKey = `${getClientIpFromHeaders(request.headers)}:${identifier.toLocaleLowerCase("tr")}`;
 
   if (isLoginRateLimited(rateLimitKey)) {
     return NextResponse.json({ message: copy.limited }, { status: 429 });
+  }
+
+  if (isProductionRuntime() && isUnsafeDefaultAdminCredential(identifier, password)) {
+    recordFailedLoginAttempt(rateLimitKey);
+    return NextResponse.json({ message: copy.invalid }, { status: 401 });
   }
 
   const user = authenticateUser(identifier, password);

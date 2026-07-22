@@ -1,6 +1,7 @@
 import db from "@/lib/db";
 import { HOME_LOCATION_SPOTLIGHT_LAYOUT_OPTIONS } from "@/lib/home-location-spotlights";
 import { hashPassword, isHashedPassword, verifyPassword } from "@/lib/passwords";
+import { assertSafeProductionPassword, isProductionRuntime, isUnsafeDefaultAdminCredential } from "@/lib/security";
 import { sanitizePropertyTranslations } from "@/lib/property-content";
 import { sanitizePropertyInfoItems } from "@/lib/property-info-items";
 import { isPropertyPublished } from "@/lib/property-panel-options";
@@ -771,6 +772,10 @@ export function countPropertiesReferencingImagePath(imagePath: string): number {
 // ─── users ───────────────────────────────────────────────────────────────────
 
 export function authenticateUser(identifier: string, password: string): SafeUser | null {
+  if (isProductionRuntime() && isUnsafeDefaultAdminCredential(identifier, password)) {
+    return null;
+  }
+
   const normalized = identifier.toLocaleLowerCase("tr");
   const row = db.prepare(`
     SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?
@@ -822,6 +827,7 @@ export function createUser(input: CreateUserInput): SafeUser {
   if (!name || !email || !phone || !password || !role) throw new Error("Kullanıcı alanları eksik.");
   if (!["portal_admin", "admin", "portfolio_manager", "advisor", "editor"].includes(role)) throw new Error("Geçersiz kullanıcı rolü.");
   if (password.length < 6) throw new Error("Şifre en az 6 karakter olmalıdır.");
+  assertSafeProductionPassword(password, "Kullanıcı şifresi");
 
   const dup = db.prepare("SELECT id FROM users WHERE LOWER(email) = ? OR LOWER(username) = ?").get(email, email);
   if (dup) throw new Error("Bu e-posta ile kayıtlı bir kullanıcı zaten var.");

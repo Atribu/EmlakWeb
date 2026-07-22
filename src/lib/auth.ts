@@ -3,9 +3,11 @@ import type { NextRequest } from "next/server";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { getUserById } from "@/lib/data-store";
+import { isProductionRuntime, requireProductionSecret } from "@/lib/security";
 import type { SafeUser } from "@/lib/types";
 
-export const SESSION_COOKIE = "emlak_demo_session";
+export const SESSION_COOKIE = isProductionRuntime() ? "__Host-rodina_session" : "rodina_session";
+export const LEGACY_SESSION_COOKIE = "emlak_demo_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 8;
 
 type SessionPayload = {
@@ -14,7 +16,10 @@ type SessionPayload = {
 };
 
 function getSessionSecret() {
-  return process.env.EMLAK_SESSION_SECRET || process.env.AUTH_SECRET || "emlak-local-development-session-secret";
+  return requireProductionSecret(
+    process.env.EMLAK_SESSION_SECRET || process.env.AUTH_SECRET,
+    "EMLAK_SESSION_SECRET",
+  );
 }
 
 function encodePayload(payload: SessionPayload): string {
@@ -81,10 +86,16 @@ export function userFromSessionValue(value: string | undefined): SafeUser | null
 
 export async function getCurrentUser(): Promise<SafeUser | null> {
   const cookieStore = await cookies();
-  const value = cookieStore.get(SESSION_COOKIE)?.value;
+  const value =
+    cookieStore.get(SESSION_COOKIE)?.value ??
+    (!isProductionRuntime() ? cookieStore.get(LEGACY_SESSION_COOKIE)?.value : undefined);
   return userFromSessionValue(value);
 }
 
 export function getUserFromRequest(request: NextRequest): SafeUser | null {
-  return userFromSessionValue(request.cookies.get(SESSION_COOKIE)?.value);
+  const value =
+    request.cookies.get(SESSION_COOKIE)?.value ??
+    (!isProductionRuntime() ? request.cookies.get(LEGACY_SESSION_COOKIE)?.value : undefined);
+
+  return userFromSessionValue(value);
 }

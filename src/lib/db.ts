@@ -1,11 +1,13 @@
 import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
+import { randomUUID } from "node:crypto";
 import { initialAdvisors, initialBlogPosts, initialProperties, initialUsers } from "@/lib/mock-data";
-import { hashPassword } from "@/lib/passwords";
+import { hashPassword, verifyPassword } from "@/lib/passwords";
 import { getDatabasePath } from "@/lib/persistent-storage";
 import { pickSampleAdvisorImageForSeed } from "@/lib/sample-advisor-images";
 import { pickSampleImageSet } from "@/lib/sample-images";
+import { assertSafeProductionPassword, isProductionRuntime } from "@/lib/security";
 
 const DB_PATH = getDatabasePath();
 const DB_DIR = path.dirname(DB_PATH);
@@ -213,6 +215,53 @@ addColumnIfMissing("properties", "adminPrivateNotes", "TEXT");
 addColumnIfMissing("leads", "followUpDate", "TEXT");
 addColumnIfMissing("leads", "priority", "TEXT NOT NULL DEFAULT 'normal'");
 
+type BootstrapAdminConfig = {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+};
+
+function isProductionBuildPhase(): boolean {
+  return process.env.NEXT_PHASE === "phase-production-build";
+}
+
+function readBootstrapAdminConfig(required: boolean): BootstrapAdminConfig | null {
+  const email = process.env.EMLAK_BOOTSTRAP_ADMIN_EMAIL?.trim().toLocaleLowerCase("tr") ?? "";
+  const password = process.env.EMLAK_BOOTSTRAP_ADMIN_PASSWORD?.trim() ?? "";
+  const name = process.env.EMLAK_BOOTSTRAP_ADMIN_NAME?.trim() || "RODINA Ana Yönetici";
+  const phone = process.env.EMLAK_BOOTSTRAP_ADMIN_PHONE?.trim() || "+90 000 000 00 00";
+
+  if (!email && !password && !required) {
+    return null;
+  }
+
+  if (!email || !password) {
+    throw new Error("Production ilk admin için EMLAK_BOOTSTRAP_ADMIN_EMAIL ve EMLAK_BOOTSTRAP_ADMIN_PASSWORD zorunludur.");
+  }
+
+  if (!email.includes("@")) {
+    throw new Error("EMLAK_BOOTSTRAP_ADMIN_EMAIL geçerli bir e-posta olmalıdır.");
+  }
+
+  assertSafeProductionPassword(password, "EMLAK_BOOTSTRAP_ADMIN_PASSWORD");
+
+  return { name, email, phone, password };
+}
+
+function insertBootstrapAdmin(insertUser: ReturnType<typeof db.prepare>, config: BootstrapAdminConfig) {
+  insertUser.run({
+    id: "usr-bootstrap-admin",
+    name: config.name,
+    role: "portal_admin",
+    email: config.email,
+    phone: config.phone,
+    username: config.email,
+    password: hashPassword(config.password),
+    advisorId: null,
+  });
+}
+
 function seedIfEmpty() {
   const advisorCount = (db.prepare("SELECT COUNT(*) as c FROM advisors").get() as { c: number }).c;
   if (advisorCount === 0) {
@@ -234,20 +283,28 @@ function seedIfEmpty() {
       INSERT OR IGNORE INTO users (id, name, role, email, phone, username, password, advisorId)
       VALUES (@id, @name, @role, @email, @phone, @username, @password, @advisorId)
     `);
-    const adminUser = {
-      id: "usr-admin-demo",
-      name: "Demo Admin",
-      role: "admin",
-      email: "admin@admin",
-      phone: "+90 555 111 11 11",
-      username: "admin@admin",
-      password: hashPassword("admin"),
-      advisorId: null,
-    };
-    insertUser.run(adminUser);
-    for (const u of initialUsers) {
-      if (u.email !== adminUser.email) {
-        insertUser.run({ ...u, password: hashPassword(u.password), advisorId: u.advisorId ?? null });
+
+    if (isProductionRuntime()) {
+      const bootstrapAdmin = readBootstrapAdminConfig(!isProductionBuildPhase());
+      if (bootstrapAdmin) {
+        insertBootstrapAdmin(insertUser, bootstrapAdmin);
+      }
+    } else {
+      const adminUser = {
+        id: "usr-admin-demo",
+        name: "Demo Admin",
+        role: "admin",
+        email: "admin@admin",
+        phone: "+90 555 111 11 11",
+        username: "admin@admin",
+        password: hashPassword("admin"),
+        advisorId: null,
+      };
+      insertUser.run(adminUser);
+      for (const u of initialUsers) {
+        if (u.email !== adminUser.email) {
+          insertUser.run({ ...u, password: hashPassword(u.password), advisorId: u.advisorId ?? null });
+        }
       }
     }
   }
@@ -299,6 +356,52 @@ function seedIfEmpty() {
 }
 
 seedIfEmpty();
+
+function hardenUnsafeProductionDemoAdmin() {
+  if (!isProductionRuntime() || isProductionBuildPhase()) {
+    return;
+  }
+
+  const row = db.prepare("SELECT * FROM users WHERE LOWER(email) = ? OR LOWER(username) = ?")
+    .get("admin@admin", "admin@admin") as Record<string, unknown> | undefined;
+
+  if (!row || !verifyPassword("admin", String(row.password ?? ""))) {
+    return;
+  }
+
+  const bootstrapAdmin = readBootstrapAdminConfig(false);
+
+  if (bootstrapAdmin) {
+    const duplicate = db.prepare("SELECT id FROM users WHERE LOWER(email) = ? AND id != ?")
+      .get(bootstrapAdmin.email, row.id) as { id: string } | undefined;
+
+    if (!duplicate) {
+      db.prepare(`
+        UPDATE users
+        SET name = ?, role = 'portal_admin', email = ?, username = ?, phone = ?, password = ?, advisorId = NULL
+        WHERE id = ?
+      `).run(
+        bootstrapAdmin.name,
+        bootstrapAdmin.email,
+        bootstrapAdmin.email,
+        bootstrapAdmin.phone,
+        hashPassword(bootstrapAdmin.password),
+        row.id,
+      );
+      console.warn("[security] Unsafe demo admin was converted to the bootstrap admin account.");
+      return;
+    }
+  }
+
+  db.prepare("UPDATE users SET password = ?, name = ? WHERE id = ?").run(
+    hashPassword(`locked-${randomUUID()}-${randomUUID()}`),
+    "Locked Demo Admin",
+    row.id,
+  );
+  console.warn("[security] Unsafe demo admin credentials were disabled for production.");
+}
+
+hardenUnsafeProductionDemoAdmin();
 
 function publishInitialPropertiesIfDemoIsEmpty() {
   const activeCount = (db.prepare("SELECT COUNT(*) as c FROM properties WHERE publicationStatus = 'Aktif'").get() as { c: number }).c;

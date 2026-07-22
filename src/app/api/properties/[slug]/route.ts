@@ -27,6 +27,7 @@ import {
   createGalleryImageLabel,
   getFilesFromFormData,
   MAX_GALLERY_IMAGE_COUNT,
+  validateTotalUploadSize,
 } from "@/lib/portfolio-images";
 import {
   readPropertyInfoItemsFromFormData,
@@ -304,6 +305,10 @@ async function parseFormDataInput(
   }
 
   const galleryFiles = getFilesFromFormData(formData, "galleryImageFiles");
+  validateTotalUploadSize([
+    ...(coverFile instanceof File && coverFile.size > 0 ? [coverFile] : []),
+    ...galleryFiles,
+  ]);
 
   if (galleryEntries.length + galleryFiles.length > MAX_GALLERY_IMAGE_COUNT) {
     throw new Error(`Galeri için en fazla ${MAX_GALLERY_IMAGE_COUNT} görsel yükleyebilirsiniz.`);

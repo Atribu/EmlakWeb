@@ -6,6 +6,8 @@ import { UPLOAD_DISK_ROOT, UPLOAD_PUBLIC_PREFIX } from "@/lib/upload-config";
 
 const uploadPublicRoot = `${UPLOAD_PUBLIC_PREFIX}/properties`;
 const uploadDiskRoot = path.join(UPLOAD_DISK_ROOT, "properties");
+const MAX_IMAGE_PIXELS = 50_000_000;
+const MAX_IMAGE_DIMENSION = 12_000;
 
 const charMap: Record<string, string> = {
   ç: "c",
@@ -90,9 +92,18 @@ async function convertImageToWebp(file: File, fieldLabel: string): Promise<Buffe
   try {
     const sharp = (await import("sharp")).default;
     const source = Buffer.from(await file.arrayBuffer());
-    const normalized = await sharp(source)
+    const normalized = await sharp(source, { limitInputPixels: MAX_IMAGE_PIXELS })
       .rotate()
       .toBuffer({ resolveWithObject: true });
+
+    if (
+      !normalized.info.width ||
+      !normalized.info.height ||
+      normalized.info.width > MAX_IMAGE_DIMENSION ||
+      normalized.info.height > MAX_IMAGE_DIMENSION
+    ) {
+      throw new Error("unsupported-dimensions");
+    }
 
     return await sharp(normalized.data)
       .composite([
