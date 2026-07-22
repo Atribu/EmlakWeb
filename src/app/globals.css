@@ -5,9 +5,9 @@
   --font-body: var(--font-manrope);
   --font-display: var(--font-cormorant);
 
-  --brand-green: #b89259;
-  --brand-night-blue: #1d385c;
-  --brand-ink: #1f1a14;
+  --brand-green: #c9a12b;
+  --brand-night-blue: #28313b;
+  --brand-ink: #252c34;
 
   --ink-950: #181613;
   --ink-900: #241f19;
@@ -22,9 +22,9 @@
   --line-strong: #d7cab7;
 
   --brand-primary: var(--brand-night-blue);
-  --brand-secondary: #f6efe4;
-  --brand-accent: #d7b37b;
-  --brand-accent-strong: #8c6a3f;
+  --brand-secondary: #f7f1e4;
+  --brand-accent: #d4aa3a;
+  --brand-accent-strong: #9b741e;
   --surface-muted: rgba(184, 146, 89, 0.08);
 
   --accent: #b89259;

@@ -17,14 +17,15 @@ import { propertyTitleForLanguage } from "@/lib/property-content";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import { homePageCopy, summarizeLocationStockLabel } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
-import { homeListingSchema } from "@/lib/seo";
+import { homeListingSchema, publicPageMetadata } from "@/lib/seo";
 import type { HomeLocationSpotlight, Property } from "@/lib/types";
 
-export const metadata: Metadata = {
-  title: "PortföySatış | Signature Estates",
+export const metadata: Metadata = publicPageMetadata({
+  title: "RODINA | RODINA Invest Co.",
   description:
     "Premium emlak portföylerini çok sayfalı kurumsal yapıda keşfedin: portföyler, harita, danışmanlar, hizmetler ve iletişim.",
-};
+  canonical: "/",
+});
 
 type PopularLocationCard = {
   key: string;
@@ -213,7 +214,7 @@ export default async function HomePage() {
     {
       key: "signature-selection",
       title: "İstanbul & Ege",
-      subtitle: "Econi seçki koleksiyonu",
+      subtitle: "RODINA seçki koleksiyonu",
       href: "/portfoyler",
       image:
         signatureProperty?.coverImage ??

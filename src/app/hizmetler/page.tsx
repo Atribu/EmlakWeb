@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { publicPageMetadata } from "@/lib/seo";
 import { servicesPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
-export const metadata: Metadata = {
-  title: "Hizmetler | Signature Estates",
+export const metadata: Metadata = publicPageMetadata({
+  title: "Hizmetler | RODINA Invest Co.",
   description: "Satış, yatırım ve portföy yönetimi hizmet detayları.",
-};
+  canonical: "/hizmetler",
+});
 
 export default async function HizmetlerPage() {
   const language = await getServerSiteLanguage();

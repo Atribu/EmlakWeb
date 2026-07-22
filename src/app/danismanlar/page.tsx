@@ -6,13 +6,15 @@ import { SiteHeader } from "@/components/site-header";
 import { listAdvisors, listProperties } from "@/lib/data-store";
 import { formatPhoneForHref } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
+import { publicPageMetadata } from "@/lib/seo";
 import { advisorsPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
-export const metadata: Metadata = {
-  title: "Danışmanlar | Signature Estates",
-  description: "Signature Estates uzman danışman ekibi ve odak bölgeleri.",
-};
+export const metadata: Metadata = publicPageMetadata({
+  title: "Danışmanlar | RODINA Invest Co.",
+  description: "RODINA Invest Co. uzman danışman ekibi ve odak bölgeleri.",
+  canonical: "/danismanlar",
+});
 
 export default async function DanismanlarPage() {
   const language = await getServerSiteLanguage();

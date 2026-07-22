@@ -439,7 +439,7 @@ export function PortfolioProjectCenter({
                   companyFilter: event.target.value,
                 }))
               }
-              placeholder="Örn. Rodina, Signature Estates, XYZ İnşaat"
+              placeholder="Örn. Rodina, RODINA Invest Co., XYZ İnşaat"
               className="input mt-3 h-12"
             />
             <p className="mt-2 text-xs text-slate-500">

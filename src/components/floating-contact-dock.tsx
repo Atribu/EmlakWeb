@@ -11,8 +11,8 @@ import { useSitePreferences } from "@/components/use-site-preferences";
 
 const CHANNELS = {
   whatsappPhone: "+905321112233",
-  telegramUrl: "https://t.me/econiinvest",
-  instagramUrl: "https://instagram.com/econiinvest",
+  telegramUrl: "https://t.me/rodinainvest",
+  instagramUrl: "https://instagram.com/rodinainvest",
 };
 
 function formatPhoneForHref(value: string) {

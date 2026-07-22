@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdvisorEditor } from "@/components/panel/advisor-editor";
 import { AdvisorManagement } from "@/components/panel/advisor-management";
+import { BrandLogoMark } from "@/components/brand-logo-mark";
 import { AdminNotificationCenter } from "@/components/panel/admin-notification-center";
 import { AdminOverviewSection } from "@/components/panel/admin-overview-section";
 import { BlogDelete } from "@/components/panel/blog-delete";
@@ -49,6 +51,9 @@ import {
 
 import { roleLabel } from "@/lib/format";
 import { isPropertyPublished, normalizePropertyPublicationStatus } from "@/lib/property-panel-options";
+import { privatePageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = privatePageMetadata("Yönetim Ofisi | RODINA Invest Co.");
 
 type AdminOfficePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -138,14 +143,12 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
           <div className="grid xl:grid-cols-[250px_minmax(0,1fr)]">
             <aside className="admin-sidebar flex min-h-full flex-col p-5 text-white sm:p-6">
               <div className="flex items-center gap-3 px-1 py-1">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1d4ed8] text-white shadow-[0_18px_30px_-18px_rgba(37,99,235,0.8)]">
-                  <DashboardLogoIcon />
-                </div>
+                <BrandLogoMark className="h-12 w-12 rounded-2xl" />
                 <div>
                   <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[#7dd3fc]">
-                    Portföy Yönetimi
+                    RODINA
                   </p>
-                  <p className="mt-0.5 text-lg font-semibold text-white">Yönetim Paneli</p>
+                  <p className="mt-0.5 text-lg font-semibold text-white">Invest Co. Paneli</p>
                 </div>
               </div>
 
@@ -496,15 +499,6 @@ export default async function AdminOfficePage({ searchParams }: AdminOfficePageP
         </div>
       </main>
     </div>
-  );
-}
-
-function DashboardLogoIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden>
-      <path d="M7 6.5h7.2c1.55 0 2.8 1.25 2.8 2.8v7.2c0 .55-.45 1-1 1h-7.2A2.8 2.8 0 0 1 6 14.7V7.5c0-.55.45-1 1-1Z" stroke="currentColor" strokeWidth="1.8" />
-      <path d="m8.5 15 2.6-4.8 1.8 2.2 2.6-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }
 

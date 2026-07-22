@@ -42,7 +42,7 @@ import {
 } from "@/lib/site-copy";
 import type { SiteLanguage } from "@/lib/site-preferences";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
-import { listingMetadata, propertySchema } from "@/lib/seo";
+import { listingMetadata, missingPageMetadata, propertySchema } from "@/lib/seo";
 import type { PropertyInfoIconKey, PropertyInfoItem } from "@/lib/types";
 
 type PropertyDetailProps = {
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: PropertyDetailProps): Promise
   const property = getPropertyBySlug(resolvedParams.slug);
 
   if (!property) {
-    return { title: "İlan Bulunamadı | Signature Estates" };
+    return missingPageMetadata("İlan Bulunamadı | RODINA Invest Co.");
   }
 
   return listingMetadata(property);

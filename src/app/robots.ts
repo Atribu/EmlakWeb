@@ -10,9 +10,10 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/yonetim-ofisi", "/yetkili-giris", "/api/"],
+        disallow: "/api/",
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
+    host: baseUrl,
   };
 }

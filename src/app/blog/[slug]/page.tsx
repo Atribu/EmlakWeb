@@ -11,7 +11,7 @@ import { blogDetailPageCopy } from "@/lib/site-copy";
 import { formatDate } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
-import { blogMetadata, blogPostSchema } from "@/lib/seo";
+import { blogMetadata, blogPostSchema, missingPageMetadata } from "@/lib/seo";
 
 type BlogDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -81,7 +81,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
   const post = getBlogPostBySlug(resolvedParams.slug);
 
   if (!post) {
-    return { title: "Blog Yazısı Bulunamadı | Signature Estates" };
+    return missingPageMetadata("Blog Yazısı Bulunamadı | RODINA Invest Co.");
   }
 
   return blogMetadata(post);

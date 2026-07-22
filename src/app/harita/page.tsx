@@ -8,13 +8,15 @@ import { SiteHeader } from "@/components/site-header";
 import { listAdvisors, listProperties } from "@/lib/data-store";
 import { propertyTitleForLanguage } from "@/lib/property-content";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
+import { publicPageMetadata } from "@/lib/seo";
 import { mapPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
-export const metadata: Metadata = {
-  title: "Harita | Signature Estates",
+export const metadata: Metadata = publicPageMetadata({
+  title: "Harita | RODINA Invest Co.",
   description: "Portföy lokasyonlarını harita üzerinde görün, konum arayın ve ilana geçin.",
-};
+  canonical: "/harita",
+});
 
 export default async function HaritaPage() {
   const language = await getServerSiteLanguage();

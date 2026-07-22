@@ -45,8 +45,8 @@ function escapeSvgText(value: string): string {
 }
 
 function buildCenteredWatermarkSvg(width: number, height: number): Buffer {
-  const watermarkText = process.env.EMLAK_WATERMARK_TEXT?.trim() || "Signature Estates";
-  const subText = process.env.EMLAK_WATERMARK_SUBTEXT?.trim() || "PORTFOY SATIS";
+  const watermarkText = process.env.EMLAK_WATERMARK_TEXT?.trim() || "RODINA Invest Co.";
+  const subText = process.env.EMLAK_WATERMARK_SUBTEXT?.trim() || "RODINA INVEST";
   const safeWatermarkText = escapeSvgText(watermarkText);
   const safeSubText = escapeSvgText(subText);
   const shortestSide = Math.max(1, Math.min(width, height));

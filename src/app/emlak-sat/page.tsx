@@ -5,13 +5,15 @@ import { SellPropertyForm } from "@/components/sell-property-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listProperties } from "@/lib/data-store";
+import { publicPageMetadata } from "@/lib/seo";
 import { sellPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
-export const metadata: Metadata = {
-  title: "Emlak Sat | Signature Estates",
+export const metadata: Metadata = publicPageMetadata({
+  title: "Emlak Sat | RODINA Invest Co.",
   description: "Mülkünüzü satışa çıkarmak için detayları paylaşın; değerleme ve premium satış operasyonu için ekibimiz sizinle iletişime geçsin.",
-};
+  canonical: "/emlak-sat",
+});
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -89,7 +91,7 @@ export default async function EmlakSatPage({ searchParams }: EmlakSatPageProps) 
               <div className="mt-4 space-y-3 text-sm text-[var(--ink-600)]">
                 <p><span className="font-semibold">{copy.phone}:</span> +90 212 900 00 01</p>
                 <p><span className="font-semibold">{copy.whatsapp}:</span> +90 532 111 22 33</p>
-                <p><span className="font-semibold">{copy.email}:</span> sales@econiinvest.com</p>
+                <p><span className="font-semibold">{copy.email}:</span> sales@rodinainvest.com</p>
               </div>
 
               <div className="mt-5 flex flex-wrap gap-2">

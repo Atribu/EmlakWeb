@@ -6,13 +6,15 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listProperties } from "@/lib/data-store";
 import { propertyTitleForLanguage } from "@/lib/property-content";
+import { publicPageMetadata } from "@/lib/seo";
 import { contactPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
-export const metadata: Metadata = {
-  title: "İletişim | Signature Estates",
-  description: "Signature Estates danışman ekibiyle iletişim kurun, talebinizi iletin.",
-};
+export const metadata: Metadata = publicPageMetadata({
+  title: "İletişim | RODINA Invest Co.",
+  description: "RODINA Invest Co. danışman ekibiyle iletişim kurun, talebinizi iletin.",
+  canonical: "/iletisim",
+});
 
 export default async function IletisimPage() {
   const language = await getServerSiteLanguage();
@@ -49,7 +51,7 @@ export default async function IletisimPage() {
 
             <div className="mt-4 space-y-2 text-sm text-[var(--ink-600)]">
               <p><span className="font-semibold">{copy.phone}:</span> +90 212 900 00 01</p>
-              <p><span className="font-semibold">{copy.email}:</span> info@econiinvest.com</p>
+              <p><span className="font-semibold">{copy.email}:</span> info@rodinainvest.com</p>
               <p><span className="font-semibold">{copy.address}:</span> Levent, İstanbul</p>
             </div>
 

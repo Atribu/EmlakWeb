@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 
-import { BrandLogoMark } from "@/components/brand-logo-mark";
+import { BrandLogo } from "@/components/brand-logo";
 
 import { HeaderMarketControlsInner } from "@/components/header-market-controls";
 import { SiteHeaderAuth } from "@/components/site-header-auth";
@@ -97,14 +97,10 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
             <Link
               href="/"
 
-              className="mx-auto flex items-center gap-2.5 leading-none text-[var(--brand-primary)] transition hover:opacity-90 xl:mx-0"
-              aria-label="PortföySatış ana sayfa"
+              className="mx-auto flex items-center leading-none transition hover:opacity-90 xl:mx-0"
+              aria-label="RODINA ana sayfa"
             >
-              <BrandLogoMark className="h-11 w-11" />
-              <span className="whitespace-nowrap text-[0.92rem] font-semibold tracking-[0.02em] sm:text-[1rem]">
-                Signature Estates
-              </span>
-
+              <BrandLogo compact className="-my-1" />
             </Link>
 
             <div className="hidden xl:flex xl:items-center xl:gap-4">

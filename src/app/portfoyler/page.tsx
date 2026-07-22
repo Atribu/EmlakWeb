@@ -8,6 +8,7 @@ import { listAdvisors, listCities, listCountries, listProperties, listRoomOption
 import { getExchangeRateSnapshot } from "@/lib/exchange-rates";
 import { convertAmountBetweenCurrencies } from "@/lib/exchange-rates-shared";
 import { PROPERTY_MARKET_STATUS_OPTIONS } from "@/lib/property-panel-options";
+import { publicPageMetadata } from "@/lib/seo";
 import { portfolioPageCopy, translatePropertyType, translateRoomLabel } from "@/lib/site-copy";
 import { getServerSiteLanguage, getServerSitePreferences } from "@/lib/site-preferences-server";
 import type { PropertyMarketStatus } from "@/lib/types";
@@ -33,19 +34,35 @@ export async function generateMetadata({ searchParams }: PortfoylerPageProps): P
   const type = readString(params.type).trim();
   const marketStatus = readString(params.marketStatus).trim();
   const query = readString(params.q).trim();
+  const rooms = readString(params.rooms).trim();
+  const minPrice = readString(params.minPrice).trim();
+  const maxPrice = readString(params.maxPrice).trim();
+  const hasActiveFilters = [
+    query,
+    country,
+    city,
+    type,
+    marketStatus,
+    rooms,
+    minPrice,
+    maxPrice,
+  ].some(Boolean);
   const filters = [query, country, city, type, marketStatus].filter(Boolean);
   const titlePrefix = filters.length > 0 ? filters.join(" / ") : "Portföyler";
+  const filteredDescription =
+    filters.length > 0
+      ? `${filters.join(", ")} kriterlerine uygun satılık portföyleri inceleyin.`
+      : "Seçtiğiniz fiyat, oda ve diğer filtrelere uygun satılık portföyleri inceleyin.";
 
-  return {
-    title: `${titlePrefix} | Signature Estates`,
+  return publicPageMetadata({
+    title: `${titlePrefix} | RODINA Invest Co.`,
     description:
-      filters.length > 0
-        ? `${filters.join(", ")} kriterlerine uygun satılık portföyleri inceleyin.`
+      hasActiveFilters
+        ? filteredDescription
         : "Filtrelenebilir satılık portföyleri tek sayfada inceleyin.",
-    alternates: {
-      canonical: "/portfoyler",
-    },
-  };
+    canonical: "/portfoyler",
+    indexable: !hasActiveFilters,
+  });
 }
 
 function toNumber(value: string): number | undefined {

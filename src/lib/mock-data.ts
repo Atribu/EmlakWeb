@@ -307,7 +307,7 @@ IMG: https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=c
 
 CTA|accent: Danismanla Premium Portfoy Stratejisi Planla | /iletisim`,
     coverImage: imageSet1.cover,
-    authorName: "Signature Estates Icerik Ekibi",
+    authorName: "RODINA Invest Co. Icerik Ekibi",
     tags: ["Premium Emlak", "SEO", "Satis Stratejisi", "Icerik Pazarlamasi", "Istanbul"],
     metaTitle: "Premium Emlak Ilaninda SEO ve Satis Stratejisi Rehberi",
     metaDescription:
@@ -326,9 +326,9 @@ Levent, Nişantaşı ve sahil hattında yeni portföylerde concierge, güvenlik 
 
 Yatırımcı tarafında ise kısa vadeli al-sat yaklaşımı yerine, kira getirisi ve çıkış likiditesi birlikte analiz ediliyor. Bu nedenle ilan incelerken teslim tarihi, proje ölçeği ve çevre gelişim planı mutlaka birlikte okunmalı.`,
     coverImage: imageSet1.cover,
-    authorName: "Signature Estates Araştırma Ekibi",
+    authorName: "RODINA Invest Co. Araştırma Ekibi",
     tags: ["İstanbul", "Lüks Konut", "Yatırım", "2026"],
-    metaTitle: "İstanbul Lüks Konut Yatırımı 2026 Trendleri | Signature Estates Blog",
+    metaTitle: "İstanbul Lüks Konut Yatırımı 2026 Trendleri | RODINA Invest Co. Blog",
     metaDescription:
       "İstanbul'da lüks konut yatırımı yaparken 2026 trendlerini, kira getirisi ve lokasyon analiziyle birlikte inceleyin.",
     publishedAt: "2026-03-12T09:10:00.000Z",
@@ -336,18 +336,18 @@ Yatırımcı tarafında ise kısa vadeli al-sat yaklaşımı yerine, kira getiri
   {
     id: "blog-2",
     slug: "portfoy-satista-dogru-fiyatlandirma-stratejisi",
-    title: "Portföy Satışta Doğru Fiyatlandırma Stratejisi",
+    title: "Emlakta Doğru Fiyatlandırma Stratejisi",
     excerpt:
       "Doğru fiyatlandırma, satış süresini ve teklif kalitesini doğrudan etkiler. Uygulamada kullanılan net yaklaşım adımları.",
     content: `Emlakta satış sürecinin en kritik adımı doğru başlangıç fiyatıdır. Piyasa üstü fiyatlar ilan görünürlüğünü düşürürken, piyasa altı fiyatlar da mülk sahibinin değer kaybına yol açabilir.
 
 Doğru fiyatlandırma için benzer portföy karşılaştırması, bölge arz-talep dengesi ve ilan performans metrikleri birlikte değerlendirilmelidir.
 
-Signature Estates modelinde danışmanlar, fiyat aralığını tek bir rakamdan çok stratejik bant olarak belirler. Bu yöntem, hem daha hızlı teklif almayı hem de müzakere alanını korumayı sağlar.`,
+RODINA Invest Co. modelinde danışmanlar, fiyat aralığını tek bir rakamdan çok stratejik bant olarak belirler. Bu yöntem, hem daha hızlı teklif almayı hem de müzakere alanını korumayı sağlar.`,
     coverImage: imageSet5.cover,
     authorName: "Selin Yıldız",
     tags: ["Satış", "Fiyatlandırma", "Portföy Yönetimi"],
-    metaTitle: "Emlakta Doğru Fiyatlandırma Stratejisi | Signature Estates Blog",
+    metaTitle: "Emlakta Doğru Fiyatlandırma Stratejisi | RODINA Invest Co. Blog",
     metaDescription:
       "Emlak portföylerinde doğru fiyatlandırma nasıl yapılır? Satış süresini kısaltan temel stratejileri öğrenin.",
     publishedAt: "2026-03-10T11:40:00.000Z",

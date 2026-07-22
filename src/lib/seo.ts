@@ -4,9 +4,16 @@ import { parseBlogContent } from "@/lib/blog-content";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import type { BlogPost, Property } from "@/lib/types";
 
-const defaultTitle = "PortföySatış | Signature Estates";
+const defaultTitle = "RODINA | RODINA Invest Co.";
 const defaultDescription =
   "İstanbul ve çevresinde satış odaklı premium emlak portföyleri. Harita, randevu ve danışman destekli hızlı teklif süreci.";
+
+type PublicPageMetadataOptions = {
+  title: string;
+  description: string;
+  canonical: string;
+  indexable?: boolean;
+};
 
 export function getBaseUrl(): URL {
   const value = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "http://localhost:3000";
@@ -31,7 +38,7 @@ export function baseMetadata(): Metadata {
       title: defaultTitle,
       description: defaultDescription,
       url: baseUrl,
-      siteName: "PortföySatış",
+      siteName: "RODINA",
       locale: "tr_TR",
       type: "website",
     },
@@ -40,9 +47,70 @@ export function baseMetadata(): Metadata {
       title: defaultTitle,
       description: defaultDescription,
     },
+  };
+}
+
+export function publicPageMetadata({
+  title,
+  description,
+  canonical,
+  indexable = true,
+}: PublicPageMetadataOptions): Metadata {
+  return {
+    title,
+    description,
     alternates: {
-      canonical: "/",
+      canonical,
     },
+    robots: indexable
+      ? undefined
+      : {
+          index: false,
+          follow: true,
+          googleBot: {
+            index: false,
+            follow: true,
+          },
+        },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: "RODINA",
+      locale: "tr_TR",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
+
+export function privatePageMetadata(title: string): Metadata {
+  return {
+    title,
+    alternates: {
+      canonical: null,
+    },
+    robots: {
+      index: false,
+      follow: false,
+      noarchive: true,
+      googleBot: {
+        index: false,
+        follow: false,
+        noarchive: true,
+      },
+    },
+  };
+}
+
+export function missingPageMetadata(title: string): Metadata {
+  return {
+    ...privatePageMetadata(title),
+    description: "Aradığınız içerik bulunamadı veya artık yayında değil.",
   };
 }
 
@@ -57,6 +125,7 @@ export function listingMetadata(property: Property): Metadata {
       title,
       description,
       type: "article",
+      url: `/ilan/${property.slug}`,
       images: [{ url: property.coverImage }],
     },
     twitter: {
@@ -77,7 +146,7 @@ export function homeListingSchema(properties: Property[]) {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "PortföySatış Premium İlanlar",
+    name: "RODINA Premium İlanlar",
     itemListElement: properties.slice(0, 12).map((property, index) => ({
       "@type": "ListItem",
       position: index + 1,
@@ -121,7 +190,7 @@ export function propertySchema(property: Property) {
 }
 
 export function blogMetadata(post: BlogPost): Metadata {
-  const title = post.metaTitle || `${post.title} | Signature Estates Blog`;
+  const title = post.metaTitle || `${post.title} | RODINA Invest Co. Blog`;
   const description = post.metaDescription || post.excerpt;
 
   return {
@@ -131,6 +200,7 @@ export function blogMetadata(post: BlogPost): Metadata {
       title,
       description,
       type: "article",
+      url: `/blog/${post.slug}`,
       images: [{ url: post.coverImage }],
     },
     twitter: {
@@ -151,7 +221,7 @@ export function blogListSchema(posts: BlogPost[]) {
   return {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "Signature Estates Blog",
+    name: "RODINA Invest Co. Blog",
     blogPost: posts.slice(0, 24).map((post) => ({
       "@type": "BlogPosting",
       headline: post.title,
@@ -208,7 +278,7 @@ export function blogPostSchema(post: BlogPost) {
     },
     publisher: {
       "@type": "Organization",
-      name: "Signature Estates",
+      name: "RODINA Invest Co.",
       url: baseUrl,
     },
     mainEntityOfPage: `${baseUrl}/blog/${post.slug}`,

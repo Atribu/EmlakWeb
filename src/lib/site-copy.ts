@@ -83,7 +83,7 @@ export function siteHeaderNavigationCopy(language: SiteLanguage): {
         items: [
           { href: "/hakkimizda", label: "Hakkımızda", description: "Markanın duruşu, yaklaşımı ve hikayesi." },
           { href: "/hakkimizda", label: "Vizyon & Misyon", description: "Uzun vadeli marka hedefleri ve hizmet yaklaşımı." },
-          { href: "/hakkimizda", label: "Neden Rodina Invest", description: "Ayırt edici servis yaklaşımı ve yatırım bakışı." },
+          { href: "/hakkimizda", label: "Neden RODINA", description: "Ayırt edici servis yaklaşımı ve yatırım bakışı." },
           { href: "/hizmetler", label: "Hizmetlerimiz", description: "Satış, yatırım ve premium portföy yönetimi başlıkları." },
           { href: "/danismanlar", label: "Referanslar", description: "Ekibin uzmanlık alanları ve bölgesel deneyim gücü." },
           { href: "/danismanlar", label: "İş Ortakları", description: "Satış sürecini destekleyen uzman ve çözüm ortakları." },
@@ -146,7 +146,7 @@ export function siteHeaderNavigationCopy(language: SiteLanguage): {
         items: [
           { href: "/hakkimizda", label: "About Us", description: "The brand perspective, approach, and story." },
           { href: "/hakkimizda", label: "Vision & Mission", description: "Long-term goals and service philosophy." },
-          { href: "/hakkimizda", label: "Why Rodina Invest", description: "Our differentiated service style and investment lens." },
+          { href: "/hakkimizda", label: "Why RODINA", description: "Our differentiated service style and investment lens." },
           { href: "/hizmetler", label: "Services", description: "Sales, investment, and premium portfolio management." },
           { href: "/danismanlar", label: "References", description: "The team’s expertise and regional experience." },
           { href: "/danismanlar", label: "Partners", description: "Specialists and partners supporting the sales process." },
@@ -209,7 +209,7 @@ export function siteHeaderNavigationCopy(language: SiteLanguage): {
         items: [
           { href: "/hakkimizda", label: "О нас", description: "Позиционирование, подход и история бренда." },
           { href: "/hakkimizda", label: "Видение и миссия", description: "Долгосрочные цели и философия сервиса." },
-          { href: "/hakkimizda", label: "Почему Rodina Invest", description: "Наш отличительный сервис и инвестиционный взгляд." },
+          { href: "/hakkimizda", label: "Почему RODINA", description: "Наш отличительный сервис и инвестиционный взгляд." },
           { href: "/hizmetler", label: "Наши услуги", description: "Продажи, инвестиции и управление премиальными портфелями." },
           { href: "/danismanlar", label: "Рекомендации", description: "Экспертиза команды и опыт по регионам." },
           { href: "/danismanlar", label: "Партнеры", description: "Специалисты и партнеры, поддерживающие сделку." },
@@ -272,7 +272,7 @@ export function siteHeaderNavigationCopy(language: SiteLanguage): {
         items: [
           { href: "/hakkimizda", label: "من نحن", description: "رؤية العلامة ونهجها وقصتها." },
           { href: "/hakkimizda", label: "الرؤية والرسالة", description: "الأهداف طويلة المدى وفلسفة الخدمة." },
-          { href: "/hakkimizda", label: "لماذا Rodina Invest", description: "أسلوبنا المختلف في الخدمة والاستثمار." },
+          { href: "/hakkimizda", label: "لماذا RODINA", description: "أسلوبنا المختلف في الخدمة والاستثمار." },
           { href: "/hizmetler", label: "خدماتنا", description: "المبيعات والاستثمار وإدارة المحافظ المميزة." },
           { href: "/danismanlar", label: "المرجعيات", description: "خبرات الفريق وقوته الإقليمية." },
           { href: "/danismanlar", label: "الشركاء", description: "الخبراء والشركاء الداعمون لعملية البيع." },
@@ -386,7 +386,7 @@ export function footerCopy(language: SiteLanguage) {
 export function homePageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
-      heroKicker: "Signature Estates Platform",
+      heroKicker: "RODINA Invest Co. Platform",
       heroTitle: "Premium emlak deneyimi artık çok sayfalı kurumsal yapıda",
       heroBody: "Portföyler, harita, danışman ekibi, hizmetler ve iletişim bölümleri ile satışa odaklı tam web sitesi altyapısı.",
       ctaListings: "Portföyleri Gör",
@@ -435,14 +435,14 @@ export function homePageCopy(language: SiteLanguage) {
         },
         "signature-selection": {
           title: "İstanbul & Ege",
-          subtitle: "Econi seçki koleksiyonu",
+          subtitle: "RODINA seçki koleksiyonu",
           badge: "Sezonun Seçimi",
           blurb: "Şehir dinamizmi ile sahil yaşamını aynı vitrinde bir araya getiren satış odaklı premium portföy seçkisi.",
         },
       },
     },
     EN: {
-      heroKicker: "Signature Estates Platform",
+      heroKicker: "RODINA Invest Co. Platform",
       heroTitle: "A premium real estate experience, now in a multi-page corporate format",
       heroBody: "A complete sales-focused website with listings, map, advisors, services, and contact sections.",
       ctaListings: "View Listings",
@@ -491,14 +491,14 @@ export function homePageCopy(language: SiteLanguage) {
         },
         "signature-selection": {
           title: "Istanbul & Aegean",
-          subtitle: "Econi selection",
+          subtitle: "RODINA selection",
           badge: "Season Pick",
           blurb: "A curated premium portfolio combining city energy with coastal living in one storefront.",
         },
       },
     },
     RU: {
-      heroKicker: "Signature Estates Platform",
+      heroKicker: "RODINA Invest Co. Platform",
       heroTitle: "Премиальный опыт в недвижимости теперь представлен в многостраничном корпоративном формате",
       heroBody: "Полноценный сайт для продаж с объектами, картой, консультантами, услугами и контактами.",
       ctaListings: "Смотреть объекты",
@@ -547,14 +547,14 @@ export function homePageCopy(language: SiteLanguage) {
         },
         "signature-selection": {
           title: "Стамбул и Эгейский регион",
-          subtitle: "Коллекция Econi",
+          subtitle: "Коллекция RODINA",
           badge: "Выбор сезона",
           blurb: "Кураторская подборка, объединяющая энергию города и прибрежный стиль жизни.",
         },
       },
     },
     AR: {
-      heroKicker: "Signature Estates Platform",
+      heroKicker: "RODINA Invest Co. Platform",
       heroTitle: "تجربة عقارية مميزة الآن ضمن موقع مؤسسي متعدد الصفحات",
       heroBody: "موقع متكامل يركز على المبيعات ويضم العقارات والخريطة والمستشارين والخدمات والتواصل.",
       ctaListings: "عرض العقارات",
@@ -603,7 +603,7 @@ export function homePageCopy(language: SiteLanguage) {
         },
         "signature-selection": {
           title: "إسطنبول وإيجه",
-          subtitle: "مجموعة Econi",
+          subtitle: "مجموعة RODINA",
           badge: "اختيار الموسم",
           blurb: "مجموعة عقارية منسقة تجمع بين حيوية المدينة وهدوء الساحل في واجهة واحدة.",
         },
@@ -716,7 +716,7 @@ export function contactPageCopy(language: SiteLanguage) {
       heroTitle: "İletişim ve Talep Formu",
       heroBody: "İlgi duyduğunuz portföyü seçip talebinizi bırakın; danışman ekibimiz en kısa sürede dönüş sağlasın.",
       infoKicker: "İletişim Bilgileri",
-      infoTitle: "Econi Desk",
+      infoTitle: "RODINA Desk",
       infoBody: "Hafta içi 09:00 - 19:00 arasında tüm talepleri operasyon ekibi karşılar.",
       phone: "Telefon",
       email: "E-posta",
@@ -729,7 +729,7 @@ export function contactPageCopy(language: SiteLanguage) {
       heroTitle: "Contact & Inquiry Form",
       heroBody: "Select the listing you are interested in and leave your request so our advisory team can get back to you quickly.",
       infoKicker: "Contact Details",
-      infoTitle: "Econi Desk",
+      infoTitle: "RODINA Desk",
       infoBody: "Our operations team handles all inquiries on weekdays between 09:00 and 19:00.",
       phone: "Phone",
       email: "Email",
@@ -742,7 +742,7 @@ export function contactPageCopy(language: SiteLanguage) {
       heroTitle: "Форма связи и запроса",
       heroBody: "Выберите интересующий объект и оставьте запрос, чтобы наша команда быстро с вами связалась.",
       infoKicker: "Контактные данные",
-      infoTitle: "Econi Desk",
+      infoTitle: "RODINA Desk",
       infoBody: "Наша операционная команда обрабатывает все запросы по будням с 09:00 до 19:00.",
       phone: "Телефон",
       email: "Эл. почта",
@@ -755,7 +755,7 @@ export function contactPageCopy(language: SiteLanguage) {
       heroTitle: "نموذج التواصل والطلب",
       heroBody: "اختر العقار الذي يهمك واترك طلبك ليعود إليك فريقنا الاستشاري بسرعة.",
       infoKicker: "معلومات التواصل",
-      infoTitle: "Econi Desk",
+      infoTitle: "RODINA Desk",
       infoBody: "يتولى فريق العمليات جميع الطلبات في أيام الأسبوع بين 09:00 و19:00.",
       phone: "الهاتف",
       email: "البريد الإلكتروني",
@@ -771,7 +771,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     TR: {
       heroKicker: "Services",
       heroTitle: "Hizmetlerimiz",
-      heroBody: "Signature Estates ekibi, emlak satışını sadece ilan değil bir operasyon olarak yönetir.",
+      heroBody: "RODINA Invest Co. ekibi, emlak satışını sadece ilan değil bir operasyon olarak yönetir.",
       serviceLabel: "Hizmet",
       items: [
         {
@@ -803,7 +803,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     EN: {
       heroKicker: "Services",
       heroTitle: "Our Services",
-      heroBody: "The Signature Estates team manages real estate sales not just as listings, but as an operation.",
+      heroBody: "The RODINA Invest Co. team manages real estate sales not just as listings, but as an operation.",
       serviceLabel: "Service",
       items: [
         {
@@ -835,7 +835,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     RU: {
       heroKicker: "Services",
       heroTitle: "Наши услуги",
-      heroBody: "Команда Signature Estates управляет продажей недвижимости как полноценной операцией, а не просто публикацией объектов.",
+      heroBody: "Команда RODINA Invest Co. управляет продажей недвижимости как полноценной операцией, а не просто публикацией объектов.",
       serviceLabel: "Услуга",
       items: [
         {
@@ -867,7 +867,7 @@ export function servicesPageCopy(language: SiteLanguage) {
     AR: {
       heroKicker: "Services",
       heroTitle: "خدماتنا",
-      heroBody: "يدير فريق Signature Estates مبيعات العقارات كعملية متكاملة وليس مجرد إعلان.",
+      heroBody: "يدير فريق RODINA Invest Co. مبيعات العقارات كعملية متكاملة وليس مجرد إعلان.",
       serviceLabel: "خدمة",
       items: [
         {
@@ -902,9 +902,9 @@ export function servicesPageCopy(language: SiteLanguage) {
 export function aboutPageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
-      heroKicker: "About Signature Estates",
+      heroKicker: "About RODINA Invest Co.",
       heroTitle: "Satış Odaklı Emlak Operasyonu",
-      heroBody: "Signature Estates, premium portföyleri doğru alıcı ile buluşturan, veri ve danışman odağını birleştiren dijital emlak platformudur.",
+      heroBody: "RODINA Invest Co., premium portföyleri doğru alıcı ile buluşturan, veri ve danışman odağını birleştiren dijital emlak platformudur.",
       metrics: {
         activeListings: "Aktif Portföy",
         advisors: "Danışman",
@@ -919,9 +919,9 @@ export function aboutPageCopy(language: SiteLanguage) {
       approachBody: "Her portföy sisteme ilgili uzman danışman ile yüklenir. Bu model, hem satış hızını artırır hem de alıcı tarafında güveni güçlendirir.",
     },
     EN: {
-      heroKicker: "About Signature Estates",
+      heroKicker: "About RODINA Invest Co.",
       heroTitle: "A Sales-Focused Real Estate Operation",
-      heroBody: "Signature Estates is a digital property platform that matches premium portfolios with the right buyers through data and advisor expertise.",
+      heroBody: "RODINA Invest Co. is a digital property platform that matches premium portfolios with the right buyers through data and advisor expertise.",
       metrics: {
         activeListings: "Active Listings",
         advisors: "Advisors",
@@ -936,9 +936,9 @@ export function aboutPageCopy(language: SiteLanguage) {
       approachBody: "Every listing is uploaded with its specialist advisor. This model improves sales speed while strengthening buyer confidence.",
     },
     RU: {
-      heroKicker: "About Signature Estates",
+      heroKicker: "About RODINA Invest Co.",
       heroTitle: "Операция по продаже недвижимости с фокусом на результат",
-      heroBody: "Signature Estates — это цифровая платформа, которая соединяет премиальные объекты с нужным покупателем, объединяя данные и экспертизу консультантов.",
+      heroBody: "RODINA Invest Co. — это цифровая платформа, которая соединяет премиальные объекты с нужным покупателем, объединяя данные и экспертизу консультантов.",
       metrics: {
         activeListings: "Активные объекты",
         advisors: "Консультанты",
@@ -953,9 +953,9 @@ export function aboutPageCopy(language: SiteLanguage) {
       approachBody: "Каждый объект публикуется вместе с профильным консультантом. Эта модель ускоряет продажи и усиливает доверие со стороны покупателя.",
     },
     AR: {
-      heroKicker: "About Signature Estates",
+      heroKicker: "About RODINA Invest Co.",
       heroTitle: "عملية عقارية تركز على البيع",
-      heroBody: "Signature Estates منصة عقارية رقمية تربط العقارات المميزة بالمشتري المناسب عبر البيانات وخبرة المستشارين.",
+      heroBody: "RODINA Invest Co. منصة عقارية رقمية تربط العقارات المميزة بالمشتري المناسب عبر البيانات وخبرة المستشارين.",
       metrics: {
         activeListings: "عقارات نشطة",
         advisors: "مستشارون",
@@ -1020,7 +1020,7 @@ export function advisorsPageCopy(language: SiteLanguage) {
 export function sellPageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
-      heroKicker: "Sell With Econi",
+      heroKicker: "Sell With RODINA",
       heroTitle: "Premium satış operasyonu için ilk adımı şimdi atın",
       heroBody: "Ücretsiz ön değerleme, profesyonel sunum ve doğru alıcı ağıyla mülkünüzü satışa hazır hale getirelim.",
       planKicker: "Satış Planı",
@@ -1040,7 +1040,7 @@ export function sellPageCopy(language: SiteLanguage) {
       advisors: "Danışman Ekibi",
     },
     EN: {
-      heroKicker: "Sell With Econi",
+      heroKicker: "Sell With RODINA",
       heroTitle: "Take the first step toward a premium sales operation today",
       heroBody: "Let us prepare your property for sale with a free valuation, professional presentation, and the right buyer network.",
       planKicker: "Sales Plan",
@@ -1060,7 +1060,7 @@ export function sellPageCopy(language: SiteLanguage) {
       advisors: "Advisor Team",
     },
     RU: {
-      heroKicker: "Sell With Econi",
+      heroKicker: "Sell With RODINA",
       heroTitle: "Сделайте первый шаг к премиальной продаже уже сейчас",
       heroBody: "Подготовим ваш объект к продаже через бесплатную оценку, профессиональную подачу и нужную сеть покупателей.",
       planKicker: "План продажи",
@@ -1080,7 +1080,7 @@ export function sellPageCopy(language: SiteLanguage) {
       advisors: "Команда консультантов",
     },
     AR: {
-      heroKicker: "Sell With Econi",
+      heroKicker: "Sell With RODINA",
       heroTitle: "ابدأ الآن أول خطوة نحو عملية بيع مميزة",
       heroBody: "دعنا نجهز عقارك للبيع من خلال تقييم مجاني وعرض احترافي وشبكة المشترين المناسبة.",
       planKicker: "خطة البيع",
@@ -1232,25 +1232,25 @@ export function blogListPageCopy(language: SiteLanguage) {
   return pick(language, {
     TR: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "Signature Estates Blog",
+      heroTitle: "RODINA Invest Co. Blog",
       heroBody: "Emlak satış operasyonu, yatırım kararları ve lokasyon trendleri üzerine yayınlanan uzman içerikler.",
       read: "Yazıyı Oku",
     },
     EN: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "Signature Estates Blog",
+      heroTitle: "RODINA Invest Co. Blog",
       heroBody: "Expert content on real estate sales operations, investment decisions, and location trends.",
       read: "Read Article",
     },
     RU: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "Блог Signature Estates",
+      heroTitle: "Блог RODINA Invest Co.",
       heroBody: "Экспертные материалы о продажах недвижимости, инвестиционных решениях и трендах локаций.",
       read: "Читать статью",
     },
     AR: {
       heroKicker: "Insights & SEO Content",
-      heroTitle: "مدونة Signature Estates",
+      heroTitle: "مدونة RODINA Invest Co.",
       heroBody: "محتوى متخصص حول عمليات بيع العقارات وقرارات الاستثمار واتجاهات المواقع.",
       read: "اقرأ المقال",
     },

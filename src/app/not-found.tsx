@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SiteHeader } from "@/components/site-header";
 import { notFoundPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
+import { missingPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = missingPageMetadata("Sayfa Bulunamadı | RODINA Invest Co.");
 
 export default async function NotFound() {
   const language = await getServerSiteLanguage();

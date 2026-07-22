@@ -9,15 +9,13 @@ import { blogListPageCopy } from "@/lib/site-copy";
 import { formatDate } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
-import { blogListSchema } from "@/lib/seo";
+import { blogListSchema, publicPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Blog | Signature Estates",
+export const metadata: Metadata = publicPageMetadata({
+  title: "Blog | RODINA Invest Co.",
   description: "Emlak yatırımı, satış stratejisi ve premium konut trendleri üzerine SEO odaklı içerikler.",
-  alternates: {
-    canonical: "/blog",
-  },
-};
+  canonical: "/blog",
+});
 
 export default async function BlogPage() {
   const language = await getServerSiteLanguage();

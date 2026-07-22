@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+
+import { privatePageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = privatePageMetadata("Giriş | RODINA Invest Co.");
 
 type LoginPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

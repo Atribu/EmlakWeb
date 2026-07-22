@@ -3,14 +3,14 @@
 import Link from "next/link";
 
 
-import { BrandLogoMark } from "@/components/brand-logo-mark";
+import { BrandLogo } from "@/components/brand-logo";
 
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { footerCopy } from "@/lib/site-copy";
 
 const SOCIAL_LINKS = [
-  { href: "https://instagram.com/econiinvest", label: "Instagram", icon: "instagram" as const },
-  { href: "https://t.me/econiinvest", label: "Telegram", icon: "telegram" as const },
+  { href: "https://instagram.com/rodinainvest", label: "Instagram", icon: "instagram" as const },
+  { href: "https://t.me/rodinainvest", label: "Telegram", icon: "telegram" as const },
   { href: "https://wa.me/905321112233", label: "WhatsApp", icon: "whatsapp" as const },
 ];
 
@@ -83,11 +83,7 @@ export function SiteFooter() {
         <div>
 
           <div className="flex items-center gap-3">
-            <BrandLogoMark className="h-12 w-12 rounded-[1rem]" />
-            <p className="text-[1.25rem] font-semibold tracking-[0.02em] text-[var(--brand-primary)]">
-              Signature Estates
-            </p>
-
+            <BrandLogo />
           </div>
 
           <p className="mt-4 max-w-xl text-[1rem] leading-8 text-[var(--ink-600)]">{copy.tagline}</p>
@@ -124,8 +120,8 @@ export function SiteFooter() {
             <a href="tel:+905321234567" className="mt-3 block text-lg font-semibold text-[var(--brand-primary)]">
               +90 532 123 45 67
             </a>
-            <a href="mailto:hello@signatureestates.com" className="mt-2 block text-sm text-[var(--ink-600)]">
-              hello@signatureestates.com
+            <a href="mailto:info@rodinainvest.com" className="mt-2 block text-sm text-[var(--ink-600)]">
+              info@rodinainvest.com
             </a>
           </div>
         </div>
@@ -133,7 +129,7 @@ export function SiteFooter() {
 
       <div className="mt-6 border-t border-[var(--line)] pt-4 text-sm">
         <p suppressHydrationWarning>
-          © {new Date().getFullYear()} Signature Estates. {copy.copyright}
+          © {new Date().getFullYear()} RODINA Invest Co. {copy.copyright}
         </p>
       </div>
     </footer>
