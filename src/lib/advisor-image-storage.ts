@@ -6,6 +6,7 @@ import { UPLOAD_DISK_ROOT, UPLOAD_PUBLIC_PREFIX } from "@/lib/upload-config";
 
 const uploadPublicRoot = `${UPLOAD_PUBLIC_PREFIX}/advisors`;
 const uploadDiskRoot = path.join(UPLOAD_DISK_ROOT, "advisors");
+const MAX_ADVISOR_IMAGE_PIXELS = 20_000_000;
 
 const charMap: Record<string, string> = {
   ç: "c",
@@ -76,15 +77,36 @@ export async function saveAdvisorImageFile(
   file: File,
   options: { storageKey: string; fieldLabel: string },
 ): Promise<string> {
-  validateWebpFile(file, options.fieldLabel);
-
   const { directory, safeStorageKey } = await ensureAdvisorUploadDirectory(options.storageKey);
   const diskPath = path.join(directory, "portrait.webp");
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = await normalizeAdvisorImageToWebp(file, options.fieldLabel);
 
   await fs.writeFile(diskPath, buffer);
 
   return `${uploadPublicRoot}/${safeStorageKey}/portrait.webp`;
+}
+
+async function normalizeAdvisorImageToWebp(file: File, fieldLabel: string): Promise<Buffer> {
+  validateWebpFile(file, fieldLabel);
+
+  try {
+    const sharp = (await import("sharp")).default;
+    const source = Buffer.from(await file.arrayBuffer());
+
+    return await sharp(source, { limitInputPixels: MAX_ADVISOR_IMAGE_PIXELS })
+      .rotate()
+      .resize({
+        width: 1200,
+        height: 1200,
+        fit: "cover",
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 86 })
+      .toBuffer();
+  } catch (error) {
+    console.error("[advisor-image-convert-error]", error);
+    throw new Error(`${fieldLabel} işlenemedi. Lütfen geçerli bir webp dosyası deneyin.`);
+  }
 }
 
 export function isManagedAdvisorImagePath(imagePath: string): boolean {

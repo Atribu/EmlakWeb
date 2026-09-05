@@ -4,14 +4,15 @@ import Link from "next/link";
 import { PropertyCard } from "@/components/property-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { listAdvisors, listCities, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
+import { listAdvisors, listCities, listCountries, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
+import { getExchangeRateSnapshot } from "@/lib/exchange-rates";
+import { translateCityName, translateCountryName } from "@/lib/location-options";
+import { PROPERTY_MARKET_STATUS_OPTIONS } from "@/lib/property-panel-options";
+import { filterPropertiesByDisplayPrice } from "@/lib/property-pricing";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { portfolioPageCopy, translatePropertyType, translateRoomLabel } from "@/lib/site-copy";
-import { getServerSiteLanguage } from "@/lib/site-preferences-server";
-
-export const metadata: Metadata = {
-  title: "Portföyler | PortföySatış",
-  description: "Filtrelenebilir satılık portföyleri tek sayfada inceleyin.",
-};
+import { getServerSiteLanguage, getServerSitePreferences } from "@/lib/site-preferences-server";
+import type { PropertyMarketStatus } from "@/lib/types";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -27,6 +28,44 @@ function readString(value: string | string[] | undefined): string {
   return value ?? "";
 }
 
+export async function generateMetadata({ searchParams }: PortfoylerPageProps): Promise<Metadata> {
+  const params = await searchParams;
+  const country = readString(params.country).trim();
+  const city = readString(params.city).trim();
+  const type = readString(params.type).trim();
+  const marketStatus = readString(params.marketStatus).trim();
+  const query = readString(params.q).trim();
+  const rooms = readString(params.rooms).trim();
+  const minPrice = readString(params.minPrice).trim();
+  const maxPrice = readString(params.maxPrice).trim();
+  const hasActiveFilters = [
+    query,
+    country,
+    city,
+    type,
+    marketStatus,
+    rooms,
+    minPrice,
+    maxPrice,
+  ].some(Boolean);
+  const filters = [query, country, city, type, marketStatus].filter(Boolean);
+  const titlePrefix = filters.length > 0 ? filters.join(" / ") : "Portföyler";
+  const filteredDescription =
+    filters.length > 0
+      ? `${filters.join(", ")} kriterlerine uygun satılık portföyleri inceleyin.`
+      : "Seçtiğiniz fiyat, oda ve diğer filtrelere uygun satılık portföyleri inceleyin.";
+
+  return publicPageMetadata({
+    title: `${titlePrefix} | RODINA Invest Co.`,
+    description:
+      hasActiveFilters
+        ? filteredDescription
+        : "Filtrelenebilir satılık portföyleri tek sayfada inceleyin.",
+    canonical: "/portfoyler",
+    indexable: !hasActiveFilters,
+  });
+}
+
 function toNumber(value: string): number | undefined {
   if (!value.trim()) {
     return undefined;
@@ -36,33 +75,94 @@ function toNumber(value: string): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+function filterLabel(language: Awaited<ReturnType<typeof getServerSiteLanguage>>, key: "country" | "marketStatus" | "allCountries" | "allMarketStatuses") {
+  const copy = {
+    TR: {
+      country: "Ülke",
+      marketStatus: "Portföy Durumu",
+      allCountries: "Tüm ülkeler",
+      allMarketStatuses: "Hazır / Proje",
+    },
+    EN: {
+      country: "Country",
+      marketStatus: "Portfolio Status",
+      allCountries: "All countries",
+      allMarketStatuses: "Ready / Project",
+    },
+    RU: {
+      country: "Страна",
+      marketStatus: "Статус объекта",
+      allCountries: "Все страны",
+      allMarketStatuses: "Готово / Проект",
+    },
+    AR: {
+      country: "الدولة",
+      marketStatus: "حالة العقار",
+      allCountries: "كل الدول",
+      allMarketStatuses: "جاهز / مشروع",
+    },
+  } as const;
+
+  return copy[language][key];
+}
+
+function translateMarketStatus(status: PropertyMarketStatus, language: Awaited<ReturnType<typeof getServerSiteLanguage>>) {
+  if (status === "Proje") {
+    return language === "EN" ? "Project" : language === "RU" ? "Проект" : language === "AR" ? "مشروع" : "Proje";
+  }
+
+  return language === "EN" ? "Ready" : language === "RU" ? "Готово" : language === "AR" ? "جاهز" : "Hazır";
+}
+
 export default async function PortfoylerPage({ searchParams }: PortfoylerPageProps) {
-  const language = await getServerSiteLanguage();
+  const [language, preferences, exchangeRateSnapshot] = await Promise.all([
+    getServerSiteLanguage(),
+    getServerSitePreferences(),
+    getExchangeRateSnapshot(),
+  ]);
   const copy = portfolioPageCopy(language);
   const params = await searchParams;
 
   const query = readString(params.q).trim();
+  const country = readString(params.country).trim();
   const city = readString(params.city).trim();
   const type = readString(params.type).trim();
   const rooms = readString(params.rooms).trim();
+  const marketStatus = readString(params.marketStatus).trim() as PropertyMarketStatus;
   const minPriceValue = readString(params.minPrice);
   const maxPriceValue = readString(params.maxPrice);
+  const minPrice = toNumber(minPriceValue);
+  const maxPrice = toNumber(maxPriceValue);
 
-  const properties = listProperties({
+  const matchingProperties = listProperties({
     query: query || undefined,
+    country: country || undefined,
     city: city || undefined,
     type: type || undefined,
+    marketStatus: PROPERTY_MARKET_STATUS_OPTIONS.includes(marketStatus) ? marketStatus : undefined,
     rooms: rooms || undefined,
-    minPrice: toNumber(minPriceValue),
-    maxPrice: toNumber(maxPriceValue),
+  });
+  const properties = filterPropertiesByDisplayPrice(matchingProperties, {
+    currency: preferences.currency,
+    exchangeRates: exchangeRateSnapshot.rates,
+    minPrice,
+    maxPrice,
   });
 
   const advisors = listAdvisors();
   const advisorMap = new Map(advisors.map((advisor) => [advisor.id, advisor]));
 
-  const cities = listCities();
+  const countries = listCountries();
+  const cities = listCities(country || undefined);
   const types = listTypes();
   const roomOptions = listRoomOptions();
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Portföyler", path: "/portfoyler" },
+    ]),
+  ];
 
   return (
     <div className="min-h-screen">
@@ -96,11 +196,20 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
                   className="input dark-input"
                 />
 
+                <select name="country" defaultValue={country} className="input dark-input" aria-label={filterLabel(language, "country")}>
+                  <option value="">{filterLabel(language, "allCountries")}</option>
+                  {countries.map((item) => (
+                    <option key={item} value={item}>
+                      {translateCountryName(item, language)}
+                    </option>
+                  ))}
+                </select>
+
                 <select name="city" defaultValue={city} className="input dark-input">
                   <option value="">{copy.cityPlaceholder}</option>
                   {cities.map((item) => (
                     <option key={item} value={item}>
-                      {item}
+                      {translateCityName(item, language)}
                     </option>
                   ))}
                 </select>
@@ -110,6 +219,15 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
                   {types.map((item) => (
                     <option key={item} value={item}>
                       {translatePropertyType(item, language)}
+                    </option>
+                  ))}
+                </select>
+
+                <select name="marketStatus" defaultValue={marketStatus} className="input dark-input" aria-label={filterLabel(language, "marketStatus")}>
+                  <option value="">{filterLabel(language, "allMarketStatuses")}</option>
+                  {PROPERTY_MARKET_STATUS_OPTIONS.map((item) => (
+                    <option key={item} value={item}>
+                      {translateMarketStatus(item, language)}
                     </option>
                   ))}
                 </select>
@@ -174,6 +292,8 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

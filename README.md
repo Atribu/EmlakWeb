@@ -1,6 +1,6 @@
-# PortföySatış Demo (DB'siz MVP)
 
-Satış odaklı emlak sitesi için hazırlanmış Next.js demo sürümü.
+
+Satış odaklı emlak sitesi için hazırlanmış Next.js uygulaması.
 
 ## Kapsam
 
@@ -18,6 +18,7 @@ Satış odaklı emlak sitesi için hazırlanmış Next.js demo sürümü.
 - React
 - Tailwind CSS v4
 - TypeScript
+- SQLite (`better-sqlite3`)
 
 ## Çalıştırma
 
@@ -26,11 +27,45 @@ npm install
 npm run dev
 ```
 
+Kontrol komutları:
+
+```bash
+npm run test
+npm run lint
+npm run build
+```
+
 ## Demo Hesaplar
 
-- Admin: `admin / admin123`
+- Admin: `admin@admin / admin`
 - Danışman: `ayse / ayse123`
 - İçerik yükleyici: `icerik / icerik123`
+
+## Kalıcı Veri Yapısı
+
+Panelden girilen portföy, blog, danışman, kullanıcı ve lead kayıtları SQLite içine yazılır.
+Panelden yüklenen görseller de kalıcı upload klasörüne kaydedilir.
+
+Local varsayılan yollar:
+
+```bash
+DB:      .demo-data/emlak.db
+Uploads: .demo-data/uploads
+```
+
+Canlı sunucuda kullanacağımız yollar:
+
+```bash
+EMLAK_DB_PATH=/home/dgtl/EmlakWeb/.demo-data/emlak.db
+EMLAK_UPLOAD_DIR=/home/dgtl/EmlakWeb/.demo-data/uploads
+EMLAK_SESSION_SECRET=uzun-rastgele-bir-production-secret
+```
+
+Deploy işlemi `/home/dgtl/EmlakWeb/.demo-data` klasörünü silmezse panelden girilen veriler ve görseller korunur.
+Şifreler veritabanında hash'li tutulur; eski düz metin şifreler başarılı giriş sonrası otomatik olarak hash'li formata taşınır.
+
+Portföy görselleri yüklenirken otomatik optimize edilir, WebP formatında kaydedilir ve görselin ortasına filigran eklenir.
+Filigran metni canlı sunucuda `EMLAK_WATERMARK_TEXT` ve `EMLAK_WATERMARK_SUBTEXT` ile değiştirilebilir.
 
 ## Mail Akışı
 
@@ -46,4 +81,4 @@ Env yoksa sistem demo modunda çalışır ve form yanıtı buna göre bilgi veri
 
 ## Not
 
-Bu sürümde veriler bellek içinde tutulur, sunucu yeniden başlarsa sıfırlanır. Sonraki adımda data katmanı Prisma/PostgreSQL'e taşınabilir.
+`.demo-data/` repoya dahil edilmez. Canlı sunucuda bu klasör kalıcı veri alanı olarak korunmalıdır.

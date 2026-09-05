@@ -231,7 +231,9 @@ export function PropertyMap({ portfolios }: PropertyMapProps) {
                 <p className="mt-1 text-xs text-[#6d6253]">
                   {portfolio.city} / {portfolio.district}
                 </p>
-                <p className="mt-1 text-xs font-semibold text-[#6a4f22]"><PriceText amount={portfolio.price} /></p>
+                <p className="mt-1 text-xs font-semibold text-[#6a4f22]">
+                  <PriceText amount={portfolio.price} sourceCurrency={portfolio.priceCurrency} />
+                </p>
                 <Link href={`/ilan/${portfolio.slug}`} className="mt-1 inline-block text-xs font-semibold underline">
                   {copy.openListing}
                 </Link>

@@ -3,7 +3,20 @@ import type { NextRequest } from "next/server";
 
 import { canCreateOrEditPortfolios, canDeletePortfolios } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
-import { deletePropertyBySlug, getPropertyBySlug, updatePropertyBySlug } from "@/lib/data-store";
+import {
+  countPropertiesReferencingImagePath,
+  createPropertyActivityLog,
+  deletePropertyBySlug,
+  getPropertyBySlugWithOptions,
+  listAdvisors,
+  updatePropertyBySlug,
+} from "@/lib/data-store";
+import {
+  buildPropertyDeletedActivity,
+  buildPropertyUpdatedActivity,
+  createPropertyActivityActor,
+} from "@/lib/property-activity";
+import { PROPERTY_MARKET_STATUS_OPTIONS, PROPERTY_PRICE_CURRENCY_OPTIONS, PROPERTY_PUBLICATION_STATUS_OPTIONS, PROPERTY_TYPE_OPTIONS } from "@/lib/property-panel-options";
 import {
   buildGalleryImageFileName,
   deleteManagedPropertyImages,
@@ -14,6 +27,7 @@ import {
   createGalleryImageLabel,
   getFilesFromFormData,
   MAX_GALLERY_IMAGE_COUNT,
+  validateTotalUploadSize,
 } from "@/lib/portfolio-images";
 import {
   readPropertyInfoItemsFromFormData,
@@ -23,12 +37,22 @@ import {
   readPropertyTranslationsFromFormData,
   readPropertyTranslationsFromPayload,
 } from "@/lib/property-content";
-import type { CreatePropertyInput, Property, PropertyType } from "@/lib/types";
+import { getExchangeRateSnapshot } from "@/lib/exchange-rates";
+import { type ExchangeRateTable } from "@/lib/exchange-rates-shared";
+import { convertPriceToTry } from "@/lib/site-preferences";
+import type { CreatePropertyInput, Property, PropertyMarketStatus, PropertyPriceCurrency, PropertyPublicationStatus, PropertyType } from "@/lib/types";
 
-const validTypes: PropertyType[] = ["Daire", "Villa", "Rezidans", "Arsa", "Ofis"];
+const validTypes = [...PROPERTY_TYPE_OPTIONS] as PropertyType[];
+const validPriceCurrencies = PROPERTY_PRICE_CURRENCY_OPTIONS.map((option) => option.code) as PropertyPriceCurrency[];
+const validMarketStatuses = [...PROPERTY_MARKET_STATUS_OPTIONS] as PropertyMarketStatus[];
+const validPublicationStatuses = [...PROPERTY_PUBLICATION_STATUS_OPTIONS] as PropertyPublicationStatus[];
+
+function normalizeNumericValue(value: unknown) {
+  return typeof value === "string" ? value.trim().replace(",", ".") : value;
+}
 
 function parseNumber(value: unknown, fieldLabel: string): number {
-  const numeric = Number(value);
+  const numeric = Number(normalizeNumericValue(value));
 
   if (!Number.isFinite(numeric) || numeric <= 0) {
     throw new Error(`${fieldLabel} geçerli bir sayı olmalıdır.`);
@@ -42,7 +66,7 @@ function parseOptionalNumber(value: unknown): number | undefined {
     return undefined;
   }
 
-  const numeric = Number(value);
+  const numeric = Number(normalizeNumericValue(value));
   return Number.isFinite(numeric) ? numeric : undefined;
 }
 
@@ -53,6 +77,41 @@ function parseOptionalString(value: unknown): string | undefined {
 
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function parsePriceCurrency(value: unknown): PropertyPriceCurrency {
+  const currency = parseString(value, "Fiyat para birimi") as PropertyPriceCurrency;
+  if (!validPriceCurrencies.includes(currency)) {
+    throw new Error("Fiyat para birimi geçersiz.");
+  }
+
+  return currency;
+}
+
+function parseMarketStatus(value: unknown): PropertyMarketStatus {
+  const status = parseString(value, "Portföy durumu") as PropertyMarketStatus;
+  if (!validMarketStatuses.includes(status)) {
+    throw new Error("Portföy durumu geçersiz.");
+  }
+
+  return status;
+}
+
+function parsePublicationStatus(value: unknown): PropertyPublicationStatus {
+  const status = parseString(value, "Yayın durumu") as PropertyPublicationStatus;
+  if (!validPublicationStatuses.includes(status)) {
+    throw new Error("Yayın durumu geçersiz.");
+  }
+
+  return status;
+}
+
+function parseOptionalPublicationStatus(value: unknown): PropertyPublicationStatus | undefined {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  return parsePublicationStatus(value);
 }
 
 function parseString(value: unknown, fieldLabel: string): string {
@@ -100,13 +159,34 @@ function parseOptionalCommaSeparatedList(value: unknown): string[] {
     .filter(Boolean);
 }
 
-function parseInput(value: unknown): CreatePropertyInput {
+function applyRoleScopedFields(
+  input: CreatePropertyInput,
+  actorRole: string,
+  existing?: Property,
+): CreatePropertyInput {
+  const canSeeAdminFields = actorRole === "portal_admin" || actorRole === "admin";
+
+  return {
+    ...input,
+    country: input.country?.trim() || existing?.country || "Türkiye",
+    floor: input.floor?.trim() ?? "",
+    publicationStatus: canSeeAdminFields
+      ? (input.publicationStatus ?? existing?.publicationStatus ?? "Onay Bekliyor")
+      : (existing?.publicationStatus ?? "Onay Bekliyor"),
+    adminCommissionNotes: canSeeAdminFields ? input.adminCommissionNotes : existing?.adminCommissionNotes,
+    adminPrivateNotes: canSeeAdminFields ? input.adminPrivateNotes : existing?.adminPrivateNotes,
+  };
+}
+
+function parseInput(value: unknown, exchangeRates: ExchangeRateTable): CreatePropertyInput {
   if (!value || typeof value !== "object") {
     throw new Error("Geçersiz istek gövdesi.");
   }
 
   const payload = value as Record<string, unknown>;
   const type = parseString(payload.type, "Portföy tipi") as PropertyType;
+  const priceCurrency = parsePriceCurrency(payload.priceCurrency);
+  const priceSourceAmount = parseNumber(payload.price, "Fiyat");
 
   if (!validTypes.includes(type)) {
     throw new Error("Portföy tipi geçersiz.");
@@ -114,16 +194,26 @@ function parseInput(value: unknown): CreatePropertyInput {
 
   return {
     title: parseString(payload.title, "Başlık"),
+    country: parseOptionalString(payload.country) ?? "Türkiye",
     city: parseString(payload.city, "Şehir"),
     district: parseString(payload.district, "İlçe"),
     neighborhood: parseString(payload.neighborhood, "Mahalle"),
     type,
-    price: parseNumber(payload.price, "Fiyat"),
+    price: convertPriceToTry(priceSourceAmount, priceCurrency, exchangeRates),
+    priceCurrency,
+    priceSourceAmount,
     rooms: parseString(payload.rooms, "Oda bilgisi"),
     areaM2: parseNumber(payload.areaM2, "Metrekare"),
-    floor: parseString(payload.floor, "Kat bilgisi"),
+    floor: parseOptionalString(payload.floor) ?? "",
     heating: parseString(payload.heating, "Isıtma"),
+    marketStatus: parseMarketStatus(payload.marketStatus),
+    publicationStatus: parseOptionalPublicationStatus(payload.publicationStatus),
     description: parseString(payload.description, "Açıklama"),
+    developerCompany: parseOptionalString(payload.developerCompany),
+    staffNotes: parseOptionalString(payload.staffNotes),
+    customerFeedbackNotes: parseOptionalString(payload.customerFeedbackNotes),
+    adminCommissionNotes: parseOptionalString(payload.adminCommissionNotes),
+    adminPrivateNotes: parseOptionalString(payload.adminPrivateNotes),
     advisorId: parseOptionalString(payload.advisorId),
     latitude: parseOptionalNumber(payload.latitude),
     longitude: parseOptionalNumber(payload.longitude),
@@ -146,6 +236,11 @@ type GalleryEntry = {
   image: string;
 };
 
+type ParsedUpdateRequest = {
+  input: CreatePropertyInput;
+  orphanedImages: string[];
+};
+
 function galleryEntriesFromProperty(property: Property): GalleryEntry[] {
   return property.galleryImages.map((image, index) => ({
     label: property.imageLabels[index] ?? `Görsel ${index + 1}`,
@@ -153,9 +248,15 @@ function galleryEntriesFromProperty(property: Property): GalleryEntry[] {
   }));
 }
 
-async function parseFormDataInput(formData: FormData, existing: Property): Promise<CreatePropertyInput> {
+async function parseFormDataInput(
+  formData: FormData,
+  existing: Property,
+  exchangeRates: ExchangeRateTable,
+): Promise<ParsedUpdateRequest> {
   const type = parseString(formData.get("type"), "Portföy tipi") as PropertyType;
   const title = parseString(formData.get("title"), "Başlık");
+  const priceCurrency = parsePriceCurrency(formData.get("priceCurrency"));
+  const priceSourceAmount = parseNumber(formData.get("price"), "Fiyat");
 
   if (!validTypes.includes(type)) {
     throw new Error("Portföy tipi geçersiz.");
@@ -168,6 +269,7 @@ async function parseFormDataInput(formData: FormData, existing: Property): Promi
   };
 
   const coverFile = formData.get("coverImageFile");
+  const orphanedImages: string[] = [];
   const coverImage =
     coverFile instanceof File && coverFile.size > 0
       ? await savePropertyImageFile(coverFile, {
@@ -185,12 +287,28 @@ async function parseFormDataInput(formData: FormData, existing: Property): Promi
   );
 
   const galleryEntries = galleryEntriesFromProperty(existing).filter((entry) => !removedGalleryImages.has(entry.image));
+  orphanedImages.push(...Array.from(removedGalleryImages));
 
-  if (removedGalleryImages.size > 0) {
-    await deleteManagedPropertyImages(Array.from(removedGalleryImages));
+  const galleryOrder = formData
+    .getAll("galleryOrder")
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter(Boolean);
+
+  if (galleryOrder.length > 0) {
+    const orderMap = new Map(galleryOrder.map((image, index) => [image, index]));
+    galleryEntries.sort((left, right) => {
+      const leftIndex = orderMap.get(left.image) ?? Number.MAX_SAFE_INTEGER;
+      const rightIndex = orderMap.get(right.image) ?? Number.MAX_SAFE_INTEGER;
+
+      return leftIndex - rightIndex;
+    });
   }
 
   const galleryFiles = getFilesFromFormData(formData, "galleryImageFiles");
+  validateTotalUploadSize([
+    ...(coverFile instanceof File && coverFile.size > 0 ? [coverFile] : []),
+    ...galleryFiles,
+  ]);
 
   if (galleryEntries.length + galleryFiles.length > MAX_GALLERY_IMAGE_COUNT) {
     throw new Error(`Galeri için en fazla ${MAX_GALLERY_IMAGE_COUNT} görsel yükleyebilirsiniz.`);
@@ -216,32 +334,45 @@ async function parseFormDataInput(formData: FormData, existing: Property): Promi
   }
 
   if (coverImage !== existing.coverImage) {
-    await deleteManagedPropertyImages([existing.coverImage]);
+    orphanedImages.push(existing.coverImage);
   }
 
   return {
-    title,
-    city: parseString(formData.get("city"), "Şehir"),
-    district: parseString(formData.get("district"), "İlçe"),
-    neighborhood: parseString(formData.get("neighborhood"), "Mahalle"),
-    type,
-    price: parseNumber(formData.get("price"), "Fiyat"),
-    rooms: parseString(formData.get("rooms"), "Oda bilgisi"),
-    areaM2: parseNumber(formData.get("areaM2"), "Metrekare"),
-    floor: parseString(formData.get("floor"), "Kat bilgisi"),
+    orphanedImages,
+    input: {
+      title,
+      country: parseOptionalString(formData.get("country")) ?? existing.country ?? "Türkiye",
+      city: parseString(formData.get("city"), "Şehir"),
+      district: parseString(formData.get("district"), "İlçe"),
+      neighborhood: parseString(formData.get("neighborhood"), "Mahalle"),
+      type,
+      price: convertPriceToTry(priceSourceAmount, priceCurrency, exchangeRates),
+      priceCurrency,
+      priceSourceAmount,
+      rooms: parseString(formData.get("rooms"), "Oda bilgisi"),
+      areaM2: parseNumber(formData.get("areaM2"), "Metrekare"),
+    floor: parseOptionalString(formData.get("floor")) ?? "",
     heating: parseString(formData.get("heating"), "Isıtma"),
-    description: parseString(formData.get("description"), "Açıklama"),
-    advisorId: parseOptionalString(formData.get("advisorId")),
-    latitude: parseOptionalNumber(formData.get("latitude")),
-    longitude: parseOptionalNumber(formData.get("longitude")),
-    coverColor: parseString(formData.get("coverColor"), "Kapak rengi"),
-    coverImage,
-    galleryImages,
-    highlights: parseOptionalCommaSeparatedList(formData.get("highlights")),
-    features: parseOptionalCommaSeparatedList(formData.get("features")),
-    infoItems: readPropertyInfoItemsFromFormData(formData),
-    imageLabels,
-    translations: readPropertyTranslationsFromFormData(formData),
+    marketStatus: parseMarketStatus(formData.get("marketStatus")),
+    publicationStatus: parseOptionalPublicationStatus(formData.get("publicationStatus")),
+      description: parseString(formData.get("description"), "Açıklama"),
+      developerCompany: parseOptionalString(formData.get("developerCompany")),
+      staffNotes: parseOptionalString(formData.get("staffNotes")),
+      customerFeedbackNotes: parseOptionalString(formData.get("customerFeedbackNotes")),
+      adminCommissionNotes: parseOptionalString(formData.get("adminCommissionNotes")),
+      adminPrivateNotes: parseOptionalString(formData.get("adminPrivateNotes")),
+      advisorId: parseOptionalString(formData.get("advisorId")),
+      latitude: parseOptionalNumber(formData.get("latitude")),
+      longitude: parseOptionalNumber(formData.get("longitude")),
+      coverColor: parseString(formData.get("coverColor"), "Kapak rengi"),
+      coverImage,
+      galleryImages,
+      highlights: parseOptionalCommaSeparatedList(formData.get("highlights")),
+      features: parseOptionalCommaSeparatedList(formData.get("features")),
+      infoItems: readPropertyInfoItemsFromFormData(formData),
+      imageLabels,
+      translations: readPropertyTranslationsFromFormData(formData),
+    },
   };
 }
 
@@ -260,7 +391,7 @@ export async function PATCH(
   }
 
   const { slug } = await params;
-  const existing = getPropertyBySlug(slug);
+  const existing = getPropertyBySlugWithOptions(slug, { includeInactive: true });
 
   if (!existing) {
     return NextResponse.json({ message: "Portföy bulunamadı." }, { status: 404 });
@@ -268,10 +399,26 @@ export async function PATCH(
 
   try {
     const contentType = request.headers.get("content-type") ?? "";
-    const input = contentType.includes("multipart/form-data")
-      ? await parseFormDataInput(await request.formData(), existing)
-      : parseInput(await request.json());
-    const property = updatePropertyBySlug(slug, input);
+    const exchangeRates = (await getExchangeRateSnapshot()).rates;
+    const parsed = contentType.includes("multipart/form-data")
+      ? await parseFormDataInput(await request.formData(), existing, exchangeRates)
+      : { input: parseInput(await request.json(), exchangeRates), orphanedImages: [] };
+    const scopedInput = applyRoleScopedFields(parsed.input, user.role, existing);
+    const property = updatePropertyBySlug(slug, scopedInput);
+    const actor = createPropertyActivityActor(user);
+    const advisorMap = new Map(listAdvisors().map((advisor) => [advisor.id, advisor.name]));
+
+    createPropertyActivityLog(
+      buildPropertyUpdatedActivity(existing, property, actor, {
+        previousAdvisorName: advisorMap.get(existing.advisorId),
+        nextAdvisorName: advisorMap.get(property.advisorId),
+      }),
+    );
+
+    const unusedImages = parsed.orphanedImages.filter((imagePath) => countPropertiesReferencingImagePath(imagePath) === 0);
+    if (unusedImages.length > 0) {
+      await deleteManagedPropertyImages(unusedImages);
+    }
 
     return NextResponse.json({ property });
   } catch (error) {
@@ -295,7 +442,7 @@ export async function DELETE(
   }
 
   const { slug } = await params;
-  const existing = getPropertyBySlug(slug);
+  const existing = getPropertyBySlugWithOptions(slug, { includeInactive: true });
 
   if (!existing) {
     return NextResponse.json({ message: "Portföy bulunamadı." }, { status: 404 });
@@ -303,7 +450,21 @@ export async function DELETE(
 
   try {
     const removed = deletePropertyBySlug(slug);
-    await deleteManagedPropertyImages([removed.coverImage, ...removed.galleryImages]);
+    const actor = createPropertyActivityActor(user);
+    const advisorMap = new Map(listAdvisors().map((advisor) => [advisor.id, advisor.name]));
+
+    createPropertyActivityLog(
+      buildPropertyDeletedActivity(removed, actor, {
+        advisorName: advisorMap.get(removed.advisorId),
+      }),
+    );
+
+    const removableImages = [removed.coverImage, ...removed.galleryImages].filter(
+      (imagePath) => countPropertiesReferencingImagePath(imagePath) === 0,
+    );
+    if (removableImages.length > 0) {
+      await deleteManagedPropertyImages(removableImages);
+    }
 
     return NextResponse.json({
       property: {

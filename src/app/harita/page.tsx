@@ -7,13 +7,16 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listAdvisors, listProperties } from "@/lib/data-store";
 import { propertyTitleForLanguage } from "@/lib/property-content";
+import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { mapPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
-export const metadata: Metadata = {
-  title: "Harita | PortföySatış",
+export const metadata: Metadata = publicPageMetadata({
+  title: "Harita | RODINA Invest Co.",
   description: "Portföy lokasyonlarını harita üzerinde görün, konum arayın ve ilana geçin.",
-};
+  canonical: "/harita",
+});
 
 export default async function HaritaPage() {
   const language = await getServerSiteLanguage();
@@ -21,6 +24,13 @@ export default async function HaritaPage() {
   const properties = listProperties();
   const advisors = listAdvisors();
   const advisorMap = new Map(advisors.map((advisor) => [advisor.id, advisor]));
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Harita", path: "/harita" },
+    ]),
+  ];
 
   const mapPortfolios = properties.map((property) => ({
     id: property.id,
@@ -30,7 +40,8 @@ export default async function HaritaPage() {
     district: property.district,
     neighborhood: property.neighborhood,
     listingRef: property.listingRef,
-    price: property.price,
+    price: propertyDisplayAmount(property),
+    priceCurrency: propertyDisplayCurrency(property),
     latitude: property.latitude,
     longitude: property.longitude,
     advisorName: advisorMap.get(property.advisorId)?.name,
@@ -69,7 +80,12 @@ export default async function HaritaPage() {
                   {propertyTitleForLanguage(property, language)}
                 </h3>
                 <p className="mt-1 text-sm text-[#675d50]">{property.city} / {property.district} / {property.neighborhood}</p>
-                <p className="mt-2 text-sm font-semibold text-[#6c5127]"><PriceText amount={property.price} /></p>
+                <p className="mt-2 text-sm font-semibold text-[#6c5127]">
+                  <PriceText
+                    amount={propertyDisplayAmount(property)}
+                    sourceCurrency={propertyDisplayCurrency(property)}
+                  />
+                </p>
                 <Link href={`/ilan/${property.slug}`} className="mt-2 inline-block text-sm font-semibold underline">
                   {copy.detail}
                 </Link>
@@ -79,6 +95,8 @@ export default async function HaritaPage() {
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

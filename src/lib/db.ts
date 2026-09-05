@@ -1,12 +1,16 @@
 import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
+import { randomUUID } from "node:crypto";
 import { initialAdvisors, initialBlogPosts, initialProperties, initialUsers } from "@/lib/mock-data";
+import { hashPassword, verifyPassword } from "@/lib/passwords";
+import { getDatabasePath } from "@/lib/persistent-storage";
 import { pickSampleAdvisorImageForSeed } from "@/lib/sample-advisor-images";
 import { pickSampleImageSet } from "@/lib/sample-images";
+import { assertSafeProductionPassword, isProductionRuntime } from "@/lib/security";
 
-const DB_DIR = path.join(process.cwd(), ".demo-data");
-const DB_PATH = path.join(DB_DIR, "emlak.db");
+const DB_PATH = getDatabasePath();
+const DB_DIR = path.dirname(DB_PATH);
 
 if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
@@ -16,6 +20,23 @@ const db = new Database(DB_PATH);
 
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
+
+function hasColumn(tableName: string, columnName: string) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+  return columns.some((column) => column.name === columnName);
+}
+
+function addColumnIfMissing(tableName: string, columnName: string, definition: string) {
+  if (!hasColumn(tableName, columnName)) {
+    try {
+      db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.toLowerCase().includes("duplicate column")) {
+        throw error;
+      }
+    }
+  }
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS advisors (
@@ -44,20 +65,30 @@ db.exec(`
     id              TEXT PRIMARY KEY,
     slug            TEXT NOT NULL UNIQUE,
     title           TEXT NOT NULL,
+    country         TEXT NOT NULL DEFAULT 'Türkiye',
     city            TEXT NOT NULL,
     district        TEXT NOT NULL,
     neighborhood    TEXT NOT NULL,
     type            TEXT NOT NULL,
     price           REAL NOT NULL,
+    priceCurrency   TEXT NOT NULL DEFAULT 'TRY',
+    priceSourceAmount REAL,
     rooms           TEXT NOT NULL,
     areaM2          REAL NOT NULL,
     floor           TEXT NOT NULL,
     heating         TEXT NOT NULL,
+    marketStatus    TEXT NOT NULL DEFAULT 'Hazır',
+    publicationStatus TEXT NOT NULL DEFAULT 'Onay Bekliyor',
     listingRef      TEXT NOT NULL,
     description     TEXT NOT NULL,
     highlights      TEXT NOT NULL DEFAULT '[]',
     features        TEXT NOT NULL DEFAULT '[]',
     infoItems       TEXT NOT NULL DEFAULT '[]',
+    developerCompany TEXT,
+    staffNotes      TEXT,
+    customerFeedbackNotes TEXT,
+    adminCommissionNotes TEXT,
+    adminPrivateNotes TEXT,
     advisorId       TEXT NOT NULL,
     latitude        REAL NOT NULL DEFAULT 0,
     longitude       REAL NOT NULL DEFAULT 0,
@@ -67,6 +98,21 @@ db.exec(`
     imageLabels     TEXT NOT NULL DEFAULT '[]',
     translations    TEXT NOT NULL DEFAULT '{}',
     publishedAt     TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS property_activity_logs (
+    id              TEXT PRIMARY KEY,
+    propertySlug    TEXT NOT NULL,
+    propertyId      TEXT,
+    listingRef      TEXT,
+    propertyTitle   TEXT NOT NULL,
+    actionType      TEXT NOT NULL,
+    actorUserId     TEXT,
+    actorName       TEXT NOT NULL,
+    actorRole       TEXT NOT NULL,
+    summary         TEXT NOT NULL,
+    details         TEXT NOT NULL DEFAULT '[]',
+    createdAt       TEXT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS blog_posts (
@@ -81,6 +127,26 @@ db.exec(`
     metaTitle       TEXT NOT NULL,
     metaDescription TEXT NOT NULL,
     publishedAt     TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS home_location_spotlights (
+    id              TEXT PRIMARY KEY,
+    slug            TEXT NOT NULL UNIQUE,
+    title           TEXT NOT NULL,
+    subtitle        TEXT NOT NULL,
+    badge           TEXT NOT NULL,
+    blurb           TEXT NOT NULL,
+    statText        TEXT,
+    href            TEXT NOT NULL,
+    image           TEXT NOT NULL,
+    priceAmount     REAL,
+    priceCurrency   TEXT,
+    layoutVariant   TEXT NOT NULL DEFAULT 'wide',
+    sortOrder       INTEGER NOT NULL DEFAULT 0,
+    isActive        INTEGER NOT NULL DEFAULT 1,
+    translations    TEXT NOT NULL DEFAULT '{}',
+    createdAt       TEXT NOT NULL,
+    updatedAt       TEXT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS leads (
@@ -122,6 +188,80 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_property_activity_logs_created_at
+    ON property_activity_logs(createdAt DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_property_activity_logs_property_slug_created_at
+    ON property_activity_logs(propertySlug, createdAt DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_home_location_spotlights_sort_order
+    ON home_location_spotlights(sortOrder ASC, createdAt DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_home_location_spotlights_is_active
+    ON home_location_spotlights(isActive, sortOrder ASC);
+`);
+
+addColumnIfMissing("properties", "priceCurrency", "TEXT NOT NULL DEFAULT 'TRY'");
+addColumnIfMissing("properties", "priceSourceAmount", "REAL");
+addColumnIfMissing("properties", "country", "TEXT NOT NULL DEFAULT 'Türkiye'");
+addColumnIfMissing("properties", "marketStatus", "TEXT NOT NULL DEFAULT 'Hazır'");
+addColumnIfMissing("properties", "publicationStatus", "TEXT NOT NULL DEFAULT 'Onay Bekliyor'");
+addColumnIfMissing("properties", "developerCompany", "TEXT");
+addColumnIfMissing("properties", "staffNotes", "TEXT");
+addColumnIfMissing("properties", "customerFeedbackNotes", "TEXT");
+addColumnIfMissing("properties", "adminCommissionNotes", "TEXT");
+addColumnIfMissing("properties", "adminPrivateNotes", "TEXT");
+addColumnIfMissing("leads", "followUpDate", "TEXT");
+addColumnIfMissing("leads", "priority", "TEXT NOT NULL DEFAULT 'normal'");
+
+type BootstrapAdminConfig = {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+};
+
+function isProductionBuildPhase(): boolean {
+  return process.env.NEXT_PHASE === "phase-production-build";
+}
+
+function readBootstrapAdminConfig(required: boolean): BootstrapAdminConfig | null {
+  const email = process.env.EMLAK_BOOTSTRAP_ADMIN_EMAIL?.trim().toLocaleLowerCase("tr") ?? "";
+  const password = process.env.EMLAK_BOOTSTRAP_ADMIN_PASSWORD?.trim() ?? "";
+  const name = process.env.EMLAK_BOOTSTRAP_ADMIN_NAME?.trim() || "RODINA Ana Yönetici";
+  const phone = process.env.EMLAK_BOOTSTRAP_ADMIN_PHONE?.trim() || "+90 000 000 00 00";
+
+  if (!email && !password && !required) {
+    return null;
+  }
+
+  if (!email || !password) {
+    throw new Error("Production ilk admin için EMLAK_BOOTSTRAP_ADMIN_EMAIL ve EMLAK_BOOTSTRAP_ADMIN_PASSWORD zorunludur.");
+  }
+
+  if (!email.includes("@")) {
+    throw new Error("EMLAK_BOOTSTRAP_ADMIN_EMAIL geçerli bir e-posta olmalıdır.");
+  }
+
+  assertSafeProductionPassword(password, "EMLAK_BOOTSTRAP_ADMIN_PASSWORD");
+
+  return { name, email, phone, password };
+}
+
+function insertBootstrapAdmin(insertUser: ReturnType<typeof db.prepare>, config: BootstrapAdminConfig) {
+  insertUser.run({
+    id: "usr-bootstrap-admin",
+    name: config.name,
+    role: "portal_admin",
+    email: config.email,
+    phone: config.phone,
+    username: config.email,
+    password: hashPassword(config.password),
+    advisorId: null,
+  });
+}
+
 function seedIfEmpty() {
   const advisorCount = (db.prepare("SELECT COUNT(*) as c FROM advisors").get() as { c: number }).c;
   if (advisorCount === 0) {
@@ -143,20 +283,28 @@ function seedIfEmpty() {
       INSERT OR IGNORE INTO users (id, name, role, email, phone, username, password, advisorId)
       VALUES (@id, @name, @role, @email, @phone, @username, @password, @advisorId)
     `);
-    const adminUser = {
-      id: "usr-admin-demo",
-      name: "Demo Admin",
-      role: "admin",
-      email: "admin@admin",
-      phone: "+90 555 111 11 11",
-      username: "admin@admin",
-      password: "admin",
-      advisorId: null,
-    };
-    insertUser.run(adminUser);
-    for (const u of initialUsers) {
-      if (u.email !== adminUser.email) {
-        insertUser.run({ ...u, advisorId: u.advisorId ?? null });
+
+    if (isProductionRuntime()) {
+      const bootstrapAdmin = readBootstrapAdminConfig(!isProductionBuildPhase());
+      if (bootstrapAdmin) {
+        insertBootstrapAdmin(insertUser, bootstrapAdmin);
+      }
+    } else {
+      const adminUser = {
+        id: "usr-admin-demo",
+        name: "Demo Admin",
+        role: "admin",
+        email: "admin@admin",
+        phone: "+90 555 111 11 11",
+        username: "admin@admin",
+        password: hashPassword("admin"),
+        advisorId: null,
+      };
+      insertUser.run(adminUser);
+      for (const u of initialUsers) {
+        if (u.email !== adminUser.email) {
+          insertUser.run({ ...u, password: hashPassword(u.password), advisorId: u.advisorId ?? null });
+        }
       }
     }
   }
@@ -166,12 +314,12 @@ function seedIfEmpty() {
     const insertProp = db.prepare(`
       INSERT OR IGNORE INTO properties
         (id, slug, title, city, district, neighborhood, type, price, rooms, areaM2,
-         floor, heating, listingRef, description, highlights, features, infoItems,
+         floor, heating, publicationStatus, listingRef, description, highlights, features, infoItems,
          advisorId, latitude, longitude, coverColor, coverImage, galleryImages,
          imageLabels, translations, publishedAt)
       VALUES
         (@id, @slug, @title, @city, @district, @neighborhood, @type, @price, @rooms, @areaM2,
-         @floor, @heating, @listingRef, @description, @highlights, @features, @infoItems,
+         @floor, @heating, @publicationStatus, @listingRef, @description, @highlights, @features, @infoItems,
          @advisorId, @latitude, @longitude, @coverColor, @coverImage, @galleryImages,
          @imageLabels, @translations, @publishedAt)
     `);
@@ -185,6 +333,7 @@ function seedIfEmpty() {
         galleryImages: JSON.stringify(p.galleryImages ?? sampleSet.gallery),
         imageLabels: JSON.stringify(p.imageLabels ?? []),
         translations: JSON.stringify(p.translations ?? {}),
+        publicationStatus: p.publicationStatus ?? "Aktif",
         coverImage: p.coverImage || sampleSet.cover,
         latitude: p.latitude ?? 41.0082,
         longitude: p.longitude ?? 28.9784,
@@ -207,5 +356,66 @@ function seedIfEmpty() {
 }
 
 seedIfEmpty();
+
+function hardenUnsafeProductionDemoAdmin() {
+  if (!isProductionRuntime() || isProductionBuildPhase()) {
+    return;
+  }
+
+  const row = db.prepare("SELECT * FROM users WHERE LOWER(email) = ? OR LOWER(username) = ?")
+    .get("admin@admin", "admin@admin") as Record<string, unknown> | undefined;
+
+  if (!row || !verifyPassword("admin", String(row.password ?? ""))) {
+    return;
+  }
+
+  const bootstrapAdmin = readBootstrapAdminConfig(false);
+
+  if (bootstrapAdmin) {
+    const duplicate = db.prepare("SELECT id FROM users WHERE LOWER(email) = ? AND id != ?")
+      .get(bootstrapAdmin.email, row.id) as { id: string } | undefined;
+
+    if (!duplicate) {
+      db.prepare(`
+        UPDATE users
+        SET name = ?, role = 'portal_admin', email = ?, username = ?, phone = ?, password = ?, advisorId = NULL
+        WHERE id = ?
+      `).run(
+        bootstrapAdmin.name,
+        bootstrapAdmin.email,
+        bootstrapAdmin.email,
+        bootstrapAdmin.phone,
+        hashPassword(bootstrapAdmin.password),
+        row.id,
+      );
+      console.warn("[security] Unsafe demo admin was converted to the bootstrap admin account.");
+      return;
+    }
+  }
+
+  db.prepare("UPDATE users SET password = ?, name = ? WHERE id = ?").run(
+    hashPassword(`locked-${randomUUID()}-${randomUUID()}`),
+    "Locked Demo Admin",
+    row.id,
+  );
+  console.warn("[security] Unsafe demo admin credentials were disabled for production.");
+}
+
+hardenUnsafeProductionDemoAdmin();
+
+function publishInitialPropertiesIfDemoIsEmpty() {
+  const activeCount = (db.prepare("SELECT COUNT(*) as c FROM properties WHERE publicationStatus = 'Aktif'").get() as { c: number }).c;
+
+  if (activeCount > 0) {
+    return;
+  }
+
+  const update = db.prepare("UPDATE properties SET publicationStatus = 'Aktif' WHERE slug = ? AND publicationStatus = 'Onay Bekliyor'");
+  for (const property of initialProperties) {
+    update.run(property.slug);
+  }
+}
+
+publishInitialPropertiesIfDemoIsEmpty();
 
 export default db;

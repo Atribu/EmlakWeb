@@ -9,21 +9,26 @@ import { blogListPageCopy } from "@/lib/site-copy";
 import { formatDate } from "@/lib/format";
 import { isUnoptimizedImageSrc } from "@/lib/image-src";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
-import { blogListSchema } from "@/lib/seo";
+import { blogListSchema, breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Blog | PortföySatış",
+export const metadata: Metadata = publicPageMetadata({
+  title: "Blog | RODINA Invest Co.",
   description: "Emlak yatırımı, satış stratejisi ve premium konut trendleri üzerine SEO odaklı içerikler.",
-  alternates: {
-    canonical: "/blog",
-  },
-};
+  canonical: "/blog",
+});
 
 export default async function BlogPage() {
   const language = await getServerSiteLanguage();
   const copy = blogListPageCopy(language);
   const posts = listBlogPosts();
-  const schema = blogListSchema(posts);
+  const structuredData = [
+    organizationSchema(),
+    blogListSchema(posts),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Blog", path: "/blog" },
+    ]),
+  ];
 
   return (
     <div className="min-h-screen">
@@ -77,7 +82,7 @@ export default async function BlogPage() {
 
         <SiteFooter />
 
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

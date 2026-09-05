@@ -27,6 +27,7 @@ import {
   propertyHighlightsForLanguage,
   propertyTitleForLanguage,
 } from "@/lib/property-content";
+import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import { getProjectMeta } from "@/lib/project-meta";
 import {
   propertyDetailPageCopy,
@@ -41,7 +42,7 @@ import {
 } from "@/lib/site-copy";
 import type { SiteLanguage } from "@/lib/site-preferences";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
-import { listingMetadata, propertySchema } from "@/lib/seo";
+import { breadcrumbSchema, listingMetadata, missingPageMetadata, organizationSchema, propertySchema } from "@/lib/seo";
 import type { PropertyInfoIconKey, PropertyInfoItem } from "@/lib/types";
 
 type PropertyDetailProps = {
@@ -53,7 +54,7 @@ export async function generateMetadata({ params }: PropertyDetailProps): Promise
   const property = getPropertyBySlug(resolvedParams.slug);
 
   if (!property) {
-    return { title: "İlan Bulunamadı | PortföySatış" };
+    return missingPageMetadata("İlan Bulunamadı | RODINA Invest Co.");
   }
 
   return listingMetadata(property);
@@ -72,11 +73,24 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
 
   const advisor = getAdvisorById(property.advisorId);
   const projectMeta = getProjectMeta(property);
-  const listingSchema = propertySchema(property);
   const propertyTitle = propertyTitleForLanguage(property, language);
+  const structuredData = [
+    organizationSchema(),
+    propertySchema(property),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Portföyler", path: "/portfoyler" },
+      { name: propertyTitle, path: `/ilan/${property.slug}` },
+    ]),
+  ];
   const propertyDescription = propertyDescriptionForLanguage(property, language);
   const propertyHighlights = propertyHighlightsForLanguage(property, language);
   const propertyFeatures = propertyFeaturesForLanguage(property, language);
+  const hasFloor = property.floor.trim().length > 0;
+  const locationLabel =
+    property.country && property.country !== "Türkiye"
+      ? [property.country, property.city, property.district, property.neighborhood].join(" / ")
+      : [property.city, property.district, property.neighborhood].join(" / ");
 
   const phoneHref = advisor ? `tel:${formatPhoneForHref(advisor.phone)}` : null;
   const whatsappHref = advisor
@@ -98,7 +112,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
           <PropertyDetailGallery
             title={propertyTitle}
             listingRef={property.listingRef}
-            locationLabel={`${property.city} / ${property.district} / ${property.neighborhood}`}
+            locationLabel={locationLabel}
             coverImage={property.coverImage}
             galleryImages={property.galleryImages}
             imageLabels={property.imageLabels}
@@ -107,11 +121,23 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
           <div className="grid gap-6 p-6 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <DetailItem label={copy.labels.price} value={<PriceText amount={property.price} />} icon={<PriceFieldIcon />} highlight />
+                <DetailItem
+                  label={copy.labels.price}
+                  value={
+                    <PriceText
+                      amount={propertyDisplayAmount(property)}
+                      sourceCurrency={propertyDisplayCurrency(property)}
+                    />
+                  }
+                  icon={<PriceFieldIcon />}
+                  highlight
+                />
                 <DetailItem label={copy.labels.type} value={translatePropertyType(property.type, language)} icon={<TypeFieldIcon />} />
                 <DetailItem label={copy.labels.rooms} value={translateRoomLabel(property.rooms, language)} icon={<RoomFieldIcon />} />
                 <DetailItem label={copy.labels.area} value={String(property.areaM2)} icon={<AreaFieldIcon />} />
-                <DetailItem label={copy.labels.floor} value={translateFloorLabel(property.floor, language)} icon={<FloorFieldIcon />} />
+                {hasFloor ? (
+                  <DetailItem label={copy.labels.floor} value={translateFloorLabel(property.floor, language)} icon={<FloorFieldIcon />} />
+                ) : null}
                 <DetailItem label={copy.labels.heating} value={translateHeatingLabel(property.heating, language)} icon={<HeatingFieldIcon />} />
               </div>
 
@@ -190,7 +216,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailProps
         </section>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(listingSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </main>
     </div>
@@ -246,11 +272,11 @@ type InfoListProps = {
 
 function InfoList({ title, items }: InfoListProps) {
   return (
-    <section className="rounded-xl border border-[#ddd0bd] bg-[#fffdf9] p-4">
-      <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8e7f67]">{title}</h3>
-      <ul className="mt-3 space-y-2 text-sm text-[#5b5145]">
+    <section className="rounded-lg border border-[var(--line-strong)] bg-white p-4">
+      <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">{title}</h3>
+      <ul className="mt-3 space-y-2 text-sm text-[var(--ink-600)]">
         {items.map((item) => (
-          <li key={item} className="rounded bg-[#f7f1e6] px-3 py-2">
+          <li key={item} className="rounded bg-[rgba(102,165,87,0.08)] px-3 py-2">
             {item}
           </li>
         ))}
@@ -261,20 +287,20 @@ function InfoList({ title, items }: InfoListProps) {
 
 function PropertyInfoGrid({ items, language }: { items: PropertyInfoItem[]; language: SiteLanguage }) {
   return (
-    <section className="mt-6 rounded-2xl border border-[#ddd0bd] bg-[#fffdf9] p-4 sm:p-5">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9a8d78]">
+    <section className="mt-6 rounded-lg border border-[var(--line-strong)] bg-white p-4 sm:p-5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
         {translateInfoHeading(language)}
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((item, index) => (
-          <article key={`${item.icon}-${item.value}-${index}`} className="rounded-2xl border border-[#e1d5c6] bg-[#f9f3ea] px-4 py-4 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#d7c8b3] bg-white text-[#7b6a52]">
+          <article key={`${item.icon}-${item.value}-${index}`} className="rounded-lg border border-[var(--line-strong)] bg-[rgba(102,165,87,0.07)] px-4 py-4 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--line-strong)] bg-white text-[var(--brand-accent-strong)]">
               <PropertyInfoIcon icon={item.icon} />
             </div>
-            <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8e7f67]">
+            <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-500)]">
               {translateInfoLabel(item.icon, language)}
             </p>
-            <p className="mt-1 text-sm font-semibold text-[#2f271d]">{item.value}</p>
+            <p className="mt-1 text-sm font-semibold text-[var(--brand-ink)]">{item.value}</p>
           </article>
         ))}
       </div>

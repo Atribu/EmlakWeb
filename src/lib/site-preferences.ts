@@ -1,5 +1,7 @@
+import { convertAmountBetweenCurrencies, type ExchangeRateTable } from "@/lib/exchange-rates-shared";
+
 export type SiteLanguage = "TR" | "EN" | "RU" | "AR";
-export type SiteCurrency = "TRY" | "USD" | "EUR";
+export type SiteCurrency = "TRY" | "USD" | "EUR" | "GBP";
 
 export type SitePreferencesSnapshot = {
   language: SiteLanguage;
@@ -20,16 +22,11 @@ export const DEFAULT_SITE_PREFERENCES_SNAPSHOT: SitePreferencesSnapshot = {
   currency: DEFAULT_SITE_CURRENCY,
 };
 
-const currencyRates: Record<SiteCurrency, number> = {
-  TRY: 1,
-  USD: 0.031,
-  EUR: 0.029,
-};
-
 const currencyLocales: Record<SiteCurrency, string> = {
   TRY: "tr-TR",
   USD: "en-US",
   EUR: "de-DE",
+  GBP: "en-GB",
 };
 
 const languageLocales: Record<SiteLanguage, string> = {
@@ -55,7 +52,7 @@ export function normalizeSiteLanguage(value: string | null | undefined): SiteLan
 }
 
 export function normalizeSiteCurrency(value: string | null | undefined): SiteCurrency {
-  if (value === "USD" || value === "EUR") {
+  if (value === "USD" || value === "EUR" || value === "GBP") {
     return value;
   }
 
@@ -97,9 +94,20 @@ export function readSitePreferencesFromCookieHeader(cookieHeader: string | null 
   );
 }
 
-export function convertPriceFromTry(value: number, currency: SiteCurrency): number {
-  const rate = currencyRates[currency] ?? 1;
-  return Math.round(value * rate);
+export function convertPriceFromTry(
+  value: number,
+  currency: SiteCurrency,
+  exchangeRates?: ExchangeRateTable,
+): number {
+  return Math.round(convertAmountBetweenCurrencies(value, "TRY", currency, exchangeRates));
+}
+
+export function convertPriceToTry(
+  value: number,
+  currency: SiteCurrency,
+  exchangeRates?: ExchangeRateTable,
+): number {
+  return Math.round(convertAmountBetweenCurrencies(value, currency, "TRY", exchangeRates));
 }
 
 export function localeForCurrency(currency: SiteCurrency): string {

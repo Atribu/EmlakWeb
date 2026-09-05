@@ -5,19 +5,10 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
+import { INSTAGRAM_URL, PRIMARY_TELEGRAM_URL, PRIMARY_WHATSAPP_URL } from "@/lib/contact-channels";
 import { dockCopy } from "@/lib/site-preferences";
 
 import { useSitePreferences } from "@/components/use-site-preferences";
-
-const CHANNELS = {
-  whatsappPhone: "+905321112233",
-  telegramUrl: "https://t.me/portfoysatis",
-  instagramUrl: "https://instagram.com/portfoysatis",
-};
-
-function formatPhoneForHref(value: string) {
-  return value.replace(/\D/g, "");
-}
 
 function FloatingButton({
   href,
@@ -40,7 +31,7 @@ function FloatingButton({
       className={`group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/18 ${accent} text-white shadow-[0_20px_36px_-22px_rgba(0,0,0,0.42)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02] sm:h-12 sm:w-12`}
     >
       {children}
-      <span className="pointer-events-none absolute right-[calc(100%+0.8rem)] hidden rounded-full border border-[#dac39d] bg-[#fffaf1] px-3 py-1 text-[11px] font-semibold whitespace-nowrap text-[#35291d] opacity-0 shadow-[0_16px_30px_-26px_rgba(30,24,17,0.8)] transition duration-200 group-hover:opacity-100 sm:block">
+      <span className="pointer-events-none absolute right-[calc(100%+0.8rem)] hidden rounded-lg border border-[var(--line-strong)] bg-white px-3 py-1 text-[11px] font-semibold whitespace-nowrap text-[var(--brand-ink)] opacity-0 shadow-[0_16px_30px_-26px_rgba(30,24,17,0.8)] transition duration-200 group-hover:opacity-100 sm:block">
         {label}
       </span>
     </a>
@@ -119,27 +110,27 @@ export function FloatingContactDock() {
   }
 
   const whatsappText = encodeURIComponent(copy.whatsappPrefill);
-  const whatsappHref = `https://wa.me/${formatPhoneForHref(CHANNELS.whatsappPhone)}?text=${whatsappText}`;
+  const whatsappHref = `${PRIMARY_WHATSAPP_URL}?text=${whatsappText}`;
 
   return (
-    <div className="pointer-events-none fixed right-3 bottom-3 z-[80] flex flex-col items-end gap-2 sm:right-5 sm:bottom-5">
+    <div className="pointer-events-none fixed right-3 bottom-3 z-[80] hidden flex-col items-end gap-2 sm:right-5 sm:bottom-5 sm:flex">
       {isAssistantOpen ? (
-        <div className="pointer-events-auto w-[min(84vw,19rem)] overflow-hidden rounded-[1.35rem] border border-[#dbc7a3] bg-[#fffaf2] shadow-[0_28px_66px_-30px_rgba(16,12,8,0.55)] sm:w-[min(92vw,21rem)]">
-          <div className="bg-[linear-gradient(135deg,#101b27_0%,#172738_58%,#1f3245_100%)] px-5 py-4 text-[#f7ecda]">
+        <div className="pointer-events-auto w-[min(84vw,19rem)] overflow-hidden rounded-lg border border-[var(--line-strong)] bg-white shadow-[0_28px_66px_-30px_rgba(16,12,8,0.55)] sm:w-[min(92vw,21rem)]">
+          <div className="bg-[var(--brand-night-blue)] px-5 py-4 text-white">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#dfc18f]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#cfe8c9]">
                   {copy.assistantIntro}
                 </p>
                 <p className="mt-2 text-lg font-semibold">{copy.assistantTitle}</p>
-                <p className="mt-1 text-sm leading-6 text-[#d8c9ae]">
+                <p className="mt-1 text-sm leading-6 text-[#edf6ea]">
                   {copy.assistantBody}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAssistantOpen(false)}
-                className="rounded-full border border-white/15 px-2.5 py-1 text-xs font-semibold text-[#efe0c1] transition hover:bg-white/10"
+                className="rounded-lg border border-white/15 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-white/10"
               >
                 {copy.close}
               </button>
@@ -147,33 +138,33 @@ export function FloatingContactDock() {
           </div>
 
           <div className="space-y-3 px-5 py-4">
-            <p className="text-sm leading-6 text-[#554a3d]">
+            <p className="text-sm leading-6 text-[var(--ink-600)]">
               {copy.assistantQuickLinks}
             </p>
 
             <div className="grid gap-2">
               <Link
                 href="/emlak-sat?intent=sat"
-                className="rounded-2xl border border-[#e2d4bf] bg-white px-4 py-3 text-left transition hover:bg-[#fbf5ea]"
+                className="rounded-lg border border-[var(--line-strong)] bg-white px-4 py-3 text-left transition hover:bg-[rgba(102,165,87,0.08)]"
               >
-                <p className="text-sm font-semibold text-[#231d17]">{copy.sellTitle}</p>
-                <p className="mt-1 text-xs leading-5 text-[#6a5f50]">{copy.sellText}</p>
+                <p className="text-sm font-semibold text-[var(--brand-ink)]">{copy.sellTitle}</p>
+                <p className="mt-1 text-xs leading-5 text-[var(--ink-600)]">{copy.sellText}</p>
               </Link>
 
               <Link
                 href="/iletisim"
-                className="rounded-2xl border border-[#e2d4bf] bg-white px-4 py-3 text-left transition hover:bg-[#fbf5ea]"
+                className="rounded-lg border border-[var(--line-strong)] bg-white px-4 py-3 text-left transition hover:bg-[rgba(102,165,87,0.08)]"
               >
-                <p className="text-sm font-semibold text-[#231d17]">{copy.advisorTitle}</p>
-                <p className="mt-1 text-xs leading-5 text-[#6a5f50]">{copy.advisorText}</p>
+                <p className="text-sm font-semibold text-[var(--brand-ink)]">{copy.advisorTitle}</p>
+                <p className="mt-1 text-xs leading-5 text-[var(--ink-600)]">{copy.advisorText}</p>
               </Link>
 
               <Link
                 href="/portfoyler"
-                className="rounded-2xl border border-[#e2d4bf] bg-white px-4 py-3 text-left transition hover:bg-[#fbf5ea]"
+                className="rounded-lg border border-[var(--line-strong)] bg-white px-4 py-3 text-left transition hover:bg-[rgba(102,165,87,0.08)]"
               >
-                <p className="text-sm font-semibold text-[#231d17]">{copy.listingsTitle}</p>
-                <p className="mt-1 text-xs leading-5 text-[#6a5f50]">{copy.listingsText}</p>
+                <p className="text-sm font-semibold text-[var(--brand-ink)]">{copy.listingsTitle}</p>
+                <p className="mt-1 text-xs leading-5 text-[var(--ink-600)]">{copy.listingsText}</p>
               </Link>
             </div>
           </div>
@@ -181,11 +172,11 @@ export function FloatingContactDock() {
       ) : null}
 
       <div className="pointer-events-auto flex flex-col items-end gap-2">
-        <FloatingButton href={CHANNELS.instagramUrl} label={copy.instagram} accent="bg-[linear-gradient(135deg,#6f2dbd_0%,#d62976_55%,#f77737_100%)]">
+        <FloatingButton href={INSTAGRAM_URL} label={copy.instagram} accent="bg-[linear-gradient(135deg,#6f2dbd_0%,#d62976_55%,#f77737_100%)]">
           <InstagramIcon />
         </FloatingButton>
 
-        <FloatingButton href={CHANNELS.telegramUrl} label={copy.telegram} accent="bg-[linear-gradient(135deg,#1d8fff_0%,#2aa3ff_100%)]">
+        <FloatingButton href={PRIMARY_TELEGRAM_URL} label={copy.telegram} accent="bg-[linear-gradient(135deg,#1d8fff_0%,#2aa3ff_100%)]">
           <TelegramIcon />
         </FloatingButton>
 
@@ -194,10 +185,10 @@ export function FloatingContactDock() {
           aria-label={copy.quickMessage}
           title={copy.quickMessage}
           onClick={() => setIsAssistantOpen((current) => !current)}
-          className="group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/18 bg-[linear-gradient(135deg,#14202d_0%,#24384c_100%)] text-white shadow-[0_20px_36px_-22px_rgba(0,0,0,0.42)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02] sm:h-12 sm:w-12"
+          className="group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/18 bg-[var(--brand-night-blue)] text-white shadow-[0_20px_36px_-22px_rgba(0,0,0,0.42)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:scale-[1.02] sm:h-12 sm:w-12"
         >
           <SparkIcon />
-          <span className="pointer-events-none absolute right-[calc(100%+0.8rem)] hidden rounded-full border border-[#dac39d] bg-[#fffaf1] px-3 py-1 text-[11px] font-semibold whitespace-nowrap text-[#35291d] opacity-0 shadow-[0_16px_30px_-26px_rgba(30,24,17,0.8)] transition duration-200 group-hover:opacity-100 sm:block">
+          <span className="pointer-events-none absolute right-[calc(100%+0.8rem)] hidden rounded-lg border border-[var(--line-strong)] bg-white px-3 py-1 text-[11px] font-semibold whitespace-nowrap text-[var(--brand-ink)] opacity-0 shadow-[0_16px_30px_-26px_rgba(30,24,17,0.8)] transition duration-200 group-hover:opacity-100 sm:block">
             {copy.quickMessage}
           </span>
         </button>

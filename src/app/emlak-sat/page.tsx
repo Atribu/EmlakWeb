@@ -4,14 +4,17 @@ import Link from "next/link";
 import { SellPropertyForm } from "@/components/sell-property-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { PRIMARY_CONTACT_PHONE_DISPLAY } from "@/lib/contact-channels";
 import { listProperties } from "@/lib/data-store";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { sellPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
-export const metadata: Metadata = {
-  title: "Emlak Sat | PortföySatış",
+export const metadata: Metadata = publicPageMetadata({
+  title: "Emlak Sat | RODINA Invest Co.",
   description: "Mülkünüzü satışa çıkarmak için detayları paylaşın; değerleme ve premium satış operasyonu için ekibimiz sizinle iletişime geçsin.",
-};
+  canonical: "/emlak-sat",
+});
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -33,6 +36,13 @@ export default async function EmlakSatPage({ searchParams }: EmlakSatPageProps) 
   const params = await searchParams;
   const intent = readString(params.intent).trim();
   const properties = listProperties();
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Emlak Sat", path: "/emlak-sat" },
+    ]),
+  ];
 
   const cityDistrictMap = properties.reduce<Record<string, string[]>>((accumulator, property) => {
     const districts = accumulator[property.city] ?? [];
@@ -49,14 +59,14 @@ export default async function EmlakSatPage({ searchParams }: EmlakSatPageProps) 
       <SiteHeader />
 
       <main className="w-full pb-24">
-        <section className="frame-wide fade-up relative overflow-hidden rounded-[1.4rem] border border-[#3f3022] bg-[#0f1621] p-7 text-[#f4ead8] shadow-[0_48px_88px_-64px_rgba(0,0,0,0.95)] sm:p-10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(216,188,141,0.18),transparent_32%)]" />
+        <section className="frame-wide fade-up relative overflow-hidden rounded-lg border border-[rgba(102,165,87,0.26)] bg-[var(--brand-night-blue)] p-7 text-white shadow-[0_48px_88px_-64px_rgba(0,0,0,0.95)] sm:p-10">
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(102,165,87,0.18)_0%,rgba(29,38,68,0)_58%)]" />
           <div className="relative z-10 max-w-4xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8bc8d]">{copy.heroKicker}</p>
-            <h1 className="mt-3 text-[2.4rem] leading-[0.95] font-semibold sm:text-[3.8rem]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#cfe8c9]">{copy.heroKicker}</p>
+            <h1 className="mt-3 text-[2.4rem] leading-[0.95] font-black sm:text-[3.8rem]">
               {copy.heroTitle}
             </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#d7c8ad] sm:text-base">
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#edf6ea] sm:text-base">
               {copy.heroBody}
             </p>
           </div>
@@ -68,14 +78,14 @@ export default async function EmlakSatPage({ searchParams }: EmlakSatPageProps) 
           <aside className="space-y-4">
             <article className="luxury-card p-6 sm:p-7">
               <span className="section-kicker">{copy.planKicker}</span>
-              <h2 className="mt-3 text-[2rem] leading-none font-semibold text-[#1f1a14]">{copy.planTitle}</h2>
-              <p className="mt-3 text-sm leading-7 text-[#665c4f]">
+              <h2 className="mt-3 text-[2rem] leading-none font-extrabold text-[var(--brand-ink)]">{copy.planTitle}</h2>
+              <p className="mt-3 text-sm leading-7 text-[var(--ink-600)]">
                 {copy.planBody}
               </p>
 
               <div className="mt-5 space-y-3">
                 {copy.planItems.map((item) => (
-                  <div key={item} className="rounded-[1rem] border border-[#e1d3be] bg-white px-4 py-3 text-sm text-[#4f463a]">
+                  <div key={item} className="rounded-lg border border-[var(--line-strong)] bg-white px-4 py-3 text-sm text-[var(--ink-700)]">
                     {item}
                   </div>
                 ))}
@@ -84,24 +94,24 @@ export default async function EmlakSatPage({ searchParams }: EmlakSatPageProps) 
 
             <article className="luxury-card p-6 sm:p-7">
               <span className="section-kicker">{copy.accessKicker}</span>
-              <h2 className="mt-3 text-[1.85rem] leading-none font-semibold text-[#1f1a14]">{copy.accessTitle}</h2>
+              <h2 className="mt-3 text-[1.85rem] leading-none font-extrabold text-[var(--brand-ink)]">{copy.accessTitle}</h2>
 
-              <div className="mt-4 space-y-3 text-sm text-[#5f5548]">
+              <div className="mt-4 space-y-3 text-sm text-[var(--ink-600)]">
                 <p><span className="font-semibold">{copy.phone}:</span> +90 212 900 00 01</p>
-                <p><span className="font-semibold">{copy.whatsapp}:</span> +90 532 111 22 33</p>
-                <p><span className="font-semibold">{copy.email}:</span> sales@portfoysatis.com</p>
+                <p><span className="font-semibold">{copy.whatsapp}:</span> {PRIMARY_CONTACT_PHONE_DISPLAY}</p>
+                <p><span className="font-semibold">{copy.email}:</span> sales@rodinainvest.com</p>
               </div>
 
               <div className="mt-5 flex flex-wrap gap-2">
                 <a
                 href="tel:+902129000001"
-                className="rounded-full border border-[#d6c5a8] bg-white px-4 py-2 text-sm font-semibold text-[#4f4435] transition hover:bg-[#f6edde]"
+                className="rounded-lg border border-[var(--line-strong)] bg-white px-4 py-2 text-sm font-semibold text-[var(--brand-primary)] transition hover:border-[var(--brand-accent)] hover:bg-[rgba(102,165,87,0.08)]"
               >
                   {copy.call}
                 </a>
                 <Link
                   href="/danismanlar"
-                  className="rounded-full border border-[#ccb795] bg-[#faf6ee] px-4 py-2 text-sm font-semibold text-[#6d593b] transition hover:bg-[#f1e8db]"
+                  className="rounded-lg border border-[var(--brand-green)] bg-[var(--brand-green)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#58974b]"
                 >
                   {copy.advisors}
                 </Link>
@@ -111,6 +121,8 @@ export default async function EmlakSatPage({ searchParams }: EmlakSatPageProps) 
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

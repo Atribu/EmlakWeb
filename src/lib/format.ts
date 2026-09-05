@@ -1,5 +1,4 @@
 import {
-  convertPriceFromTry,
   DEFAULT_SITE_CURRENCY,
   DEFAULT_SITE_LANGUAGE,
   localeForCurrency,
@@ -7,15 +6,34 @@ import {
   type SiteCurrency,
   type SiteLanguage,
 } from "@/lib/site-preferences";
+import { convertAmountBetweenCurrencies, type ExchangeRateTable } from "@/lib/exchange-rates-shared";
 
-export function formatPrice(value: number, currency: SiteCurrency = DEFAULT_SITE_CURRENCY): string {
+type FormatPriceOptions = {
+  sourceCurrency?: SiteCurrency;
+  exchangeRates?: ExchangeRateTable;
+  maximumFractionDigits?: number;
+};
+
+export function formatPrice(
+  value: number,
+  currency: SiteCurrency = DEFAULT_SITE_CURRENCY,
+  options: FormatPriceOptions = {},
+): string {
+  const sourceCurrency = options.sourceCurrency ?? currency;
   const formatter = new Intl.NumberFormat(localeForCurrency(currency), {
     style: "currency",
     currency,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: options.maximumFractionDigits ?? 0,
   });
 
-  return formatter.format(convertPriceFromTry(value, currency));
+  const convertedValue = convertAmountBetweenCurrencies(
+    value,
+    sourceCurrency,
+    currency,
+    options.exchangeRates,
+  );
+
+  return formatter.format(convertedValue);
 }
 
 export function formatPhoneForHref(value: string): string {
@@ -23,7 +41,7 @@ export function formatPhoneForHref(value: string): string {
 }
 
 export function roleLabel(role: string, language: SiteLanguage = DEFAULT_SITE_LANGUAGE): string {
-  if (role === "portal_admin") return "Portal Admin";
+  if (role === "portal_admin") return "Admin";
   if (role === "admin") return "Admin";
 
   if (role === "portfolio_manager") {
@@ -67,6 +85,23 @@ export function formatDate(value: string, language: SiteLanguage = DEFAULT_SITE_
 
 export function formatDateTR(value: string): string {
   return formatDate(value, "TR");
+}
+
+export function formatDateTimeTR(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Istanbul",
+  }).format(date);
 }
 
 export function leadStageLabel(stage: string): string {

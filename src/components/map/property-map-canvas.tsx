@@ -8,6 +8,7 @@ import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import { PriceText } from "@/components/price-text";
 import { useSitePreferences } from "@/components/use-site-preferences";
 import { mapComponentCopy } from "@/lib/site-copy";
+import type { SiteCurrency } from "@/lib/site-preferences";
 
 export type MapPortfolio = {
   id: string;
@@ -18,6 +19,7 @@ export type MapPortfolio = {
   neighborhood: string;
   listingRef: string;
   price: number;
+  priceCurrency: SiteCurrency;
   latitude: number;
   longitude: number;
   advisorName?: string;
@@ -119,7 +121,7 @@ export function PropertyMapCanvas({
                   {portfolio.city} / {portfolio.district} / {portfolio.neighborhood}
                 </p>
                 <p className="text-xs font-semibold text-[#6a4f22]">
-                  <PriceText amount={portfolio.price} />
+                  <PriceText amount={portfolio.price} sourceCurrency={portfolio.priceCurrency} />
                 </p>
                 {portfolio.advisorName ? (
                   <p className="text-xs text-slate-500">{copy.advisor}: {portfolio.advisorName}</p>

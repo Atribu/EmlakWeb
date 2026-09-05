@@ -2,17 +2,26 @@ import type { Metadata } from "next";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { servicesPageCopy } from "@/lib/site-copy";
 import { getServerSiteLanguage } from "@/lib/site-preferences-server";
 
-export const metadata: Metadata = {
-  title: "Hizmetler | PortföySatış",
+export const metadata: Metadata = publicPageMetadata({
+  title: "Hizmetler | RODINA Invest Co.",
   description: "Satış, yatırım ve portföy yönetimi hizmet detayları.",
-};
+  canonical: "/hizmetler",
+});
 
 export default async function HizmetlerPage() {
   const language = await getServerSiteLanguage();
   const copy = servicesPageCopy(language);
+  const structuredData = [
+    organizationSchema(),
+    breadcrumbSchema([
+      { name: "Ana Sayfa", path: "/" },
+      { name: "Hizmetler", path: "/hizmetler" },
+    ]),
+  ];
 
   return (
     <div className="min-h-screen">
@@ -38,6 +47,8 @@ export default async function HizmetlerPage() {
         </section>
 
         <SiteFooter />
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </main>
     </div>
   );

@@ -15,21 +15,27 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path: segments } = await params;
+  const uploadRoot = path.resolve(UPLOAD_DISK_ROOT);
 
   const safePath = segments
     .map((s) => path.basename(s))
     .join(path.sep);
 
-  const diskPath = path.join(UPLOAD_DISK_ROOT, safePath);
+  const diskPath = path.resolve(uploadRoot, safePath);
+  const relativePath = path.relative(uploadRoot, diskPath);
 
-  if (!diskPath.startsWith(UPLOAD_DISK_ROOT)) {
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
   try {
     const buffer = await fs.readFile(diskPath);
     const ext = path.extname(diskPath).toLowerCase();
-    const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
+    const contentType = MIME_TYPES[ext];
+
+    if (!contentType) {
+      return new NextResponse("Unsupported Media Type", { status: 415 });
+    }
 
     return new NextResponse(buffer, {
       status: 200,

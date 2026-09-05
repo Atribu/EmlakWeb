@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 import { canManageLeads, canViewLead } from "@/lib/access-control";
 import { getUserFromRequest } from "@/lib/auth";
 import { getLeadById, updateLeadStage } from "@/lib/data-store";
-import type { LeadStage } from "@/lib/types";
+import type { LeadPriority, LeadStage } from "@/lib/types";
 
 const validStages: LeadStage[] = [
   "new",
@@ -14,6 +14,8 @@ const validStages: LeadStage[] = [
   "won",
   "lost",
 ];
+
+const validPriorities: LeadPriority[] = ["low", "normal", "high"];
 
 function parseStage(value: unknown): LeadStage {
   if (typeof value !== "string") {
@@ -25,6 +27,34 @@ function parseStage(value: unknown): LeadStage {
   }
 
   return value as LeadStage;
+}
+
+function parsePriority(value: unknown): LeadPriority | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== "string" || !validPriorities.includes(value as LeadPriority)) {
+    throw new Error("Geçersiz lead önceliği.");
+  }
+
+  return value as LeadPriority;
+}
+
+function parseOptionalDate(value: unknown): string | null | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null || value === "") {
+    return null;
+  }
+
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error("Takip tarihi geçersiz.");
+  }
+
+  return value;
 }
 
 export async function PATCH(
@@ -53,15 +83,38 @@ export async function PATCH(
   }
 
   try {
-    const payload = (await request.json()) as { stage?: unknown; pipelineNote?: unknown };
+    const payload = (await request.json()) as {
+      stage?: unknown;
+      pipelineNote?: unknown;
+      followUpDate?: unknown;
+      priority?: unknown;
+      assignedAdvisorId?: unknown;
+    };
 
     const stage = parseStage(payload?.stage);
     const pipelineNote = typeof payload?.pipelineNote === "string" ? payload.pipelineNote : undefined;
+    const followUpDate = parseOptionalDate(payload?.followUpDate);
+    const priority = parsePriority(payload?.priority);
+    const assignedAdvisorId =
+      typeof payload?.assignedAdvisorId === "string" || payload?.assignedAdvisorId === null
+        ? payload.assignedAdvisorId
+        : undefined;
+
+    if (
+      assignedAdvisorId !== undefined &&
+      user.role !== "portal_admin" &&
+      user.role !== "admin"
+    ) {
+      return NextResponse.json({ message: "Lead ataması için yetkiniz yok." }, { status: 403 });
+    }
 
     const lead = updateLeadStage({
       leadId,
       stage,
       pipelineNote,
+      followUpDate,
+      priority,
+      assignedAdvisorId,
     });
 
     return NextResponse.json({ lead });

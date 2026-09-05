@@ -78,7 +78,7 @@ export async function PATCH(
 
   if (!canManageAdvisors(user.role)) {
     return NextResponse.json(
-      { message: "Danışman düzenleme işlemi sadece portal admin ve admin yetkisindedir." },
+      { message: "Danışman düzenleme işlemi sadece admin yetkisindedir." },
       { status: 403 },
     );
   }
@@ -115,7 +115,7 @@ export async function DELETE(
 
   if (!canManageAdvisors(user.role)) {
     return NextResponse.json(
-      { message: "Danışman silme işlemi sadece portal admin ve admin yetkisindedir." },
+      { message: "Danışman silme işlemi sadece admin yetkisindedir." },
       { status: 403 },
     );
   }

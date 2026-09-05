@@ -1,74 +1,70 @@
 import type { MetadataRoute } from "next";
 
 import { listBlogPosts, listProperties } from "@/lib/data-store";
-import { getBaseUrl } from "@/lib/seo";
+import { absoluteUrl, BRAND_LOGO_PATH, getBaseUrlString } from "@/lib/seo";
+
+function sitemapImages(images: string[]): string[] {
+  return Array.from(new Set(images.filter(Boolean).map(absoluteUrl)));
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = getBaseUrl().toString().replace(/\/$/, "");
-  const now = new Date();
+  const baseUrl = getBaseUrlString();
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
-      lastModified: now,
       changeFrequency: "daily",
       priority: 1,
+      images: sitemapImages([BRAND_LOGO_PATH]),
     },
     {
       url: `${baseUrl}/portfoyler`,
-      lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
       url: `${baseUrl}/blog`,
-      lastModified: now,
       changeFrequency: "daily",
       priority: 0.85,
     },
     {
       url: `${baseUrl}/harita`,
-      lastModified: now,
       changeFrequency: "daily",
       priority: 0.85,
     },
     {
       url: `${baseUrl}/danismanlar`,
-      lastModified: now,
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
       url: `${baseUrl}/hizmetler`,
-      lastModified: now,
       changeFrequency: "weekly",
       priority: 0.65,
     },
     {
       url: `${baseUrl}/hakkimizda`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.55,
     },
     {
       url: `${baseUrl}/iletisim`,
-      lastModified: now,
       changeFrequency: "weekly",
       priority: 0.75,
     },
     {
-      url: `${baseUrl}/yetkili-giris`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.4,
+      url: `${baseUrl}/emlak-sat`,
+      changeFrequency: "weekly",
+      priority: 0.75,
     },
   ];
 
-  const listingRoutes: MetadataRoute.Sitemap = listProperties().map((property) => ({
+  const listingRoutes: MetadataRoute.Sitemap = listProperties({ publicationStatus: "Aktif" }).map((property) => ({
     url: `${baseUrl}/ilan/${property.slug}`,
     lastModified: new Date(property.publishedAt),
     changeFrequency: "weekly",
     priority: 0.8,
+    images: sitemapImages([property.coverImage, ...property.galleryImages]).slice(0, 10),
   }));
 
   const blogRoutes: MetadataRoute.Sitemap = listBlogPosts().map((post) => ({
@@ -76,6 +72,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(post.publishedAt),
     changeFrequency: "weekly",
     priority: 0.75,
+    images: sitemapImages([post.coverImage]),
   }));
 
   return [...staticRoutes, ...listingRoutes, ...blogRoutes];

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { publicFormRateLimitResponse } from "@/lib/api-rate-limit";
 import { createSellerLead } from "@/lib/data-store";
 import { sendSellerLeadNotification } from "@/lib/email";
 import { readSitePreferencesFromCookieHeader } from "@/lib/site-preferences";
@@ -39,6 +40,11 @@ function sanitizeMessage(value: string) {
 }
 
 export async function POST(request: Request) {
+  const rateLimitResponse = publicFormRateLimitResponse(request, "seller-leads");
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   try {
     const language = readSitePreferencesFromCookieHeader(request.headers.get("cookie")).language;
     const copy =

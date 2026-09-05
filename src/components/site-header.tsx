@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+
+import { BrandLogo } from "@/components/brand-logo";
+
 import { HeaderMarketControlsInner } from "@/components/header-market-controls";
 import { SiteHeaderAuth } from "@/components/site-header-auth";
 import { useSitePreferences } from "@/components/use-site-preferences";
@@ -93,20 +96,11 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
 
             <Link
               href="/"
-              className="mx-auto flex items-center gap-3 leading-none text-[var(--brand-primary)] transition hover:opacity-90 xl:mx-0"
-              aria-label="PortföySatış ana sayfa"
+
+              className="mx-auto flex items-center leading-none transition hover:opacity-90 xl:mx-0"
+              aria-label="RODINA ana sayfa"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-[0.95rem] bg-[linear-gradient(135deg,var(--brand-primary)_0%,#315682_100%)] text-base font-semibold text-white shadow-[0_18px_34px_-26px_rgba(29,56,92,0.62)]">
-                PS
-              </span>
-              <span className="block">
-                <span className="block text-[9px] font-semibold uppercase tracking-[0.24em] text-[var(--brand-accent-strong)]">
-                  PortföySatış
-                </span>
-                <span className="text-[1rem] font-semibold tracking-[0.02em] sm:text-[1.12rem]">
-                  Signature Estates
-                </span>
-              </span>
+              <BrandLogo compact className="-my-1" />
             </Link>
 
             <div className="hidden xl:flex xl:items-center xl:gap-4">
@@ -115,7 +109,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                   <div key={group.href} className="group relative">
                     <Link
                       href={group.href}
-                      className="flex min-h-10 items-center gap-1 rounded-full px-4 py-2 transition hover:bg-[rgba(29,56,92,0.07)] hover:text-[var(--brand-primary)] focus-visible:bg-[rgba(29,56,92,0.07)] focus-visible:text-[var(--brand-primary)] focus-visible:outline-none"
+                    className="flex min-h-10 items-center gap-1 rounded-full px-4 py-2 transition hover:bg-[rgba(29,56,92,0.07)] hover:text-[var(--brand-primary)] focus-visible:bg-[rgba(29,56,92,0.07)] focus-visible:text-[var(--brand-primary)] focus-visible:outline-none"
                     >
                       {group.label}
                       <ChevronIcon />
@@ -233,11 +227,11 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                       </button>
 
                       {isOpen ? (
-                        <div className="border-t border-[rgba(220,208,189,0.72)] px-3 py-3">
+                        <div className="border-t border-[var(--line)] px-3 py-3">
                           <Link
                             href={group.href}
                             onClick={closeMobileMenu}
-                            className="mb-2 block rounded-[0.95rem] bg-[rgba(29,56,92,0.05)] px-3 py-2 text-[13px] font-semibold text-[var(--brand-primary)]"
+                            className="mb-2 block rounded-[0.9rem] bg-[rgba(29,56,92,0.08)] px-3 py-2 text-[13px] font-semibold text-[var(--brand-primary)]"
                           >
                             {group.label}
                           </Link>
@@ -247,7 +241,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                                 key={`${group.href}-${item.href}-${item.label}`}
                                 href={item.href}
                                 onClick={closeMobileMenu}
-                                className="flex items-center justify-between gap-3 rounded-[0.95rem] px-3 py-2.5 text-[13px] font-medium text-[var(--ink-700)] transition hover:bg-[rgba(29,56,92,0.05)]"
+                                className="flex items-center justify-between gap-3 rounded-[0.9rem] px-3 py-2.5 text-[13px] font-medium text-[var(--ink-700)] transition hover:bg-[rgba(29,56,92,0.05)]"
                               >
                                 <span className="min-w-0 truncate">{item.label}</span>
                                 <span className="shrink-0 text-[var(--brand-accent-strong)]">
@@ -269,7 +263,7 @@ export function SiteHeader({ initialUser = null }: SiteHeaderProps) {
                     key={`mobile-${item.href}`}
                     href={item.href}
                     onClick={closeMobileMenu}
-                    className="rounded-[1rem] border border-[var(--line-strong)] bg-white px-4 py-3 text-sm font-semibold tracking-[0.03em] text-[var(--brand-primary)] transition hover:bg-[rgba(29,56,92,0.04)]"
+                    className="rounded-full border border-[var(--line-strong)] bg-white px-4 py-3 text-sm font-semibold tracking-[0.03em] text-[var(--brand-primary)] transition hover:bg-[rgba(29,56,92,0.05)]"
                   >
                     {item.label}
                   </Link>

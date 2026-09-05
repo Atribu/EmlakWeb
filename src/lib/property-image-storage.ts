@@ -6,6 +6,8 @@ import { UPLOAD_DISK_ROOT, UPLOAD_PUBLIC_PREFIX } from "@/lib/upload-config";
 
 const uploadPublicRoot = `${UPLOAD_PUBLIC_PREFIX}/properties`;
 const uploadDiskRoot = path.join(UPLOAD_DISK_ROOT, "properties");
+const MAX_IMAGE_PIXELS = 50_000_000;
+const MAX_IMAGE_DIMENSION = 12_000;
 
 const charMap: Record<string, string> = {
   ç: "c",
@@ -36,15 +38,80 @@ function normalizeFileName(value: string): string {
   return `${safeSegment(stripped, "gorsel")}.webp`;
 }
 
+function escapeSvgText(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildCenteredWatermarkSvg(width: number, height: number): Buffer {
+  const watermarkText = process.env.EMLAK_WATERMARK_TEXT?.trim() || "RODINA Invest Co.";
+  const subText = process.env.EMLAK_WATERMARK_SUBTEXT?.trim() || "RODINA INVEST";
+  const safeWatermarkText = escapeSvgText(watermarkText);
+  const safeSubText = escapeSvgText(subText);
+  const shortestSide = Math.max(1, Math.min(width, height));
+  const logoSize = Math.max(54, Math.min(118, Math.round(shortestSide * 0.12)));
+  const titleSize = Math.max(30, Math.min(82, Math.round(width * 0.055)));
+  const subTitleSize = Math.max(10, Math.min(22, Math.round(titleSize * 0.27)));
+  const contentWidth = Math.min(width * 0.74, titleSize * Math.max(watermarkText.length * 0.62, 9));
+  const boxWidth = Math.max(260, Math.min(width * 0.82, contentWidth + logoSize + 86));
+  const boxHeight = Math.max(110, logoSize + 42);
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const boxX = centerX - boxWidth / 2;
+  const boxY = centerY - boxHeight / 2;
+  const logoX = boxX + 30;
+  const logoY = centerY - logoSize / 2;
+  const textX = logoX + logoSize + 28;
+  const titleY = centerY - subTitleSize * 0.12;
+  const subTitleY = titleY + titleSize * 0.5;
+
+  return Buffer.from(`
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="watermark-shadow" x="-20%" y="-30%" width="140%" height="160%">
+          <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#020617" flood-opacity="0.22"/>
+        </filter>
+      </defs>
+      <g opacity="0.48" filter="url(#watermark-shadow)">
+        <rect x="${boxX}" y="${boxY}" width="${boxWidth}" height="${boxHeight}" rx="${boxHeight / 2}" fill="#ffffff" fill-opacity="0.42" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"/>
+        <rect x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" rx="${logoSize * 0.24}" fill="#0f172a" fill-opacity="0.72"/>
+        <text x="${logoX + logoSize / 2}" y="${logoY + logoSize * 0.66}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${logoSize * 0.42}" font-weight="800" fill="#ffffff">PS</text>
+        <text x="${textX}" y="${titleY}" font-family="Arial, Helvetica, sans-serif" font-size="${titleSize}" font-weight="800" letter-spacing="-1.5" fill="#ffffff" stroke="#0f172a" stroke-opacity="0.46" stroke-width="2.2" paint-order="stroke">${safeWatermarkText}</text>
+        <text x="${textX + 3}" y="${subTitleY}" font-family="Arial, Helvetica, sans-serif" font-size="${subTitleSize}" font-weight="800" letter-spacing="${Math.max(2, subTitleSize * 0.18)}" fill="#ffffff" fill-opacity="0.92">${safeSubText}</text>
+      </g>
+    </svg>
+  `);
+}
+
 async function convertImageToWebp(file: File, fieldLabel: string): Promise<Buffer> {
   validatePortfolioImageFile(file, fieldLabel);
 
   try {
     const sharp = (await import("sharp")).default;
     const source = Buffer.from(await file.arrayBuffer());
-
-    return await sharp(source)
+    const normalized = await sharp(source, { limitInputPixels: MAX_IMAGE_PIXELS })
       .rotate()
+      .toBuffer({ resolveWithObject: true });
+
+    if (
+      !normalized.info.width ||
+      !normalized.info.height ||
+      normalized.info.width > MAX_IMAGE_DIMENSION ||
+      normalized.info.height > MAX_IMAGE_DIMENSION
+    ) {
+      throw new Error("unsupported-dimensions");
+    }
+
+    return await sharp(normalized.data)
+      .composite([
+        {
+          input: buildCenteredWatermarkSvg(normalized.info.width, normalized.info.height),
+          gravity: "center",
+        },
+      ])
       .webp({ quality: 82 })
       .toBuffer();
   } catch (error) {

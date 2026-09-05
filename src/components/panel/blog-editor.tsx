@@ -106,7 +106,7 @@ export function BlogEditor({ initialPosts }: BlogEditorProps) {
 
   if (!selectedPost) {
     return (
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="admin-card p-6 sm:p-7">
         <h2 className="text-xl font-semibold tracking-tight text-slate-900">Blog Düzenle</h2>
         <p className="mt-2 text-sm text-slate-600">Düzenlenecek blog yazısı bulunamadı.</p>
       </section>
@@ -116,7 +116,7 @@ export function BlogEditor({ initialPosts }: BlogEditorProps) {
   const previewImage = imageIndex >= 0 ? SAMPLE_IMAGE_SETS[imageIndex]?.cover : selectedPost.coverImage;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="admin-card p-6 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-slate-900">Blog Yazısı Düzenle</h2>

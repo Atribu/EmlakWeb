@@ -2,6 +2,10 @@ import type { SiteLanguage } from "@/lib/site-preferences";
 
 export type UserRole = "portal_admin" | "admin" | "portfolio_manager" | "advisor" | "editor";
 
+export type PropertyPriceCurrency = "TRY" | "USD" | "EUR" | "GBP";
+export type PropertyMarketStatus = "Hazır" | "Proje";
+export type PropertyPublicationStatus = "Taslak" | "Onay Bekliyor" | "Aktif" | "Pasif" | "Satıldı";
+
 export type PropertyType =
   | "Daire"
   | "Villa"
@@ -82,20 +86,30 @@ export type Property = {
   id: string;
   slug: string;
   title: string;
+  country?: string;
   city: string;
   district: string;
   neighborhood: string;
   type: PropertyType;
   price: number;
+  priceCurrency?: PropertyPriceCurrency;
+  priceSourceAmount?: number;
   rooms: string;
   areaM2: number;
   floor: string;
   heating: string;
+  marketStatus?: PropertyMarketStatus;
+  publicationStatus?: PropertyPublicationStatus;
   listingRef: string;
   description: string;
   highlights: string[];
   features: string[];
   infoItems?: PropertyInfoItem[];
+  developerCompany?: string;
+  staffNotes?: string;
+  customerFeedbackNotes?: string;
+  adminCommissionNotes?: string;
+  adminPrivateNotes?: string;
   advisorId: string;
   latitude: number;
   longitude: number;
@@ -107,31 +121,83 @@ export type Property = {
   publishedAt: string;
 };
 
+export type PropertyActivityAction =
+  | "created"
+  | "updated"
+  | "publication_status_changed"
+  | "advisor_changed"
+  | "note_added"
+  | "duplicated"
+  | "deleted";
+
+export type PropertyActivityLog = {
+  id: string;
+  propertySlug: string;
+  propertyId?: string;
+  listingRef?: string;
+  propertyTitle: string;
+  actionType: PropertyActivityAction;
+  actorUserId?: string;
+  actorName: string;
+  actorRole: UserRole | string;
+  summary: string;
+  details: string[];
+  createdAt: string;
+};
+
+export type CreatePropertyActivityLogInput = {
+  propertySlug: string;
+  propertyId?: string;
+  listingRef?: string;
+  propertyTitle: string;
+  actionType: PropertyActivityAction;
+  actorUserId?: string;
+  actorName: string;
+  actorRole: UserRole | string;
+  summary: string;
+  details: string[];
+  createdAt?: string;
+};
+
 export type PropertyFilter = {
   query?: string;
+  country?: string;
   city?: string;
   type?: string;
+  marketStatus?: PropertyMarketStatus;
   minPrice?: number;
   maxPrice?: number;
   rooms?: string;
   advisorId?: string;
+  publicationStatus?: PropertyPublicationStatus;
+  includeInactive?: boolean;
 };
 
 export type CreatePropertyInput = {
   title: string;
+  country?: string;
   city: string;
   district: string;
   neighborhood: string;
   type: PropertyType;
   price: number;
+  priceCurrency?: PropertyPriceCurrency;
+  priceSourceAmount?: number;
   rooms: string;
   areaM2: number;
   floor: string;
   heating: string;
+  marketStatus?: PropertyMarketStatus;
+  publicationStatus?: PropertyPublicationStatus;
   description: string;
   highlights: string[];
   features: string[];
   infoItems?: PropertyInfoItem[];
+  developerCompany?: string;
+  staffNotes?: string;
+  customerFeedbackNotes?: string;
+  adminCommissionNotes?: string;
+  adminPrivateNotes?: string;
   advisorId?: string;
   latitude?: number;
   longitude?: number;
@@ -150,9 +216,11 @@ export type ContactLead = {
   phone: string;
   message: string;
   stage: LeadStage;
+  priority?: LeadPriority;
   source: LeadSource;
   preferredDate?: string;
   preferredTime?: string;
+  followUpDate?: string;
   appointmentNote?: string;
   assignedAdvisorId?: string;
   pipelineNote?: string;
@@ -168,6 +236,8 @@ export type LeadStage =
   | "won"
   | "lost";
 
+export type LeadPriority = "low" | "normal" | "high";
+
 export type LeadSource = "contact_form" | "appointment_form";
 
 export type CreateLeadInput = {
@@ -179,6 +249,8 @@ export type CreateLeadInput = {
   source?: LeadSource;
   preferredDate?: string;
   preferredTime?: string;
+  followUpDate?: string;
+  priority?: LeadPriority;
   appointmentNote?: string;
   assignedAdvisorId?: string;
   stage?: LeadStage;
@@ -247,3 +319,55 @@ export type CreateBlogPostInput = {
   metaTitle: string;
   metaDescription: string;
 };
+
+export type HomeLocationSpotlightLayout = "hero" | "compact" | "wide" | "standard";
+
+export type HomeLocationSpotlightTranslationFields = {
+  title?: string;
+  subtitle?: string;
+  badge?: string;
+  blurb?: string;
+  statText?: string;
+};
+
+export type HomeLocationSpotlightTranslations = Partial<
+  Record<Exclude<SiteLanguage, "TR">, HomeLocationSpotlightTranslationFields>
+>;
+
+export type HomeLocationSpotlight = {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  blurb: string;
+  statText?: string;
+  href: string;
+  image: string;
+  priceAmount?: number;
+  priceCurrency?: PropertyPriceCurrency;
+  layoutVariant: HomeLocationSpotlightLayout;
+  sortOrder: number;
+  isActive: boolean;
+  translations?: HomeLocationSpotlightTranslations;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateHomeLocationSpotlightInput = {
+  title: string;
+  subtitle: string;
+  badge: string;
+  blurb: string;
+  statText?: string;
+  href: string;
+  image: string;
+  priceAmount?: number;
+  priceCurrency?: PropertyPriceCurrency;
+  layoutVariant?: HomeLocationSpotlightLayout;
+  sortOrder?: number;
+  isActive?: boolean;
+  translations?: HomeLocationSpotlightTranslations;
+};
+
+export type UpdateHomeLocationSpotlightInput = Partial<CreateHomeLocationSpotlightInput>;
