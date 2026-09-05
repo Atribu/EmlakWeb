@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
 
 import { parseBlogContent } from "@/lib/blog-content";
+import {
+  INSTAGRAM_URL,
+  PRIMARY_CONTACT_PHONE_DISPLAY,
+  PRIMARY_CONTACT_PHONE_E164,
+  PRIMARY_TELEGRAM_URL,
+} from "@/lib/contact-channels";
 import { propertyDisplayAmount, propertyDisplayCurrency } from "@/lib/property-pricing";
 import type { BlogPost, Property } from "@/lib/types";
 
 export const BRAND_NAME = "RODINA Invest Co.";
 export const SHORT_BRAND_NAME = "RODINA";
 export const BRAND_LOGO_PATH = "/brand/rodina-logo.webp";
-export const BRAND_PHONE_DISPLAY = "+90 532 123 45 67";
-export const BRAND_PHONE_SCHEMA = "+905321234567";
+export const BRAND_PHONE_DISPLAY = PRIMARY_CONTACT_PHONE_DISPLAY;
+export const BRAND_PHONE_SCHEMA = PRIMARY_CONTACT_PHONE_E164;
 export const BRAND_EMAIL = "info@rodinainvest.com";
-export const BRAND_SOCIAL_LINKS = ["https://instagram.com/rodinainvest", "https://t.me/rodinainvest"];
+export const BRAND_SOCIAL_LINKS = [INSTAGRAM_URL, PRIMARY_TELEGRAM_URL];
 
 const defaultTitle = "RODINA | RODINA Invest Co.";
 const defaultDescription =

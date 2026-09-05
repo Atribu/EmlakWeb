@@ -11,7 +11,7 @@ export function BrandLogoMark({ className = "" }: BrandLogoMarkProps) {
       className={`flex items-center justify-center overflow-hidden rounded-[0.95rem] bg-white shadow-[0_18px_34px_-26px_rgba(29,56,92,0.28)] ${className}`}
     >
       <Image
-        src="/brand/rodina-mark.webp"
+        src="/brand/rodina-mark-transparent.png"
         alt=""
         width={420}
         height={311}

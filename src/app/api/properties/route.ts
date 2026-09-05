@@ -26,8 +26,9 @@ import {
   readPropertyTranslationsFromPayload,
 } from "@/lib/property-content";
 import { getExchangeRateSnapshot } from "@/lib/exchange-rates";
-import { convertAmountBetweenCurrencies, type ExchangeRateTable } from "@/lib/exchange-rates-shared";
+import type { ExchangeRateTable } from "@/lib/exchange-rates-shared";
 import { convertPriceToTry, normalizeSiteCurrency, readSitePreferencesFromCookieHeader } from "@/lib/site-preferences";
+import { filterPropertiesByDisplayPrice } from "@/lib/property-pricing";
 import type { CreatePropertyInput, PropertyMarketStatus, PropertyPriceCurrency, PropertyType } from "@/lib/types";
 
 const validTypes = [...PROPERTY_TYPE_OPTIONS] as PropertyType[];
@@ -177,20 +178,6 @@ function createVariantInput(input: CreatePropertyInput, roomSelections: string[]
     rooms: room,
     title: resolveVariantTitle(input.title, input.rooms, room, roomSelections.length),
   };
-}
-
-function normalizePriceFilterToTry(
-  value: number | undefined,
-  currency: PropertyPriceCurrency,
-  exchangeRates: ExchangeRateTable,
-  direction: "min" | "max",
-) {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return undefined;
-  }
-
-  const converted = convertAmountBetweenCurrencies(value, currency, "TRY", exchangeRates);
-  return direction === "min" ? Math.ceil(converted) : Math.floor(converted);
 }
 
 function applyRoleScopedFields(
@@ -359,6 +346,7 @@ async function parseCreateFormData(formData: FormData, exchangeRates: ExchangeRa
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
   const query = url.searchParams.get("q") ?? undefined;
+  const country = url.searchParams.get("country") ?? undefined;
   const city = url.searchParams.get("city") ?? undefined;
   const type = url.searchParams.get("type") ?? undefined;
   const rooms = url.searchParams.get("rooms") ?? undefined;
@@ -374,23 +362,18 @@ export async function GET(request: NextRequest) {
   const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
   const maxPrice = maxPriceRaw ? Number(maxPriceRaw) : undefined;
 
-  const properties = listProperties({
+  const matchingProperties = listProperties({
     query,
+    country,
     city,
     type,
     rooms,
-    minPrice: normalizePriceFilterToTry(
-      Number.isFinite(minPrice) ? minPrice : undefined,
-      selectedCurrency,
-      exchangeRates,
-      "min",
-    ),
-    maxPrice: normalizePriceFilterToTry(
-      Number.isFinite(maxPrice) ? maxPrice : undefined,
-      selectedCurrency,
-      exchangeRates,
-      "max",
-    ),
+  });
+  const properties = filterPropertiesByDisplayPrice(matchingProperties, {
+    currency: selectedCurrency,
+    exchangeRates,
+    minPrice: Number.isFinite(minPrice) ? minPrice : undefined,
+    maxPrice: Number.isFinite(maxPrice) ? maxPrice : undefined,
   });
 
   return NextResponse.json({ properties });

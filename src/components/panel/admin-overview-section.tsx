@@ -127,40 +127,44 @@ export function AdminOverviewSection({
 
   const metrics = [
     {
-      label: "Toplam Gelir",
+      label: "Portföy Değeri",
       value: formatMetricCurrency(totalPortfolioValue),
       delta: clampDelta(((activePropertyCount - passivePropertyCount) / Math.max(summary.propertyCount, 1)) * 100),
       tone: "positive" as const,
+      accent: "gold" as const,
       icon: <RevenueMetricIcon />,
     },
     {
-      label: "Yeni Kullanıcılar",
+      label: "Ekip Üyesi",
       value: formatMetricNumber(users.length),
       delta: clampDelta(((users.length - summary.advisorCount) / Math.max(summary.advisorCount, 1)) * 100),
       tone: users.length >= summary.advisorCount ? ("positive" as const) : ("negative" as const),
+      accent: "navy" as const,
       icon: <UsersMetricIcon />,
     },
     {
-      label: "Analitik",
+      label: "Aktif Süreç",
       value: formatMetricNumber(offerAnalyticsValue),
       delta: clampDelta(((appointmentLeadCount - contactLeadCount) / Math.max(summary.leadCount, 1)) * 100),
       tone: appointmentLeadCount >= contactLeadCount ? ("positive" as const) : ("negative" as const),
+      accent: "teal" as const,
       icon: <AnalyticsMetricIcon />,
     },
     {
-      label: "Toplam Değişim",
+      label: "Yayın Dengesi",
       value: formatMetricNumber(Math.abs(totalChangeValue)),
       delta: clampDelta((totalChangeValue / Math.max(summary.propertyCount, 1)) * 100),
       tone: totalChangeValue >= 0 ? ("positive" as const) : ("negative" as const),
+      accent: "coral" as const,
       icon: <ChangeMetricIcon />,
     },
   ];
 
   const chartSeries = buildMonthlyActivitySeries(properties, summary.leadCount, appointmentLeadCount, blogPosts.length);
   const trafficSegments = [
-    { label: "Organik", value: appointmentLeadCount, color: "#3b82f6" },
-    { label: "Sosyal", value: contactLeadCount, color: "#60a5fa" },
-    { label: "Doğrudan", value: otherLeadCount, color: "#93c5fd" },
+    { label: "Organik", value: appointmentLeadCount, color: "#caa33f" },
+    { label: "Sosyal", value: contactLeadCount, color: "#31415a" },
+    { label: "Doğrudan", value: otherLeadCount, color: "#72a395" },
   ];
   const qualitySummaries = properties.map((property) => summarizePropertyQuality(property));
   const readyForApprovalCount = qualitySummaries.filter((summaryItem) => summaryItem.isReadyForApproval).length;
@@ -183,7 +187,7 @@ export function AdminOverviewSection({
   const currentPropertySlugs = new Set(properties.map((property) => property.slug));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
           <MetricOverviewCard
@@ -192,13 +196,14 @@ export function AdminOverviewSection({
             value={metric.value}
             delta={metric.delta}
             tone={metric.tone}
+            accent={metric.accent}
             icon={metric.icon}
           />
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_320px]">
-        <article className="admin-card p-6">
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_320px]">
+        <article className="admin-card admin-dashboard-panel p-5 sm:p-6">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-[#0f172a]">Aylık Satışlar</h2>
@@ -213,7 +218,7 @@ export function AdminOverviewSection({
           />
         </article>
 
-        <article className="admin-card p-6">
+        <article className="admin-card admin-dashboard-panel p-5 sm:p-6">
           <div>
             <h2 className="text-lg font-semibold text-[#0f172a]">Trafik Kaynakları</h2>
             <p className="mt-1 text-sm text-[#64748b]">Lead kaynak dağılımı</p>
@@ -235,19 +240,19 @@ export function AdminOverviewSection({
       </section>
 
       <section className="grid gap-4 xl:grid-cols-3">
-        <article className="admin-card p-5">
+        <article className="admin-card admin-insight-card p-5" data-tone="success">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Onaya Hazır</p>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-[#0f172a]">{readyForApprovalCount}</p>
           <p className="mt-2 text-sm text-[#64748b]">Kritik alanları tamamlanmış portföy sayısı</p>
         </article>
 
-        <article className="admin-card p-5">
+        <article className="admin-card admin-insight-card p-5" data-tone="danger">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-rose-700">Kritik Eksik</p>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-[#0f172a]">{criticalAttentionCount}</p>
           <p className="mt-2 text-sm text-[#64748b]">Yayına çıkmadan önce müdahale isteyen kayıtlar</p>
         </article>
 
-        <article className="admin-card p-5">
+        <article className="admin-card admin-insight-card p-5" data-tone="warning">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">İçerik Uyarısı</p>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-[#0f172a]">{advisoryAttentionCount}</p>
           <p className="mt-2 text-sm text-[#64748b]">Ek dil, ikon veya içerik tarafında tamamlanabilecek kayıtlar</p>
@@ -255,7 +260,7 @@ export function AdminOverviewSection({
       </section>
 
       <section className="grid gap-4 xl:grid-cols-3">
-        <article className="admin-card p-5">
+        <article className="admin-card admin-queue-card p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-700">Öncelik</p>
@@ -272,7 +277,7 @@ export function AdminOverviewSection({
                 <Link
                   key={`pending-${property.id}`}
                   href={`/yonetim-ofisi?tab=portfolio-edit&slug=${property.slug}`}
-                  className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-white"
+                  className="admin-queue-item block px-4 py-3"
                 >
                   <p className="text-sm font-semibold text-[#0f172a]">{property.title}</p>
                   <p className="mt-1 text-xs text-[#64748b]">
@@ -288,7 +293,7 @@ export function AdminOverviewSection({
           </div>
         </article>
 
-        <article className="admin-card p-5">
+        <article className="admin-card admin-queue-card p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-rose-700">Müdahale</p>
@@ -305,7 +310,7 @@ export function AdminOverviewSection({
                 <Link
                   key={`critical-${property.id}`}
                   href={`/yonetim-ofisi?tab=portfolio-edit&slug=${property.slug}`}
-                  className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-white"
+                  className="admin-queue-item block px-4 py-3"
                 >
                   <p className="text-sm font-semibold text-[#0f172a]">{property.title}</p>
                   <p className="mt-1 text-xs text-[#64748b]">
@@ -321,7 +326,7 @@ export function AdminOverviewSection({
           </div>
         </article>
 
-        <article className="admin-card p-5">
+        <article className="admin-card admin-queue-card p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">Hızlı Akış</p>
@@ -338,7 +343,7 @@ export function AdminOverviewSection({
                 <Link
                   key={`activity-focus-${activity.id}`}
                   href={`/yonetim-ofisi?tab=portfolio-edit&slug=${activity.propertySlug}`}
-                  className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-white"
+                  className="admin-queue-item block px-4 py-3"
                 >
                   <p className="text-sm font-semibold text-[#0f172a]">{activity.propertyTitle}</p>
                   <p className="mt-1 text-xs text-[#64748b]">
@@ -355,7 +360,7 @@ export function AdminOverviewSection({
         </article>
       </section>
 
-      <section className="admin-card overflow-hidden p-0">
+      <section className="admin-card admin-activity-table-card overflow-hidden p-0">
         <div className="flex items-center justify-between gap-3 border-b border-[#e2e8f0] px-6 py-5">
           <div>
             <h2 className="text-lg font-semibold text-[#0f172a]">Son İşlemler</h2>
@@ -454,22 +459,23 @@ type MetricOverviewCardProps = {
   value: string;
   delta: number;
   tone: "positive" | "negative";
+  accent: "gold" | "navy" | "teal" | "coral";
   icon: ReactNode;
 };
 
-function MetricOverviewCard({ label, value, delta, tone, icon }: MetricOverviewCardProps) {
+function MetricOverviewCard({ label, value, delta, tone, accent, icon }: MetricOverviewCardProps) {
   return (
-    <article className="admin-stat-card admin-stat-card-dark border-[#e9eef6] shadow-[0_22px_40px_-34px_rgba(15,23,42,0.18)]">
+    <article className="admin-stat-card admin-stat-card-dark admin-metric-card" data-accent={accent}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-[#94a3b8]">{label}</p>
-          <p className="mt-3 truncate text-[2rem] font-semibold tracking-tight text-[#0f172a]">{value}</p>
-          <p className={`mt-2 text-sm font-semibold ${tone === "positive" ? "text-[#16a34a]" : "text-[#dc2626]"}`}>
+          <p className="admin-metric-label">{label}</p>
+          <p className="admin-metric-value">{value}</p>
+          <p className="admin-metric-delta" data-tone={tone}>
             {formatDelta(delta)}
           </p>
         </div>
 
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[#f8fafc] text-[#60a5fa] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_16px_30px_-28px_rgba(15,23,42,0.45)]">
+        <span className="admin-metric-icon">
           {icon}
         </span>
       </div>
@@ -535,12 +541,12 @@ function DashboardLineChart({
   const areaPath = `${primaryPath} L ${paddingLeft + chartWidth} ${paddingTop + chartHeight} L ${paddingLeft} ${paddingTop + chartHeight} Z`;
 
   return (
-    <div className="rounded-[1.4rem] border border-[#edf2f7] bg-[#fbfdff] px-4 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
+    <div className="admin-chart-surface px-3 py-4 sm:px-4 sm:py-5">
       <svg viewBox={`0 0 ${width} ${height}`} className="h-[280px] w-full" aria-hidden>
         <defs>
           <linearGradient id="dashboard-primary-area" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.03" />
+            <stop offset="0%" stopColor="#caa33f" stopOpacity="0.24" />
+            <stop offset="100%" stopColor="#caa33f" stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
@@ -551,8 +557,8 @@ function DashboardLineChart({
 
           return (
             <g key={index}>
-              <line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y} stroke="#e8eef5" strokeWidth="1" />
-              <text x={paddingLeft - 10} y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="10">
+              <line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y} stroke="#e8e5de" strokeWidth="1" />
+              <text x={paddingLeft - 10} y={y + 4} textAnchor="end" fill="#89919e" fontSize="10">
                 {tickValue}
               </text>
             </g>
@@ -560,11 +566,11 @@ function DashboardLineChart({
         })}
 
         <path d={areaPath} fill="url(#dashboard-primary-area)" />
-        <path d={comparisonPath} fill="none" stroke="#93c5fd" strokeWidth="2.5" strokeLinecap="round" />
-        <path d={primaryPath} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" />
+        <path d={comparisonPath} fill="none" stroke="#a9b4c2" strokeWidth="2.25" strokeLinecap="round" />
+        <path d={primaryPath} fill="none" stroke="#b98f29" strokeWidth="3" strokeLinecap="round" />
 
         {primaryPoints.map((point, index) => (
-          <circle key={labels[index]} cx={point.x} cy={point.y} r="4.5" fill="#ffffff" stroke="#2563eb" strokeWidth="2" />
+          <circle key={labels[index]} cx={point.x} cy={point.y} r="4.5" fill="#ffffff" stroke="#b98f29" strokeWidth="2" />
         ))}
 
         {labels.map((label, index) => (
@@ -573,7 +579,7 @@ function DashboardLineChart({
             x={paddingLeft + stepX * index}
             y={height - 8}
             textAnchor="middle"
-            fill="#94a3b8"
+            fill="#89919e"
             fontSize="11"
           >
             {label}
@@ -605,7 +611,7 @@ function DashboardDonut({ segments }: { segments: Array<{ label: string; value: 
     .stops;
 
   const background =
-    gradientStops.length > 0 ? `conic-gradient(${gradientStops.join(", ")})` : "conic-gradient(#dbeafe 0deg 360deg)";
+    gradientStops.length > 0 ? `conic-gradient(${gradientStops.join(", ")})` : "conic-gradient(#ece8dc 0deg 360deg)";
 
   return (
     <div className="flex justify-center">

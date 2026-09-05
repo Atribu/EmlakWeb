@@ -1,5 +1,6 @@
 import db from "@/lib/db";
 import { HOME_LOCATION_SPOTLIGHT_LAYOUT_OPTIONS } from "@/lib/home-location-spotlights";
+import { locationsMatch, uniqueLocationValues } from "@/lib/location-options";
 import { hashPassword, isHashedPassword, verifyPassword } from "@/lib/passwords";
 import { assertSafeProductionPassword, isProductionRuntime, isUnsafeDefaultAdminCredential } from "@/lib/security";
 import { sanitizePropertyTranslations } from "@/lib/property-content";
@@ -369,8 +370,8 @@ export function listProperties(filter: PropertyFilter = {}): Property[] {
 
   return rows.filter((p) => {
     if (!filter.includeInactive && !isPropertyPublished(p.publicationStatus)) return false;
-    if (filter.country && (p.country ?? "Türkiye") !== filter.country) return false;
-    if (filter.city && p.city !== filter.city) return false;
+    if (filter.country && !locationsMatch(p.country ?? "Türkiye", filter.country, "country")) return false;
+    if (filter.city && !locationsMatch(p.city, filter.city, "city")) return false;
     if (filter.type && p.type !== filter.type) return false;
     if (filter.marketStatus && p.marketStatus !== filter.marketStatus) return false;
     if (filter.publicationStatus && p.publicationStatus !== filter.publicationStatus) return false;
@@ -739,15 +740,15 @@ export function listPropertyActivityLogs(filter: { propertySlug?: string; limit?
   return (db.prepare(query).all(...values) as Record<string, unknown>[]).map(rowToPropertyActivityLog);
 }
 
-export function listCities(): string[] {
-  return Array.from(new Set(listProperties().map((property) => property.city))).sort((left, right) =>
-    left.localeCompare(right, "tr"),
-  );
+export function listCities(country?: string): string[] {
+  const properties = listProperties({ country: country?.trim() || undefined });
+  return uniqueLocationValues(properties.map((property) => property.city), "city");
 }
 
 export function listCountries(): string[] {
-  return Array.from(new Set(listProperties().map((property) => property.country?.trim() || "Türkiye"))).sort(
-    (left, right) => left.localeCompare(right, "tr"),
+  return uniqueLocationValues(
+    listProperties().map((property) => property.country?.trim() || "Türkiye"),
+    "country",
   );
 }
 

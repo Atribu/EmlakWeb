@@ -6,12 +6,19 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 
 import { useSitePreferences } from "@/components/use-site-preferences";
+import {
+  INSTAGRAM_URL,
+  PRIMARY_CONTACT_PHONE_DISPLAY,
+  PRIMARY_CONTACT_PHONE_E164,
+  PRIMARY_TELEGRAM_URL,
+  PRIMARY_WHATSAPP_URL,
+} from "@/lib/contact-channels";
 import { footerCopy } from "@/lib/site-copy";
 
 const SOCIAL_LINKS = [
-  { href: "https://instagram.com/rodinainvest", label: "Instagram", icon: "instagram" as const },
-  { href: "https://t.me/rodinainvest", label: "Telegram", icon: "telegram" as const },
-  { href: "https://wa.me/905321112233", label: "WhatsApp", icon: "whatsapp" as const },
+  { href: INSTAGRAM_URL, label: "Instagram", icon: "instagram" as const },
+  { href: PRIMARY_TELEGRAM_URL, label: "Telegram", icon: "telegram" as const },
+  { href: PRIMARY_WHATSAPP_URL, label: "WhatsApp", icon: "whatsapp" as const },
 ];
 
 const footerMetaCopy = {
@@ -117,8 +124,8 @@ export function SiteFooter() {
 
           <div className="rounded-[1rem] border border-[var(--line-strong)] bg-white p-4 shadow-[0_20px_34px_-28px_rgba(22,32,48,0.28)]">
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-accent-strong)]">{metaCopy.directLine}</p>
-            <a href="tel:+905321234567" className="mt-3 block text-lg font-semibold text-[var(--brand-primary)]">
-              +90 532 123 45 67
+            <a href={`tel:${PRIMARY_CONTACT_PHONE_E164}`} className="mt-3 block text-lg font-semibold text-[var(--brand-primary)]">
+              {PRIMARY_CONTACT_PHONE_DISPLAY}
             </a>
             <a href="mailto:info@rodinainvest.com" className="mt-2 block text-sm text-[var(--ink-600)]">
               info@rodinainvest.com

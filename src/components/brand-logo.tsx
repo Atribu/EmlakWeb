@@ -17,7 +17,7 @@ export function BrandLogo({ inverse = false, compact = false, className = "" }: 
       aria-label="RODINA Invest Co."
     >
       <Image
-        src="/brand/rodina-mark.webp"
+        src="/brand/rodina-mark-transparent.png"
         alt=""
         width={420}
         height={311}

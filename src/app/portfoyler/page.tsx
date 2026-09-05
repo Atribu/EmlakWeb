@@ -6,8 +6,9 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listAdvisors, listCities, listCountries, listProperties, listRoomOptions, listTypes } from "@/lib/data-store";
 import { getExchangeRateSnapshot } from "@/lib/exchange-rates";
-import { convertAmountBetweenCurrencies } from "@/lib/exchange-rates-shared";
+import { translateCityName, translateCountryName } from "@/lib/location-options";
 import { PROPERTY_MARKET_STATUS_OPTIONS } from "@/lib/property-panel-options";
+import { filterPropertiesByDisplayPrice } from "@/lib/property-pricing";
 import { breadcrumbSchema, organizationSchema, publicPageMetadata } from "@/lib/seo";
 import { portfolioPageCopy, translatePropertyType, translateRoomLabel } from "@/lib/site-copy";
 import { getServerSiteLanguage, getServerSitePreferences } from "@/lib/site-preferences-server";
@@ -133,28 +134,26 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
   const minPrice = toNumber(minPriceValue);
   const maxPrice = toNumber(maxPriceValue);
 
-  const properties = listProperties({
+  const matchingProperties = listProperties({
     query: query || undefined,
     country: country || undefined,
     city: city || undefined,
     type: type || undefined,
     marketStatus: PROPERTY_MARKET_STATUS_OPTIONS.includes(marketStatus) ? marketStatus : undefined,
     rooms: rooms || undefined,
-    minPrice:
-      typeof minPrice === "number"
-        ? Math.ceil(convertAmountBetweenCurrencies(minPrice, preferences.currency, "TRY", exchangeRateSnapshot.rates))
-        : undefined,
-    maxPrice:
-      typeof maxPrice === "number"
-        ? Math.floor(convertAmountBetweenCurrencies(maxPrice, preferences.currency, "TRY", exchangeRateSnapshot.rates))
-        : undefined,
+  });
+  const properties = filterPropertiesByDisplayPrice(matchingProperties, {
+    currency: preferences.currency,
+    exchangeRates: exchangeRateSnapshot.rates,
+    minPrice,
+    maxPrice,
   });
 
   const advisors = listAdvisors();
   const advisorMap = new Map(advisors.map((advisor) => [advisor.id, advisor]));
 
   const countries = listCountries();
-  const cities = listCities();
+  const cities = listCities(country || undefined);
   const types = listTypes();
   const roomOptions = listRoomOptions();
   const structuredData = [
@@ -201,7 +200,7 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
                   <option value="">{filterLabel(language, "allCountries")}</option>
                   {countries.map((item) => (
                     <option key={item} value={item}>
-                      {item}
+                      {translateCountryName(item, language)}
                     </option>
                   ))}
                 </select>
@@ -210,7 +209,7 @@ export default async function PortfoylerPage({ searchParams }: PortfoylerPagePro
                   <option value="">{copy.cityPlaceholder}</option>
                   {cities.map((item) => (
                     <option key={item} value={item}>
-                      {item}
+                      {translateCityName(item, language)}
                     </option>
                   ))}
                 </select>

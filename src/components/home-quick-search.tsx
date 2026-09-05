@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { startTransition, useState, type FormEvent } from "react";
 
 import { useSitePreferences } from "@/components/use-site-preferences";
+import { translateCityName } from "@/lib/location-options";
 import { translatePropertyType } from "@/lib/site-copy";
 import type { SiteLanguage } from "@/lib/site-preferences";
 import type { PropertyType } from "@/lib/types";
@@ -224,7 +225,7 @@ export function HomeQuickSearch({
               <option value="">{copy.cityPlaceholder}</option>
               {cities.map((city) => (
                 <option key={city} value={city}>
-                  {city}
+                  {translateCityName(city, language)}
                 </option>
               ))}
             </select>
@@ -391,7 +392,7 @@ export function HomeQuickSearch({
                 <option value="">{copy.cityPlaceholder}</option>
                 {cities.map((city) => (
                   <option key={city} value={city}>
-                    {city}
+                    {translateCityName(city, language)}
                   </option>
                 ))}
               </select>

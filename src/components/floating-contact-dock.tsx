@@ -5,19 +5,10 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
+import { INSTAGRAM_URL, PRIMARY_TELEGRAM_URL, PRIMARY_WHATSAPP_URL } from "@/lib/contact-channels";
 import { dockCopy } from "@/lib/site-preferences";
 
 import { useSitePreferences } from "@/components/use-site-preferences";
-
-const CHANNELS = {
-  whatsappPhone: "+905321112233",
-  telegramUrl: "https://t.me/rodinainvest",
-  instagramUrl: "https://instagram.com/rodinainvest",
-};
-
-function formatPhoneForHref(value: string) {
-  return value.replace(/\D/g, "");
-}
 
 function FloatingButton({
   href,
@@ -119,7 +110,7 @@ export function FloatingContactDock() {
   }
 
   const whatsappText = encodeURIComponent(copy.whatsappPrefill);
-  const whatsappHref = `https://wa.me/${formatPhoneForHref(CHANNELS.whatsappPhone)}?text=${whatsappText}`;
+  const whatsappHref = `${PRIMARY_WHATSAPP_URL}?text=${whatsappText}`;
 
   return (
     <div className="pointer-events-none fixed right-3 bottom-3 z-[80] hidden flex-col items-end gap-2 sm:right-5 sm:bottom-5 sm:flex">
@@ -181,11 +172,11 @@ export function FloatingContactDock() {
       ) : null}
 
       <div className="pointer-events-auto flex flex-col items-end gap-2">
-        <FloatingButton href={CHANNELS.instagramUrl} label={copy.instagram} accent="bg-[linear-gradient(135deg,#6f2dbd_0%,#d62976_55%,#f77737_100%)]">
+        <FloatingButton href={INSTAGRAM_URL} label={copy.instagram} accent="bg-[linear-gradient(135deg,#6f2dbd_0%,#d62976_55%,#f77737_100%)]">
           <InstagramIcon />
         </FloatingButton>
 
-        <FloatingButton href={CHANNELS.telegramUrl} label={copy.telegram} accent="bg-[linear-gradient(135deg,#1d8fff_0%,#2aa3ff_100%)]">
+        <FloatingButton href={PRIMARY_TELEGRAM_URL} label={copy.telegram} accent="bg-[linear-gradient(135deg,#1d8fff_0%,#2aa3ff_100%)]">
           <TelegramIcon />
         </FloatingButton>
 

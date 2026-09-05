@@ -55,7 +55,7 @@ test("organization schema identifies the RODINA brand with an absolute logo", ()
   assert.equal(schema.name, BRAND_NAME);
   assert.equal(schema["@type"], "RealEstateAgent");
   assert.equal(schema.logo, "http://localhost:3000/brand/rodina-logo.webp");
-  assert.deepEqual(schema.sameAs, ["https://instagram.com/rodinainvest", "https://t.me/rodinainvest"]);
+  assert.deepEqual(schema.sameAs, ["https://instagram.com/rodinainvest", "https://t.me/+905513640763?profile"]);
 });
 
 test("website schema exposes the portfolio search action", () => {

@@ -27,7 +27,7 @@ export function AdminNotificationCenter({ notifications }: AdminNotificationCent
   return (
     <details className="group relative">
       <summary
-        className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-[1rem] border border-[#e2e8f0] bg-white text-[#475569] shadow-[0_10px_20px_-18px_rgba(15,23,42,0.35)] transition hover:border-[#cbd5e1] hover:text-[#0f172a] group-open:border-[#1d4ed8] group-open:text-[#1d4ed8] [&::-webkit-details-marker]:hidden"
+        className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-[0.72rem] border border-[#dfe3e8] bg-white text-[#536074] shadow-[0_10px_22px_-20px_rgba(17,25,39,0.32)] transition hover:border-[#c9ced6] hover:text-[#172033] group-open:border-[#caa33f] group-open:text-[#987223] [&::-webkit-details-marker]:hidden"
         aria-label="Bildirim merkezini aç"
       >
         <BellIcon />
@@ -40,11 +40,11 @@ export function AdminNotificationCenter({ notifications }: AdminNotificationCent
         )}
       </summary>
 
-      <div className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-[1.25rem] border border-[#e2e8f0] bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.35)]">
+      <div className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-[0.9rem] border border-[#dfe3e8] bg-white shadow-[0_26px_70px_-30px_rgba(17,25,39,0.35)]">
         <div className="border-b border-[#e2e8f0] px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1d4ed8]">Bildirim Merkezi</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#987223]">Bildirim Merkezi</p>
               <h2 className="mt-1 text-base font-semibold text-[#0f172a]">Bekleyen işler</h2>
             </div>
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[#475569]">
@@ -59,7 +59,7 @@ export function AdminNotificationCenter({ notifications }: AdminNotificationCent
               <Link
                 key={notification.id}
                 href={notification.href}
-                className={`block rounded-2xl border px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-24px_rgba(15,23,42,0.45)] ${notificationToneClass[notification.tone]}`}
+                className={`block rounded-[0.72rem] border px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-24px_rgba(15,23,42,0.45)] ${notificationToneClass[notification.tone]}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -82,7 +82,7 @@ export function AdminNotificationCenter({ notifications }: AdminNotificationCent
         </div>
 
         <div className="border-t border-[#e2e8f0] bg-[#f8fafc] px-5 py-3">
-          <Link href="/yonetim-ofisi?tab=overview" className="text-sm font-semibold text-[#1d4ed8] hover:text-[#1e40af]">
+          <Link href="/yonetim-ofisi?tab=overview" className="text-sm font-semibold text-[#987223] hover:text-[#765615]">
             Genel bakışa git
           </Link>
         </div>
